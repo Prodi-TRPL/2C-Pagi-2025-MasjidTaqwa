@@ -2,14 +2,24 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite",
-        "build": "vite build"
+        "dev": "concurrently \"php artisan serve\" \"vite\"",
+        "build": "vite build",
+        "serve": "php artisan serve",
+        "hot": "vite --hot",
+        "frontend:lint": "eslint resources/js",
+        "frontend:test": "echo 'Add React testing here if needed'",
+        "db:fresh": "php artisan migrate:fresh --seed --force",
+        "db:setup": "php artisan migrate --force && php artisan db:seed --force",
+        "storage:link": "php artisan storage:link",
+        "clear:cache": "php artisan cache:clear && php artisan config:clear && php artisan route:clear && php artisan view:clear",
+        "setup": "npm install && composer install && cp .env.example .env && php artisan key:generate && php artisan migrate && php artisan db:seed && install concurrently --save-dev && npm run storage:link && npm run clear:cache"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",
         "@vitejs/plugin-react": "^4.2.0",
         "axios": "^1.6.4",
         "bootstrap": "^5.2.3",
+        "concurrently": "^9.1.2",
         "laravel-vite-plugin": "^1.0.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
@@ -20,5 +30,19 @@
         "@tailwindcss/vite": "^4.1.4",
         "react-router-dom": "^7.5.0",
         "tailwindcss": "^4.1.4"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Prodi-TRPL/2C-Pagi-2025-MasjidTaqwa.git"
+    },
+    "keywords": [
+        "MasjidTaqwa",
+        "donation",
+        "laravel",
+        "react",
+        "vite",
+        "tailwindcss"
+    ],
+    "author": "Tim PBL TRPL-212",
+    "license": "MIT"
 }
