@@ -1,5 +1,5 @@
 # 🕌 Sidontaq - Aplikasi Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota
-<img src="public/img/logo-app.jpg" alt="Logo Masjid Taqwa" width="800"/>
+<img src="public/img/logo-app.jpg" alt="Logo Masjid Taqwa" width="600"/>
 
 ## 🚀 Project Overview
 
