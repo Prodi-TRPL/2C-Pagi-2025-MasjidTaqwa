@@ -1,7 +1,8 @@
 # 🕌 Sidontaq - Aplikasi Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota
 <img src="public/img/logo-app.jpg" alt="Logo Masjid Taqwa" width="500"/>
 
-![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)
+![MIT License](https://img.shields.io/badge/license-MIT-blue.svg) ![React](https://img.shields.io/badge/React-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![Laravel](https://img.shields.io/badge/Laravel-%23F05340.svg?style=for-the-badge&logo=laravel&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
+
 
 ## 🚀 Project Overview
 
@@ -237,7 +238,7 @@ Proyek dikembangkan menggunakan pendekatan metodologi **Waterfall**.
 
 MIT License
 
-Copyright (c) 2025 Tim PBL TRPL-211, Politeknik Negeri Batam
+Copyright (c) 2025 Tim PBL TRPL-212, Politeknik Negeri Batam
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
