@@ -1,4 +1,5 @@
-# 🕌 Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota
+# 🕌 Sidontaq - Aplikasi Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota
+![Logo Masjid Taqwa](public/img/logo-app.jpg)
 
 ## 🚀 Project Overview
 
@@ -183,7 +184,6 @@ Sidontaq menyediakan script yang tersedia di dalam `package.json` untuk mempermu
 | `npm run clear:cache` | Membersihkan semua cache: config, route, view, dan cache umum Laravel. |
 | `npm run setup` | Instal semua dependensi (`npm` dan `composer`), setup environment, generate key Laravel, migrasi dan seed database, membuat storage link, install `concurrently`, serta clear cache. |
 
----
 
 ### Backend Setup
 - **`php artisan migrate`**: Menjalankan migrasi untuk database.
@@ -192,6 +192,8 @@ Sidontaq menyediakan script yang tersedia di dalam `package.json` untuk mempermu
 ### Frontend Setup
 - **`npm run build`**: Membuat build untuk frontend React.
 - **`npm run dev`**: Menjalankan server development untuk React dengan Vite.
+
+---
 
 ## ⚠️ Troubleshooting
 
