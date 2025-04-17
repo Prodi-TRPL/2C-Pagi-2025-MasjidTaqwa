@@ -217,12 +217,12 @@ Proyek dikembangkan menggunakan pendekatan metodologi **Waterfall**.
 
 | Tahapan                  | Durasi         | Deskripsi                                                                 |
 |--------------------------|----------------|---------------------------------------------------------------------------|
-| 🔍 **Requirement Analysis** | 2 minggu       | Mengumpulkan kebutuhan sistem dari pengguna dan stakeholder.              |
-| 🧩 **System Design**        | 2 minggu       | Mendesain arsitektur sistem, struktur database, dan antarmuka aplikasi.   |
-| 💻 **Implementation**       | 5 minggu       | Proses pengembangan kode program, integrasi frontend & backend.           |
-| 🧪 **Testing**              | 3 minggu       | Pengujian fungsionalitas sistem, validasi, dan perbaikan bug.             |
-| 🚀 **Deployment**           | 1 minggu       | Peluncuran sistem ke lingkungan produksi dan penyebaran ke pengguna.      |
-| 🔧 **Maintenance**          | Berkelanjutan  | Pemeliharaan sistem, perbaikan error, serta penyesuaian kebutuhan baru.   |
+| **Requirement Analysis** | 2 minggu       | Mengumpulkan kebutuhan sistem dari pengguna dan stakeholder.              |
+| **System Design**        | 2 minggu       | Mendesain arsitektur sistem, struktur database, dan antarmuka aplikasi.   |
+| **Implementation**       | 5 minggu       | Proses pengembangan kode program, integrasi frontend & backend.           |
+| **Testing**              | 3 minggu       | Pengujian fungsionalitas sistem, validasi, dan perbaikan bug.             |
+| **Deployment**           | 1 minggu       | Peluncuran sistem ke lingkungan produksi dan penyebaran ke pengguna.      |
+| **Maintenance**          | Berkelanjutan  | Pemeliharaan sistem, perbaikan error, serta penyesuaian kebutuhan baru.   |
 
 ---
 
