@@ -110,7 +110,7 @@ MasjidTaqwa/
 
 1. **Clone Repository**
    ```bash
-   git clone https://github.com/username/MasjidTaqwa.git
+   git clone https://github.com/Prodi-TRPL/2C-Pagi-2025-MasjidTaqwa
    cd MasjidTaqwa
    ```
 
@@ -166,8 +166,8 @@ Berikut adalah beberapa script yang tersedia di dalam `package.json` untuk mempe
 
 ## 📜 Script Tersedia
 
-| Script | Perintah | Keterangan |
-|:---|:---|:---|
+| Script | Perintah |
+|:---|:---|
 | `npm run dev` | Menjalankan **Laravel server** dan **Vite dev server** secara bersamaan untuk pengembangan. |
 | `npm run build` | Build **frontend** (React + Tailwind) menggunakan Vite untuk produksi. |
 | `npm run serve` | Menjalankan **Laravel server** saja. |
@@ -182,9 +182,6 @@ Berikut adalah beberapa script yang tersedia di dalam `package.json` untuk mempe
 
 ---
 
-Kalau mau, bagian ini nanti bisa ditaruh di bawah bagian "Instalasi dan Setup" di README supaya flow bacanya makin enak!  
-Mau sekalian aku buatkan update lengkap README kamu dengan bagian ini? 🚀✨
-
 ### Backend Setup
 - **`php artisan migrate`**: Menjalankan migrasi untuk database.
 - **`php artisan db:seed`**: Menjalankan seeder untuk mengisi data awal.
@@ -195,21 +192,15 @@ Mau sekalian aku buatkan update lengkap README kamu dengan bagian ini? 🚀✨
 
 ## ⚠️ Troubleshooting
 
-### 1. **Masalah dengan Composer**
-   - Pastikan **Composer** sudah terinstal dengan benar.
-   - Jalankan perintah `composer install` di direktori `backend`.
-
-### 2. **Masalah dengan Node.js dan NPM**
-   - Pastikan **Node.js** dan **NPM** sudah terinstal.
-   - Jalankan `npm install` untuk memastikan semua dependensi terinstal dengan benar.
-
-### 3. **Masalah pada `php artisan migrate`**
-   - Pastikan `.env` sudah dikonfigurasi dengan benar untuk koneksi database.
-   - Periksa log error jika terjadi masalah pada migrasi atau seeder.
-
-### 4. **Masalah API Endpoint**
-   - Pastikan route API di `routes/api.php` sudah dikonfigurasi dengan benar.
-   - Gunakan tools seperti **Postman** untuk menguji endpoint API.
+| 🔍 Masalah Umum | 💡 Solusi Cepat |
+|-----------------|----------------|
+| **🛑 Laravel tidak bisa jalan / error saat serve** | Pastikan `.env` sudah dikonfigurasi dengan benar dan dependencies backend telah terinstall:<br>`composer install`<br>`php artisan key:generate` |
+| **⚙️ Perubahan di UI tidak muncul** | Coba jalankan ulang dev server React:<br>`npm run dev` |
+| **📦 Dependency error (npm/composer)** | Hapus dan install ulang dependencies:<br>`rm -rf node_modules`<br>`rm package-lock.json`<br>`npm install`<br>dan/atau<br>`composer install` |
+| **❌ Error saat migrate database** | Coba reset ulang database:<br>`php artisan migrate:fresh --seed`<br>Pastikan koneksi DB di `.env` benar |
+| **📂 File upload tidak muncul di storage/public** | Buat ulang symbolic link ke storage:<br>`php artisan storage:link` |
+| **🔥 Cache masih menyimpan data lama** | Bersihkan semua cache Laravel:<br>`php artisan cache:clear`<br>`php artisan config:clear`<br>`php artisan view:clear`<br>`php artisan route:clear` |
+| **🌐 Port bentrok saat menjalankan dev** | Ubah port Vite atau Laravel server di `.env` atau langsung lewat command line:<br>`php artisan serve --port=8001`<br>`vite --port 5174` |
 
 ## 🚧 Catatan Pengembangan
 - Pastikan untuk membuat **branch terpisah** untuk setiap fitur atau bug fix yang dikerjakan.
