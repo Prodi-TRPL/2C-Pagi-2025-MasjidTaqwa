@@ -1,66 +1,219 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🕌 Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 🚀 Project Overview
 
-## About Laravel
+Aplikasi ini bertujuan untuk mengelola **donasi** yang masuk untuk **pembangunan Masjid Taqwa Muhammadiyah Batam Kota**. Sistem ini memungkinkan pengelolaan donasi secara efisien dengan antarmuka pengguna berbasis web yang dibangun menggunakan **ReactJS**, **TailwindCSS**, dan **Laravel** di backend.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Fitur utama aplikasi ini:
+Berikut adalah **list fitur utama** yang sudah disesuaikan dengan isi yang Anda berikan untuk aplikasi **Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota**:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 **Fitur Utama**
 
-## Learning Laravel
+### 1. **Landing Page**
+   - Memuat informasi total donasi yang telah terkumpul.
+   - Memuat informasi progress pembangunan masjid.
+   - Memuat informasi rekapitulasi laporan donasi yang telah diterima.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. **Manajemen Donasi**
+   - Pencatatan otomatis setiap transaksi donasi yang masuk, baik melalui transfer bank maupun metode pemberian lainnya.
+   - Notifikasi otomatis kepada donatur setelah donasi diterima.
+   - Pengelolaan data donatur untuk memudahkan pelacakan riwayat donasi.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 3. **Laporan Keuangan Transparan**
+   - Rekapitulasi pemasukan dan pengeluaran secara otomatis.
+   - Pembuatan laporan keuangan yang dapat diakses oleh panitia masjid dan donatur.
+   - Penyajian laporan dalam bentuk grafik dan tabel untuk memudahkan analisis keuangan.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4. **Halaman Informasi Proyek**
+   - Menampilkan informasi terkini mengenai progres pembangunan masjid.
+   - Update foto, video, dan laporan perkembangan proyek secara berkala. *(Optional)*
+   - Estimasi kebutuhan dana yang masih diperlukan untuk tahap pembangunan selanjutnya.
 
-## Laravel Sponsors
+### 5. **Fitur Donasi Online**
+   - Integrasi dengan berbagai metode pembayaran digital (QRIS, transfer bank, e-wallet).
+   - Konfirmasi donasi otomatis untuk memudahkan pencatatan.
+   - Formulir donasi online yang mudah digunakan oleh donatur.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 6. **Dashboard Admin**
+   - Panel kontrol bagi pengurus masjid untuk mengelola data donasi dan laporan keuangan.
+   - Fitur pengelolaan user (admin, panitia, donatur).
+   - Sistem audit log untuk mencatat aktivitas dalam sistem guna meningkatkan keamanan.
 
-### Premium Partners
+### 7. **Portal Donatur**
+   - Akses bagi donatur untuk melihat riwayat donasi mereka.
+   - Notifikasi tentang pencapaian target dana dan perkembangan pembangunan.
+   - Fitur berbagi informasi donasi ke media sosial untuk mengajak lebih banyak donatur.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+---
 
-## Contributing
+## 📁 Project Structure
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Berikut adalah struktur folder dari project ini:
 
-## Code of Conduct
+```
+MasjidTaqwa/
+│
+├── app/                       # Kode utama Laravel (backend)
+│   ├── Http/
+│   │   ├── Controllers/       # Controller API
+│   └── ...
+│
+├── public/                    # Output dari Vite dan file publik lainnya
+│   ├── build/                 # Output dari Vite (frontend React)
+│   └── index.php              # File utama Laravel
+│
+├── resources/
+│   ├── js/                    # Semua file React (frontend)
+│   │   ├── components/        # Komponen React
+│   │   ├── pages/             # Halaman utama React
+│   │   └── app.jsx            # Entry React untuk aplikasi
+│   ├── views/                 # Laravel views
+│   │   └── react-main.blade.php # Blade untuk React
+│   └── css/
+│       └── app.css            # Tailwind base styling
+│
+├── routes/
+│   ├── web.php                # Laravel routing (untuk Blade)
+│   └── api.php                # Endpoint API Laravel (untuk React)
+│
+├── database/                  # Migrasi dan Seeder database
+│   ├── migrations/            # Migrasi
+│   ├── seeders/               # Seeder
+│   └── factories/             # Factory data
+│
+├── .env                       # Konfigurasi environment
+├── package.json               # Konfigurasi npm
+├── vite.config.js             # Konfigurasi Vite untuk React
+├── tailwind.config.js         # Konfigurasi TailwindCSS
+└── composer.json              # Konfigurasi Laravel composer
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🧑‍💻 Tabel Tim Pengembang
 
-## Security Vulnerabilities
+| Nama                 | Peran                             |
+|----------------------|-----------------------------------|
+| **John Doe**          | Backend Developer (Laravel)      |
+| **Jane Doe**          | Frontend Developer (ReactJS)     |
+| **Budi Santoso**      | Full-stack Developer (API & UI)  |
+| **Sarah Suryani**     | UI/UX Designer                   |
+| **Ahmad Rizky**       | Database Administrator           |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🛠️ Instalasi dan Setup Lengkap
 
-## License
+### Prasyarat
+1. Pastikan sudah menginstal [Node.js](https://nodejs.org/en/) dan [Composer](https://getcomposer.org/).
+2. Pastikan sudah menginstal [Laravel](https://laravel.com/docs/8.x) dan [MySQL](https://www.mysql.com/) untuk database.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Langkah-langkah Instalasi
+
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/username/MasjidTaqwa.git
+   cd MasjidTaqwa
+   ```
+
+2. **Instalasi Backend (Laravel)**
+   - Pindah ke folder backend:
+     ```bash
+     cd backend
+     ```
+   - Instalasi dependensi Laravel:
+     ```bash
+     composer install
+     ```
+   - Copy file `.env.example` ke `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Generate key aplikasi:
+     ```bash
+     php artisan key:generate
+     ```
+   - Jalankan migrasi dan seeder:
+     ```bash
+     php artisan migrate --seed
+     ```
+   - Jalankan server Laravel:
+     ```bash
+     php artisan serve
+     ```
+
+3. **Instalasi Frontend (React + TailwindCSS)**
+   - Pindah ke folder frontend:
+     ```bash
+     cd frontend
+     ```
+   - Instalasi dependensi frontend:
+     ```bash
+     npm install
+     ```
+   - Jalankan server development Vite:
+     ```bash
+     npm run dev
+     ```
+
+   Aplikasi akan berjalan di `http://localhost:3000`.
+
+### Setup Environment
+1. Atur konfigurasi `.env` di folder `backend` sesuai dengan environment (database, API keys, dll).
+2. Pastikan koneksi database dan konfigurasi lainnya telah sesuai.
+
+## 🔧 Script Tersedia
+
+Berikut adalah beberapa script yang tersedia di dalam `package.json` untuk mempermudah pengembangan:
+
+## 📜 Script Tersedia
+
+| Script | Perintah | Keterangan |
+|:---|:---|:---|
+| `npm run dev` | Menjalankan **Laravel server** dan **Vite dev server** secara bersamaan untuk pengembangan. |
+| `npm run build` | Build **frontend** (React + Tailwind) menggunakan Vite untuk produksi. |
+| `npm run serve` | Menjalankan **Laravel server** saja. |
+| `npm run hot` | Menjalankan **Vite dev server** dengan **Hot Module Replacement** (HMR) aktif. |
+| `npm run frontend:lint` | Menjalankan **ESLint** untuk melakukan pengecekan kode pada `resources/js`. |
+| `npm run frontend:test` | Placeholder untuk menambahkan testing pada project React (bisa diubah sesuai kebutuhan). |
+| `npm run db:fresh` | Menjalankan migrasi database **fresh** dan seed data ulang (menghapus semua data sebelumnya). |
+| `npm run db:setup` | Menjalankan migrasi database dan seed data tanpa menghapus data lama. |
+| `npm run storage:link` | Membuat symbolic link dari `storage` ke `public/storage` untuk akses file upload. |
+| `npm run clear:cache` | Membersihkan semua cache: config, route, view, dan cache umum Laravel. |
+| `npm run setup` | Instal semua dependensi (`npm` dan `composer`), setup environment, generate key Laravel, migrasi dan seed database, membuat storage link, install `concurrently`, serta clear cache. |
+
+---
+
+Kalau mau, bagian ini nanti bisa ditaruh di bawah bagian "Instalasi dan Setup" di README supaya flow bacanya makin enak!  
+Mau sekalian aku buatkan update lengkap README kamu dengan bagian ini? 🚀✨
+
+### Backend Setup
+- **`php artisan migrate`**: Menjalankan migrasi untuk database.
+- **`php artisan db:seed`**: Menjalankan seeder untuk mengisi data awal.
+
+### Frontend Setup
+- **`npm run build`**: Membuat build untuk frontend React.
+- **`npm run dev`**: Menjalankan server development untuk React dengan Vite.
+
+## ⚠️ Troubleshooting
+
+### 1. **Masalah dengan Composer**
+   - Pastikan **Composer** sudah terinstal dengan benar.
+   - Jalankan perintah `composer install` di direktori `backend`.
+
+### 2. **Masalah dengan Node.js dan NPM**
+   - Pastikan **Node.js** dan **NPM** sudah terinstal.
+   - Jalankan `npm install` untuk memastikan semua dependensi terinstal dengan benar.
+
+### 3. **Masalah pada `php artisan migrate`**
+   - Pastikan `.env` sudah dikonfigurasi dengan benar untuk koneksi database.
+   - Periksa log error jika terjadi masalah pada migrasi atau seeder.
+
+### 4. **Masalah API Endpoint**
+   - Pastikan route API di `routes/api.php` sudah dikonfigurasi dengan benar.
+   - Gunakan tools seperti **Postman** untuk menguji endpoint API.
+
+## 🚧 Catatan Pengembangan
+- Pastikan untuk membuat **branch terpisah** untuk setiap fitur atau bug fix yang dikerjakan.
+- Jangan lupa untuk selalu **commit** dan **push** perubahan secara berkala.
+- Gunakan **PR/MR (Pull Request/Merge Request)** untuk kolaborasi yang lebih mudah.
+
+---
