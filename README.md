@@ -4,13 +4,13 @@
 ![MIT License](https://img.shields.io/badge/license-MIT-blue.svg) ![React](https://img.shields.io/badge/React-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![Laravel](https://img.shields.io/badge/Laravel-%23F05340.svg?style=for-the-badge&logo=laravel&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
 
 
-## 🚀 Project Overview
+## Project Overview
 
 Aplikasi ini bertujuan untuk mengelola **donasi** yang masuk untuk **pembangunan Masjid Taqwa Muhammadiyah Batam Kota**. Sistem ini memungkinkan pengelolaan donasi secara efisien dengan antarmuka pengguna berbasis web yang dibangun menggunakan **ReactJS**, **TailwindCSS**, dan **Laravel** di backend.
 
 ---
 
-## 🚀 **Fitur Utama**
+## **Fitur Utama**
 
 ### 1. **Landing Page**
    - Memuat informasi total donasi yang telah terkumpul.
