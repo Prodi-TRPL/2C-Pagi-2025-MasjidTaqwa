@@ -90,15 +90,18 @@ MasjidTaqwa/
 └── composer.json              # Konfigurasi Laravel composer
 ```
 
-## 🧑‍💻 Tabel Tim Pengembang
 
-| Nama                 | Peran                             |
-|----------------------|-----------------------------------|
-| **John Doe**          | Backend Developer (Laravel)      |
-| **Jane Doe**          | Frontend Developer (ReactJS)     |
-| **Budi Santoso**      | Full-stack Developer (API & UI)  |
-| **Sarah Suryani**     | UI/UX Designer                   |
-| **Ahmad Rizky**       | Database Administrator           |
+## 👨‍💻 Tim Pengembang
+
+| No. | Nama                   | NIM         | Role                          |
+|-----|--------------------------------|-------------|---------------------------------------|
+| 1   | Muhammad Thariq Syafruddin    | 4342401067  | Database Developer                 |
+| 2   | Ibra Marioka                   | 4342401071  | Backend Developer                     |
+| 3   | Diva Satria                    | 4342401072  | Frontend Developer                    |
+| 4   | Surya Nur Aini                 | 4342401074  | Business Analyst                     |
+| 5   | Muhammad Addin                 | 4342401076  | Quality Assurance (QA)          |
+| 6   | Nayla Nur Nabila              | 4342401083  | UI/UX Designer  |
+
 
 ## 🛠️ Instalasi dan Setup Lengkap
 
