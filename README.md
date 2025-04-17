@@ -8,9 +8,6 @@
 
 Aplikasi ini bertujuan untuk mengelola **donasi** yang masuk untuk **pembangunan Masjid Taqwa Muhammadiyah Batam Kota**. Sistem ini memungkinkan pengelolaan donasi secara efisien dengan antarmuka pengguna berbasis web yang dibangun menggunakan **ReactJS**, **TailwindCSS**, dan **Laravel** di backend.
 
-Fitur utama aplikasi ini:
-Berikut adalah **list fitur utama** yang sudah disesuaikan dengan isi yang Anda berikan untuk aplikasi **Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota**:
-
 ---
 
 ## 🚀 **Fitur Utama**
