@@ -12,10 +12,15 @@ class Notifikasi extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['pengguna_id', 'tipe', 'pesan', 'status', 'created_at'];
+    protected $fillable = ['pengguna_id', 'donasi_id', 'tipe', 'pesan', 'status', 'created_at'];
 
     public function pengguna()
     {
         return $this->belongsTo(Pengguna::class, 'pengguna_id');
+    }
+
+    public function donasi()
+    {
+        return $this->belongsTo(Donasi::class, 'donasi_id');
     }
 }

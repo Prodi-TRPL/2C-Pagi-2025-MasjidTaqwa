@@ -12,11 +12,11 @@ class ProyekPembangunan extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['pengelola_id', 'nama_item', 'deskripsi', 'target_dana', 'dana_terkumpul', 'created_at'];
+    protected $fillable = ['admin_id', 'nama_item', 'deskripsi', 'target_dana', 'dana_terkumpul', 'created_at'];
 
-    public function pengelola()
+    public function admin()
     {
-        return $this->belongsTo(Pengguna::class, 'pengelola_id');
+        return $this->belongsTo(Pengguna::class, 'admin_id');
     }
 
     public function pengeluaran()

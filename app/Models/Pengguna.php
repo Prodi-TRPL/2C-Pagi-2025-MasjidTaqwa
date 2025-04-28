@@ -22,7 +22,7 @@ class Pengguna extends Authenticatable
 
     public function proyek()
     {
-        return $this->hasMany(ProyekPembangunan::class, 'pengelola_id');
+        return $this->hasMany(ProyekPembangunan::class, 'admin_id'); 
     }
 
     public function pengeluaran()
