@@ -28,7 +28,7 @@ function Navbar({ isLoggedIn, role }) {
 
 {/* Menu untuk Desktop */}  
 <div className="hidden md:flex space-x-8 items-center">
-                <a href="/" className="text-gray-700 hover:text-blue-600">Beranda</a>
+                <a href="#beranda" className="text-gray-700 hover:text-blue-600">Beranda</a>
 
                 {/* Dropdown Informasi */}
                 <div className="relative">
@@ -113,7 +113,7 @@ function Navbar({ isLoggedIn, role }) {
         {/* Menu Burger untuk Mobile */} 
 <div className={`${isMenuOpen ? 'block' : 'hidden'} md:hidden`}>
             <div className="space-y-1 px-2 pt-2 pb-3">
-            <a href="/" className="block text-gray-700 hover:bg-gray-100">Beranda</a>
+            <a href="#beranda" className="block text-gray-700 hover:bg-gray-100">Beranda</a>
             <button onClick={() => {
                 setIsInformasiOpen(!isInformasiOpen);
                 setIsTransparansiOpen(false);

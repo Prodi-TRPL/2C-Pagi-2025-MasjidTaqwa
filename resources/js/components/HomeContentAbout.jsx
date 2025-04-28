@@ -1,0 +1,42 @@
+import React from 'react';
+
+const SekilasSidontaq = () => {
+    return (
+        <section className="flex flex-col md:flex-row items-center justify-between bg-green-100 p-10 rounded-2xl shadow-lg">
+        {/* deskripsi */}
+        <div className="md:w-1/2 space-y-6">
+            <h2 className="text-3xl font-bold text-green-800">Sekilas Tentang SIDONTAQ</h2>
+            <p className="text-gray-700">
+            Sistem ini memberikan layanan utama dalam pengelolaan donasi dan pembangunan masjid dengan berbagai fitur,
+            seperti pencatatan keuangan, transparansi donasi, laporan wakaf, serta kemudahan akses bagi donatur.
+            Anda dapat berdonasi dengan mudah, cepat, dan aman.
+            </p>
+            <ul className="space-y-3 text-gray-700">
+            <li className="flex items-start">
+                <span className="text-green-600 mr-2">✓</span>
+                Sistem donasi digital untuk mendukung pembangunan Masjid Taqwa Muhammadiyah
+            </li>
+            <li className="flex items-start">
+                <span className="text-green-600 mr-2">✓</span>
+                Kelola donasi dengan transparan dan efisien, keuangan terdokumentasi
+            </li>
+            <li className="flex items-start">
+                <span className="text-green-600 mr-2">✓</span>
+                Memudahkan pencatatan keuangan, laporan wakaf, dan distribusi dana masjid
+            </li>
+            </ul>
+        </div>
+        
+        {/* Image Section */}
+        <div className="md:w-1/2 mt-8 md:mt-0 flex justify-center">
+            <img 
+            src="../img/laptopandmobile.png" 
+            alt="SIDONTAQ Preview" 
+            className="w-full max-w-md rounded-xl"
+            />
+        </div>
+        </section>
+    );
+};
+
+export default SekilasSidontaq;

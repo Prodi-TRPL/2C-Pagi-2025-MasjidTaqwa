@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import '../css/app.css'; // Tailwind
 
-import Beranda from './pages/Beranda'; // Mengimpor halaman Beranda
+import Beranda from './pages/beranda'; // Mengimpor halaman Beranda
 
 const root = ReactDOM.createRoot(document.getElementById('app'));
 

@@ -2,6 +2,8 @@
 import React from 'react';
 import Navbar from '../components/Navbar'; // Pastikan path-nya benar
 import HomeContent from '../components/HomeContent';
+import HomeContentAbout from '../components/HomeContentAbout'; 
+import { SimpleFooter } from '../components/SimpleFooter';
 
 function Beranda() {
   return (
@@ -10,10 +12,15 @@ function Beranda() {
       <div className="relative z-20">
         <Navbar />
       </div>
-
       {/* HomeContent di bawah */}
       <div className="relative z-10">
         <HomeContent />
+      </div>
+      <div className="relative z-0">
+        <HomeContentAbout />
+      </div>
+      <div className="relative z-0">
+        <SimpleFooter />
       </div>
     </div>
   );
