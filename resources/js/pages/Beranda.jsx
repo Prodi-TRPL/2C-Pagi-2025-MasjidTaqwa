@@ -3,6 +3,9 @@ import React from 'react';
 import Navbar from '../components/Navbar'; // Pastikan path-nya benar
 import HomeContent from '../components/HomeContent';
 import HomeContentAbout from '../components/HomeContentAbout'; 
+import HomeContentEco from '../components/HomeContentEco';
+import HomeContentAdvantage from '../components/HomeContentAdvantage';
+import HomeContentContact from '../components/HomeContentContact';
 import { SimpleFooter } from '../components/SimpleFooter';
 
 function Beranda() {
@@ -18,6 +21,15 @@ function Beranda() {
       </div>
       <div className="relative z-0">
         <HomeContentAbout />
+      </div>
+      <div className="relative z-0">
+        <HomeContentEco />
+      </div>
+      <div className="relative z-0">
+        <HomeContentAdvantage />
+      </div>
+      <div className="relative z-0">
+        <HomeContentContact />
       </div>
       <div className="relative z-0">
         <SimpleFooter />

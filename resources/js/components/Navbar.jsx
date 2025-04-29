@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 function Navbar({ isLoggedIn, role }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,7 +14,7 @@ function Navbar({ isLoggedIn, role }) {
             {/* Logo and Burger Menu for Mobile */}
             <div className="flex justify-between md:block w-full">
                 <div className="flex-shrink-0">
-                    <a href="/" className="text-2xl font-bold text-blue-600">LOGO</a>
+                    <Link to="/" className="text-2xl font-bold text-blue-600">LOGO</Link>
                 </div>
 
                 {/* Tombol Burger untuk Mobile */}
@@ -41,8 +42,8 @@ function Navbar({ isLoggedIn, role }) {
                 {isInformasiOpen && (
                     <div className="absolute mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                     <div className="py-1">
-                        <a href="/tentang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tentang</a>
-                        <a href="/keunggulan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Keunggulan</a>
+                        <Link to="/tentang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tentang</Link>
+                        <Link to="/keunggulan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Keunggulan</Link>
                     </div>
                     </div>
                 )}
@@ -59,20 +60,20 @@ function Navbar({ isLoggedIn, role }) {
                 {isTransparansiOpen && (
                     <div className="absolute mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                     <div className="py-1">
-                        <a href="/rekapan-bulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</a>
-                        <a href="/rekapan-donatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</a>
+                        <Link to="/rekapan-bulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
+                        <Link to="/rekapan-donatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
                     </div>
                     </div>
                 )}
                 </div>
 
-                <a href="/hubungi" className="text-gray-700 hover:text-blue-600">Hubungi</a>
+                <Link to="/hubungi" className="text-gray-700 hover:text-blue-600">Hubungi</Link>
             </div>
 
             {/* Profile / Login */} 
             <div className="flex items-center ml-6">
                 {!isLoggedIn ? (
-                <a href="/login" className="hidden md:block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Masuk</a>
+                <Link to="/login" className="hidden md:block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Masuk</Link>
                 ) : (
                 <div className="relative">
                     <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="focus:outline-none">
@@ -87,16 +88,16 @@ function Navbar({ isLoggedIn, role }) {
                         <div className="py-1">
                         {role === 'admin' ? (
                             <>
-                            <a href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
-                            <a href="/admin/data-pembangunan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Data Pembangunan</a>
-                            <a href="/profil-saya" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profil Saya</a>
+                            <Link to="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</Link>
+                            <Link to="/admin/data-pembangunan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Data Pembangunan</Link>
+                            <Link to="/profil-saya" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profil Saya</Link>
                             <a href="/logout" className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100">Logout</a>
                             </>
                         ) : (
                             <>
-                            <a href="/donatur/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
-                            <a href="/donatur/riwayat-donasi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Riwayat Donasi</a>
-                            <a href="/profil-saya" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profil Saya</a>
+                            <Link to="/donatur/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</Link>
+                            <Link to="/donatur/riwayat-donasi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Riwayat Donasi</Link>
+                            <Link to="/profil-saya" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profil Saya</Link>
                             <a href="/logout" className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100">Logout</a>
                             </>
                         )}
@@ -122,8 +123,8 @@ function Navbar({ isLoggedIn, role }) {
             </button>
             {isInformasiOpen && (
                 <div className="space-y-1">
-                <a href="/tentang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tentang</a>
-                <a href="/keunggulan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Keunggulan</a>
+                <Link to="/tentang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tentang</Link>
+                <Link to="/keunggulan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Keunggulan</Link>
                 </div>
             )}
             <button onClick={() => {
@@ -134,19 +135,19 @@ function Navbar({ isLoggedIn, role }) {
             </button>
             {isTransparansiOpen && (
                 <div className="space-y-1">
-                <a href="/rekapan-bulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</a>
-                <a href="/rekapan-donatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</a>
+                <Link to="/rekapan-bulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
+                <Link to="/rekapan-donatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
                 </div>
             )}
-            <a href="/hubungi" className="block text-gray-700 hover:bg-gray-100">Hubungi</a>
+            <Link to="/hubungi" className="block text-gray-700 hover:bg-gray-100">Hubungi</Link>
             {!isLoggedIn ? (
-                <a href="/login" className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-100">Masuk</a>
+                <Link to="/login" className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-100">Masuk</Link>
             ) : (
                 <div className="block text-gray-700">
                 {role === 'admin' ? (
-                    <a href="/admin/dashboard" className="block px-4 py-2 text-sm hover:bg-gray-100">Dashboard</a>
+                    <Link to="/admin/dashboard" className="block px-4 py-2 text-sm hover:bg-gray-100">Dashboard</Link>
                 ) : (
-                    <a href="/donatur/dashboard" className="block px-4 py-2 text-sm hover:bg-gray-100">Dashboard</a>
+                    <Link to="/donatur/dashboard" className="block px-4 py-2 text-sm hover:bg-gray-100">Dashboard</Link>
                 )}
                 </div>
             )}
