@@ -23,7 +23,7 @@ const HomeContentSignUp = () => {
             <img
                 src='#'
                 alt="Ilustrasi Pria dengan Laptop"
-                className="w-[300px] md:w-[400px] object-contain"
+                className="hidden md:block w-[300px] md:w-[400px] object-contain"
             />
             </div>
         </div>

@@ -2,24 +2,15 @@ import React from "react";
 
 function HomeContentContact() {
     return (
-        <section className="flex flex-col md:flex-row items-center justify-center gap-10 p-6 md:p-16 bg-white">
-        {/* Image section with overlapping elements */}
+        <section className="flex flex-col md:flex-row items-center justify-center gap-10 p-6 md:p-16 bg-white max-w-6xl mx-auto">        {/* Image section with overlapping elements */}
         <div className="relative w-full md:w-1/2 flex justify-center items-center">
             {/* Base image */}
             <img
             src="/img/contact-image.jpg"
             alt="Elderly Man"
-            className="w-72 h-auto rounded-md shadow-md"
+            className="rounded-md shadow-md flex-shrink-0 flex-grow-0"
+            style={{ width: '288px', height: '200px', objectFit: 'contain' }}
             />
-
-            {/* Overlapping layout with devices */}
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 w-52 md:w-60">
-            <img
-                src="/img/devices.png"
-                alt="Devices"
-                className="w-full h-auto"
-            />
-            </div>
         </div>
 
         {/* Text and contact info section */}
