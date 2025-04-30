@@ -60,8 +60,8 @@ function Navbar({ isLoggedIn, role }) {
                 {isTransparansiOpen && (
                     <div className="absolute mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                     <div className="py-1">
-                        <Link to="/rekapan-bulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
-                        <Link to="/rekapan-donatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
+                        <Link to="/rekapanbulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
+                        <Link to="/rekapandonatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
                     </div>
                     </div>
                 )}
@@ -135,8 +135,8 @@ function Navbar({ isLoggedIn, role }) {
             </button>
             {isTransparansiOpen && (
                 <div className="space-y-1">
-                <Link to="/rekapan-bulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
-                <Link to="/rekapan-donatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
+                <Link to="/rekapanbulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
+                <Link to="/rekapandonatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
                 </div>
             )}
             <Link to="/hubungi" className="block text-gray-700 hover:bg-gray-100">Hubungi</Link>

@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 
 import '../css/app.css'; // Tailwind
 import Beranda from './pages/beranda';
+import Hubungi from './pages/Hubungi';
+import RekapanBulanan from './pages/RekapanBulanan';
 import Login from './pages/Login';
 import Loader from './components/Loader';
 
@@ -24,6 +26,8 @@ const AppRoutes = () => {
       {loading && <Loader />}
       <Routes>
         <Route path="/" element={<Beranda />} />
+        <Route path="/hubungi" element={<Hubungi />} />
+        <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
         <Route path="/login" element={<Login />} />
       </Routes>
     </>

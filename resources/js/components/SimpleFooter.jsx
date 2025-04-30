@@ -12,9 +12,9 @@ export const SimpleFooter = () => {
             className="inline-flex items-center"
           >
             <img
-              src="/img/logo-app.jpg"
+              src="/img/LogoSidontaq.png"
               alt="SIDONTAQ Logo"
-              className="w-30"
+              className="w-20"
             />
             <span className="ml-2 text-xl font-bold tracking-wide text-gray-800 uppercase">
               SIDONTAQ
