@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 const SekilasSidontaq = () => {
+    useEffect(() => {
+        AOS.init({
+            duration: 50000,
+            once: true,
+        });
+    }, []);
+
     return (
         <section className="bg-green-100 p-10 px-15 rounded-2xl shadow-lg">
             <div className="flex flex-col md:flex-row items-center justify-between max-w-7xl mx-auto">
                 {/* deskripsi */}
-                <div className="md:w-1/2 max-w-lg space-y-6">
+                <div className="md:w-1/2 max-w-lg space-y-6" data-aos="fade-left">
                     <h2 className="text-2xl md:text-3xl font-bold text-green-800">Sekilas Tentang SIDONTAQ</h2>
                     <p className="text-gray-700 text-base md:text-lg">
                         Sistem ini memberikan layanan utama dalam pengelolaan donasi dan pembangunan masjid dengan berbagai fitur,
@@ -29,7 +38,7 @@ const SekilasSidontaq = () => {
                 </div>
 
                 {/* Image Section */}
-                <div className="md:w-1/2 mt-8 md:mt-0 flex justify-center">
+                <div className="md:w-1/2 mt-8 md:mt-0 flex justify-center" data-aos="fade-right">
                     <img 
                         src="../img/laptopandmobile.png" 
                         alt="SIDONTAQ Preview" 

@@ -11,7 +11,7 @@ import { SimpleFooter } from '../components/SimpleFooter';
 
 function Beranda() {
   return (
-    <div className="relative">
+    <div className="pt-16 relative">
       {/* Navbar selalu di atas */}
       <div className="relative z-20">
         <Navbar />

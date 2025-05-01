@@ -8,13 +8,17 @@ function Navbar({ isLoggedIn, role }) {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     return (
-        <nav className="bg-white shadow-md">
+<nav className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-14">
             <div className="flex justify-between h-16 items-center">
             {/* Logo and Burger Menu for Mobile */}
             <div className="flex justify-between md:block w-full">
+                {/* Tempat menaruh logo */}
                 <div className="flex-shrink-0">
-                    <Link to="/" className="text-2xl font-bold text-blue-600">LOGO</Link>
+                    <Link to="/" className="flex items-center">
+                        {/* Ganti LOGO dengan gambar logo */}
+                        <img src="/img/LogoSidontaqNav.jpeg" alt="Logo" className="h-13 w-auto" />
+                    </Link>
                 </div>
 
                 {/* Tombol Burger untuk Mobile */}
@@ -51,7 +55,7 @@ function Navbar({ isLoggedIn, role }) {
 
                 {/* Dropdown Transparansi */}
                 <div className="relative">
-<button onClick={() => {
+                    <button onClick={() => {
                     setIsTransparansiOpen(!isTransparansiOpen);
                     setIsInformasiOpen(false);
                 }} className="text-gray-700 hover:text-blue-600 focus:outline-none">
