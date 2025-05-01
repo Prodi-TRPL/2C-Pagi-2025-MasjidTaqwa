@@ -1,5 +1,5 @@
 // app.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 
@@ -8,22 +8,19 @@ import Beranda from './pages/beranda';
 import Hubungi from './pages/Hubungi';
 import RekapanBulanan from './pages/RekapanBulanan';
 import Login from './pages/Login';
-import Loader from './components/Loader';
+import ScrollToTop from './components/ScrollToTop';
 
-// Komponen wrapper untuk routing + loader
+// Komponen wrapper untuk routing
 const AppRoutes = () => {
   const location = useLocation();
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    const timeout = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timeout);
+    // No loader logic needed anymore
   }, [location]);
 
   return (
     <>
-      {loading && <Loader />}
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Beranda />} />
         <Route path="/hubungi" element={<Hubungi />} />
