@@ -1,12 +1,12 @@
 import React from "react";
-import Navbar from '../components/Navbar'; 
+import NavbarBaru from '../components/NavbarBaru'; 
 import { SimpleFooter } from "../components/SimpleFooter";
 
 function RekapanBulanan() {
     return (
         <div className="relative">
             <div className="relative z-20">
-                <Navbar />
+                <NavbarBaru />
             </div>
             <div className="relative z-10">
                 <SimpleFooter />

@@ -2,12 +2,22 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (hash) {
+      const navigationType = window.performance?.getEntriesByType('navigation')?.[0]?.type;
+      if (navigationType !== 'reload') {
+        const element = document.querySelector(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+      }
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [pathname]);
+  }, [pathname, hash]);
 
   useEffect(() => {
     const onScroll = () => {

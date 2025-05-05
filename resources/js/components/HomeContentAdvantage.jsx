@@ -42,7 +42,7 @@ const HomePage = () => {
   return (
     <div className="w-full">
       {/* Section: Keunggulan SIDONTAQ */}
-      <div className="w-full py-16 bg-gray-50">
+      <div id="keunggulan" className="w-full py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4">
           {/* Judul */}
           <div className="text-center mb-12">

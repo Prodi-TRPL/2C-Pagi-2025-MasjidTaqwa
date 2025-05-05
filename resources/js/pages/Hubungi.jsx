@@ -1,5 +1,5 @@
 import React from "react";
-import Navbar from '../components/Navbar'; 
+import NavbarBaru from '../components/NavbarBaru'; 
 import HubungiContentReminder from "../components/HubungiContentReminder";
 import { SimpleFooter } from "../components/SimpleFooter";
 
@@ -7,7 +7,7 @@ function Hubungi() {
     return (
         <div className="relative">
             <div className="relative z-20">
-                <Navbar />
+                <NavbarBaru />
             </div>
             <div className="relative z-10">
                 <HubungiContentReminder />

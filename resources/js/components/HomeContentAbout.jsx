@@ -11,7 +11,7 @@ const SekilasSidontaq = () => {
     }, []);
 
     return (
-        <section className="bg-green-100 p-10 px-15 rounded-2xl shadow-lg">
+        <section id="tentang" className="bg-green-100 p-10 px-15 rounded-2xl shadow-lg">
             <div className="flex flex-col md:flex-row items-center justify-between max-w-7xl mx-auto">
                 {/* deskripsi */}
                 <div className="md:w-1/2 max-w-lg space-y-6" data-aos="fade-left">

@@ -4,9 +4,10 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 
 import '../css/app.css'; // Tailwind
-import Beranda from './pages/beranda';
+import Beranda from './pages/Beranda';
 import Hubungi from './pages/Hubungi';
 import RekapanBulanan from './pages/RekapanBulanan';
+import RekapanDonatur from './pages/RekapanDonatur';
 import Login from './pages/Login';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -25,6 +26,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Beranda />} />
         <Route path="/hubungi" element={<Hubungi />} />
         <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
+        <Route path="/rekapandonatur" element={<RekapanDonatur />} />
         <Route path="/login" element={<Login />} />
       </Routes>
     </>
