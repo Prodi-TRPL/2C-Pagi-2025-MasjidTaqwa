@@ -7,9 +7,14 @@ function Navbar({ isLoggedIn, role }) {
     const [isTransparansiOpen, setIsTransparansiOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-    // Ref for mobile menu container to handle height animation
+    // Refs and states for height animation of menus
     const menuRef = useRef(null);
+    const informasiRef = useRef(null);
+    const transparansiRef = useRef(null);
+
     const [menuHeight, setMenuHeight] = useState('0px');
+    const [informasiHeight, setInformasiHeight] = useState('0px');
+    const [transparansiHeight, setTransparansiHeight] = useState('0px');
 
     useEffect(() => {
         if (menuRef.current) {
@@ -20,6 +25,26 @@ function Navbar({ isLoggedIn, role }) {
             }
         }
     }, [isMenuOpen]);
+
+    useEffect(() => {
+        if (informasiRef.current) {
+            if (isInformasiOpen) {
+                setInformasiHeight(informasiRef.current.scrollHeight + 'px');
+            } else {
+                setInformasiHeight('0px');
+            }
+        }
+    }, [isInformasiOpen]);
+
+    useEffect(() => {
+        if (transparansiRef.current) {
+            if (isTransparansiOpen) {
+                setTransparansiHeight(transparansiRef.current.scrollHeight + 'px');
+            } else {
+                setTransparansiHeight('0px');
+            }
+        }
+    }, [isTransparansiOpen]);
 
     return (
         <nav className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
@@ -137,30 +162,44 @@ function Navbar({ isLoggedIn, role }) {
             >
                 <div className="space-y-1 px-2 pt-2 pb-3">
                     <a href="#beranda" className="block text-gray-700 hover:bg-gray-100">Beranda</a>
-                    <button onClick={() => {
-                        setIsInformasiOpen(!isInformasiOpen);
-                        setIsTransparansiOpen(false);
-                    }} className="block text-gray-700 hover:bg-gray-100">
+                    <button
+                        onClick={() => {
+                            setIsInformasiOpen(!isInformasiOpen);
+                            setIsTransparansiOpen(false);
+                        }}
+                        className={`block text-gray-700 hover:bg-gray-100 focus:outline-none px-2 py-1 rounded ${
+                            isInformasiOpen ? 'bg-blue-100' : ''
+                        }`}
+                    >
                         Informasi
                     </button>
-                    {isInformasiOpen && (
-                        <div className="space-y-1">
-                            <Link to="/tentang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tentang</Link>
-                            <Link to="/keunggulan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Keunggulan</Link>
-                        </div>
-                    )}
-                    <button onClick={() => {
-                        setIsTransparansiOpen(!isTransparansiOpen);
-                        setIsInformasiOpen(false);
-                    }} className="block text-gray-700 hover:bg-gray-100">
+                    <div
+                        ref={informasiRef}
+                        className="overflow-hidden transition-all duration-300 ease-in-out"
+                        style={{ maxHeight: informasiHeight }}
+                    >
+                        <Link to="/tentang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Tentang</Link>
+                        <Link to="/keunggulan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Keunggulan</Link>
+                    </div>
+                    <button
+                        onClick={() => {
+                            setIsTransparansiOpen(!isTransparansiOpen);
+                            setIsInformasiOpen(false);
+                        }}
+                        className={`block text-gray-700 hover:bg-gray-100 focus:outline-none px-2 py-1 rounded ${
+                            isTransparansiOpen ? 'bg-blue-100' : ''
+                        }`}
+                    >
                         Transparansi
                     </button>
-                    {isTransparansiOpen && (
-                        <div className="space-y-1">
-                            <Link to="/rekapanbulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
-                            <Link to="/rekapandonatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
-                        </div>
-                    )}
+                    <div
+                        ref={transparansiRef}
+                        className="overflow-hidden transition-all duration-300 ease-in-out"
+                        style={{ maxHeight: transparansiHeight }}
+                    >
+                        <Link to="/rekapanbulanan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Bulanan</Link>
+                        <Link to="/rekapandonatur" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapan Donatur</Link>
+                    </div>
                     <Link to="/hubungi" className="block text-gray-700 hover:bg-gray-100">Hubungi</Link>
                     {!isLoggedIn ? (
                         <Link to="/login" className="block px-4 py-2 text-sm text-blue-600 hover:bg-blue-100">Masuk</Link>

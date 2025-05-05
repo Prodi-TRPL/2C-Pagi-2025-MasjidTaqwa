@@ -1,6 +1,6 @@
 // pages/Beranda.jsx
 import React from 'react';
-import Navbar from '../components/Navbar'; // Pastikan path-nya benar
+import NavbarBaru from '../components/NavbarBaru'; // Pastikan path-nya benar
 import HomeContent from '../components/HomeContent';
 import HomeContentAbout from '../components/HomeContentAbout'; 
 import HomeContentEco from '../components/HomeContentEco';
@@ -14,7 +14,7 @@ function Beranda() {
     <div className="pt-16 relative">
       {/* Navbar selalu di atas */}
       <div className="relative z-20">
-        <Navbar />
+        <NavbarBaru />
       </div>
       {/* HomeContent di bawah */}
       <div className="relative z-10">
