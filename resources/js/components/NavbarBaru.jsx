@@ -11,7 +11,7 @@ export default function NavbarBaru() {
             <nav className="px-3 flex-center-between w-full max-w-7xl mx-auto gap-x-3">
                 <div className="flex-center gap-x-3 z-[999] relative">
                     {/* Logo Sidontaq */}
-                    <img src="/img/LogoSidontaqNav.jpeg" alt="Logo" className="h-13 w-auto" />
+                    <img src="/img/LogoSidontaqNav.jpeg" alt="Logo" className="h-13 w-auto" draggable={false}/>
                 </div>
 
                 {/* Menu list: Modify menu items here */}
@@ -24,7 +24,7 @@ export default function NavbarBaru() {
                 <div className="flex-center gap-x-5">
                 {/* Sign In button: Modify sign-in button here */}
             <Link
-                to="/login"
+                to="/loginbaru"
                 aria-label="masuk"
                 className="bg-[#59B997] text-white z-[999] relative px-3 py-1.5 shadow rounded-xl flex-center border border-[#59B997] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#59B997]"
             >

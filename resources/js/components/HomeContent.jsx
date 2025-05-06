@@ -19,11 +19,10 @@ const HomeContent = () => {
                         Bantu Pembangunan Masjid
                     </h3>
                     <h1 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                        Solusi Software Andal untuk Manajemen Donasi Masjid Taqwa Muhammadiyah
+                        Jadikan amal jariyah Anda bagian dari pembangunan rumah Allah
                     </h1>
                     <p className="text-gray-600 mb-6">
-                        Hadirkan Donasi Transparan dan Aman. 
-                        Setiap kontribusi Anda tercatat dengan jelas dan mendukung pembangunan serta pelayanan bagi jamaah.
+                    Dengan sistem donasi yang transparan dan aman, setiap rupiah yang Anda berikan akan langsung mendukung pembangunan masjid dan pelayanan terbaik untuk jamaah.
                     </p>
                     <a href="#" className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition duration-300">
                         Donasi Sekarang

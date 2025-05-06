@@ -1,17 +1,18 @@
-// app.jsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 import '../css/app.css'; // Tailwind
 import Beranda from './pages/Beranda';
 import Hubungi from './pages/Hubungi';
 import RekapanBulanan from './pages/RekapanBulanan';
 import RekapanDonatur from './pages/RekapanDonatur';
-import Login from './pages/Login';
+import LoginBaru from './pages/LoginBaru';
+import SignUp from './pages/SignUp';
 import ScrollToTop from './components/ScrollToTop';
 
-// Komponen wrapper untuk routing
+// Komponen wrapper untuk routing dengan animasi transisi
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -22,13 +23,22 @@ const AppRoutes = () => {
   return (
     <>
       <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Beranda />} />
-        <Route path="/hubungi" element={<Hubungi />} />
-        <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
-        <Route path="/rekapandonatur" element={<RekapanDonatur />} />
-        <Route path="/login" element={<Login />} />
-      </Routes>
+      <TransitionGroup>
+        <CSSTransition
+          key={location.key}
+          classNames="slide"
+          timeout={300}
+        >
+          <Routes location={location}>
+            <Route path="/" element={<Beranda />} />
+            <Route path="/hubungi" element={<Hubungi />} />
+            <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
+            <Route path="/rekapandonatur" element={<RekapanDonatur />} />
+            <Route path="/loginbaru" element={<LoginBaru />} />
+            <Route path="/signup" element={<SignUp />} />
+          </Routes>
+        </CSSTransition>
+      </TransitionGroup>
     </>
   );
 };

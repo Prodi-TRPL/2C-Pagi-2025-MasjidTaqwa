@@ -15,6 +15,7 @@ export const SimpleFooter = () => {
               src="/img/LogoSidontaq.png"
               alt="SIDONTAQ Logo"
               className="w-20"
+              draggable={false}
             />
             <span className="ml-2 text-xl font-bold tracking-wide text-gray-800 uppercase">
               SIDONTAQ

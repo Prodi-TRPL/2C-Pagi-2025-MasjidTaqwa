@@ -43,6 +43,7 @@ const SekilasSidontaq = () => {
                         src="../img/laptopandmobile.png" 
                         alt="SIDONTAQ Preview" 
                         className="w-full max-w-sm md:max-w-md rounded-xl object-contain"
+                        draggable={false}
                     />
                 </div>
             </div>

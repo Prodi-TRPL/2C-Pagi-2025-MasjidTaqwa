@@ -1,4 +1,4 @@
-import { Home, Info, BarChart2, Phone, LogIn, Star, Calendar, Users } from "lucide-react";
+import { Home, Info, BarChart2, Phone, Star, Calendar, Users } from "lucide-react";
 
 /* Menu data: Adapted from old Navbar.jsx for NavbarBaru.jsx with icons */
 export const Menus = [
