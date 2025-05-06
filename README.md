@@ -164,6 +164,18 @@ MasjidTaqwa/
 1. Atur konfigurasi `.env` di folder `backend` sesuai dengan environment (database, API keys, dll).
 2. Pastikan koneksi database dan konfigurasi lainnya telah sesuai.
 
+### 📄 Konfigurasi File `.env`
+
+Sebelum menjalankan aplikasi, pastikan kamu sudah menyiapkan file konfigurasi environment.
+
+File `.env.example` **sudah tersedia** di dalam project ini dan dapat langsung digunakan sebagai template.
+
+#### Langkah-langkah:
+1. **Salin file `.env.example` menjadi `.env`:**
+
+   ```bash
+   cp .env.example .env
+
 ## 🔧 Script Tersedia
 
 Sidontaq menyediakan script yang tersedia di dalam `package.json` untuk mempermudah pengembangan:
