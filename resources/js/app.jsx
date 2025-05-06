@@ -10,6 +10,7 @@ import RekapanBulanan from './pages/RekapanBulanan';
 import RekapanDonatur from './pages/RekapanDonatur';
 import LoginBaru from './pages/LoginBaru';
 import SignUp from './pages/SignUp';
+import LupaPassword from './pages/LupaPassword';
 import ScrollToTop from './components/ScrollToTop';
 
 // Komponen wrapper untuk routing dengan animasi transisi
@@ -36,6 +37,7 @@ const AppRoutes = () => {
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
             <Route path="/loginbaru" element={<LoginBaru />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/lupapassword" element={<LupaPassword />} />
           </Routes>
         </CSSTransition>
       </TransitionGroup>

@@ -47,7 +47,7 @@ const HomeContentSignUp = () => {
                         </p>
                         <Link
                             to="/signup"
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow inline-block"
+                            className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow inline-block"
                         >
                             Daftar Sekarang
                         </Link>

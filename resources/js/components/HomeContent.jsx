@@ -11,7 +11,7 @@ const HomeContent = () => {
     }, []);
 
     return (
-        <div className="w-full py-12 bg-green-50">
+        <div className="w-full pb-12 pt-12 lg:pt-0 bg-gray-50">
             <div className="max-w-7xl mx-auto px-15 flex flex-col md:flex-row items-center gap-8">
                 {/* Kiri: Teks */}
                 <div className="flex-1 text-center md:text-left" data-aos="fade-right">
@@ -32,9 +32,10 @@ const HomeContent = () => {
                 {/* Kanan: Gambar */}
                 <div className="flex-1" data-aos="fade-left">
                     <img
-                        src="/images/masjid.jpg"  // Ganti dengan path gambar kamu
+                        src="../img/mosque-hero.png"  // Ganti dengan path gambar kamu
                         alt="Masjid Taqwa"
-                        className="w-full rounded-2xl shadow-lg object-cover"
+                        className="w-[600px] h-auto object-contain mx-auto"
+                        draggable={false}
                     />
                 </div>
             </div>

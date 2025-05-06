@@ -52,15 +52,15 @@ const SignUp = () => {
         <div className="p-6 max-w-md mx-auto">
           <h1 className="text-2xl font-semibold mb-4">Daftar</h1>
           <form onSubmit={handleSubmit}>
-            {/* Username Input */}
+            {/* Email Input */}
             <div className="mb-4">
-              <label htmlFor="username" className="block text-gray-600">
-                Nama Pengguna
+              <label htmlFor="email" className="block text-gray-600">
+                Email Pengguna
               </label>
               <input
-                type="text"
-                id="username"
-                name="username"
+                type="email"
+                id="email"
+                name="email"
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:border-blue-500"
                 autoComplete="off"
                 value={username}
@@ -113,7 +113,7 @@ const SignUp = () => {
           </div>
           {/* Footer */}
           <div className="mt-6 text-gray-600 text-center">
-            <p>&copy; Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
+            <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
           </div>
         </div>
       </div>
