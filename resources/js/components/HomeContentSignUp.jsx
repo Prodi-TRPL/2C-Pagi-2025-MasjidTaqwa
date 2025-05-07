@@ -32,29 +32,32 @@ const HomeContentSignUp = () => {
 
             {/* Bottom green layout with fade-left animation */}
             <section
-                className="bg-[#5ABF9A] py-8 px-6 z-10 relative"
-                data-aos="fade-left"
+                className="py-0 md:py-4 lg:py-8 px-0 md:px-3 lg:px-6 z-10 relative"
+                style={{ background: 'linear-gradient(to right, #5ABF9A 85%, #5ABF9A 80%, #ffffff 100%)' }}
+                data-aos="fade-right"
             >
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between">
-                    {/* Left text */}
-                    <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0 z-10 p-6 md:p-12">
-                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-snug">
-                            Bersama Wujudkan <br /> Masjid yang Lebih Baik
-                        </h1>
-                        <p className="text-gray-800 text-base md:text-lg mb-6">
-                            Gabung sekarang dan dukung masjid dengan <br className="hidden md:block" />
-                            sistem manajemen yang modern.
-                        </p>
-                        <Link
-                            to="/signup"
-                            className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow inline-block"
-                        >
-                            Daftar Sekarang
-                        </Link>
-                    </div>
+                <div className="max-w-7xl mx-auto px-0 md:px-5 lg:px-15">
+                    <div className="flex flex-col md:flex-row items-center justify-between">
+                        {/* Left text */}
+                        <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0 z-10 p-6 md:p-12">
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-snug">
+                                Bersama Wujudkan <br /> Masjid yang Lebih Baik
+                            </h1>
+                            <p className="text-gray-800 text-base md:text-lg mb-6">
+                                Gabung sekarang dan dukung masjid dengan <br className="hidden md:block" />
+                                sistem manajemen yang modern.
+                            </p>
+                            <Link
+                                to="/signup"
+                                className="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow inline-block"
+                            >
+                                Daftar Sekarang
+                            </Link>
+                        </div>
 
-                    {/* Right spacer */}
-                    <div className="md:w-1/2 mt-8 md:mt-0" />
+                        {/* Right spacer */}
+                        <div className="md:w-1/2 mt-8 md:mt-0" />
+                    </div>
                 </div>
             </section>
         </div>

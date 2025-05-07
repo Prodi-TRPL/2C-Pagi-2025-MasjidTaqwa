@@ -38,7 +38,7 @@ const EcosystemSidontaqWithBg = () => {
 
     return (
         <section className="bg-green-900 py-20 text-white">
-            <div className="max-w-6xl mx-auto px-6 text-center">
+<div className="max-w-7xl mx-auto px-4 lg:px-15 text-center">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">Ecosystem SIDONTAQ</h2>
                 <p className="text-lg max-w-2xl mx-auto mb-12">
                     Sistem donasi terintegrasi untuk menciptakan ekosistem digital yang memudahkan donatur dalam berkontribusi dan mendukung pembangunan masjid secara transparan.

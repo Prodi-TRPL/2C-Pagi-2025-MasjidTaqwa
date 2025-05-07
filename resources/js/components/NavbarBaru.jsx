@@ -8,7 +8,7 @@ import MobMenu from "./MobMenu";
 export default function NavbarBaru() {
     return (
             <header className="h-16 text-[15px] fixed top-0 left-0 right-0 flex-center bg-white text-black z-[1000]">
-            <nav className="px-3 flex-center-between w-full max-w-7xl mx-auto gap-x-3">
+<nav className="px-3 lg:px-15 flex-center-between w-full max-w-7xl mx-auto gap-x-3">
                 <div className="flex-center gap-x-3 z-[999] relative">
                     {/* Logo Sidontaq */}
                     <a href="/">

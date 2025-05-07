@@ -3,8 +3,8 @@ import { Button, Input, Textarea, Typography } from "@material-tailwind/react";
 
 export function ContactSectionForm() {
     return (
-        <section className="px-12 lg:px-50 py-8 lg:py-16">
-        <div className="container mx-auto text-center">
+        <section className="px-4 lg:px-15 py-8 lg:py-16">
+        <div className="max-w-7xl mx-auto text-center">
             <Typography
                 variant="h5"
                 className="mb-4 !text-base lg:!text-2xl text-green-600"

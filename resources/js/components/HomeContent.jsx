@@ -12,7 +12,7 @@ const HomeContent = () => {
 
     return (
         <div className="w-full pb-12 pt-12 lg:pt-0 bg-gray-50">
-            <div className="max-w-7xl mx-auto px-15 flex flex-col md:flex-row items-center gap-8">
+            <div className="max-w-7xl mx-auto px-5 lg:px-15 flex flex-col md:flex-row items-center gap-8">
                 {/* Kiri: Teks */}
                 <div className="flex-1 text-center md:text-left" data-aos="fade-right">
                     <h3 className="text-green-600 font-semibold text-lg mb-2">
