@@ -1,6 +1,6 @@
 // Navbar2.jsx
 import { Link } from "react-router-dom";
-import { Menus } from "../utils";
+import { Menus } from "../../utils";
 import DesktopMenu from "./DesktopMenu";
 import MobMenu from "./MobMenu";
 

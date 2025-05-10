@@ -1,8 +1,8 @@
 import React from "react";
-import NavbarBaru from '../components/NavbarBaru'; 
-import HeroSectionRekapanDonatur from "../components/HeroSectionRekapanDonatur";
-import DonationTableDonatur from "../components/DonationTableDonatur"; 
-import { SimpleFooter } from "../components/SimpleFooter";
+import NavbarBaru from '../components/LandingPage/NavbarBaru'; 
+import HeroSectionRekapanDonatur from "../components/LandingPage/HeroSectionRekapanDonatur";
+import DonationTableDonatur from "../components/LandingPage/DonationTableDonatur"; 
+import { SimpleFooter } from "../components/LandingPage/SimpleFooter";
 function RekapanDonatur() {
     return (
         <div className="pt-16 relative">

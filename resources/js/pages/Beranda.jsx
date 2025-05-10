@@ -1,13 +1,13 @@
 // pages/Beranda.jsx
 import React from 'react';
-import NavbarBaru from '../components/NavbarBaru'; // Pastikan path-nya benar
-import HomeContent from '../components/HomeContent';
-import HomeContentAbout from '../components/HomeContentAbout'; 
-import HomeContentEco from '../components/HomeContentEco';
-import HomeContentAdvantage from '../components/HomeContentAdvantage';
-import HomeContentContact from '../components/HomeContentContact';
-import HomeContentSignUp from '../components/HomeContentSignUp';
-import { SimpleFooter } from '../components/SimpleFooter';
+import NavbarBaru from '../components/LandingPage/NavbarBaru'; // Pastikan path-nya benar
+import HomeContent from '../components/LandingPage/HomeContent';
+import HomeContentAbout from '../components/LandingPage/HomeContentAbout'; 
+import HomeContentEco from '../components/LandingPage/HomeContentEco';
+import HomeContentAdvantage from '../components/LandingPage/HomeContentAdvantage';
+import HomeContentContact from '../components/LandingPage/HomeContentContact';
+import HomeContentSignUp from '../components/LandingPage/HomeContentSignUp';
+import { SimpleFooter } from '../components/LandingPage/SimpleFooter';
 
 function Beranda() {
   return (

@@ -1,8 +1,8 @@
 import React from "react";
-import NavbarBaru from '../components/NavbarBaru'; 
-import HeroSectionRekapanBulanan from "../components/HeroSectionRekapanBulanan";
-import { SimpleFooter } from "../components/SimpleFooter";
-import DonationChartBulanan from "../components/DonationChartBulanan";
+import NavbarBaru from '../components/LandingPage/NavbarBaru'; 
+import HeroSectionRekapanBulanan from "../components/LandingPage/HeroSectionRekapanBulanan";
+import { SimpleFooter } from "../components/LandingPage/SimpleFooter";
+import DonationChartBulanan from "../components/LandingPage/DonationChartBulanan";
 
 const RekapanBulanan = () => {
     return (

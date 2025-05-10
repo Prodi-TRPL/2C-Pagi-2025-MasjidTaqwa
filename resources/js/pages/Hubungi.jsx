@@ -1,9 +1,9 @@
 import React from "react";
-import NavbarBaru from '../components/NavbarBaru'; 
-import HubungiContentReminder from "../components/HubungiContentReminder";
-import HeroSectionHubungi from "../components/HeroSectionHubungi";
-import ContactSectionForm from "../components/ContactSectionForm";
-import { SimpleFooter } from "../components/SimpleFooter";
+import NavbarBaru from '../components/LandingPage/NavbarBaru'; 
+import HubungiContentReminder from "../components/LandingPage/HubungiContentReminder";
+import HeroSectionHubungi from "../components/LandingPage/HeroSectionHubungi";
+import ContactSectionForm from "../components/LandingPage/ContactSectionForm";
+import { SimpleFooter } from "../components/LandingPage/SimpleFooter";
 
 function Hubungi() {
     return (

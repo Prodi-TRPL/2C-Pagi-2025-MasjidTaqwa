@@ -24,7 +24,7 @@ const LupaPassword = () => {
       {/* Left: Background Image */}
       <div className="hidden lg:block w-1/2">
         <img
-          src="../img/GreenBackground.jpeg"
+          src="../img/bg-repeat.png"
           alt="Background"
           className="object-cover w-full h-full"
           style={{ height: '100vh' }}
