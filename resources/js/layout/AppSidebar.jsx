@@ -16,7 +16,6 @@ import {
     UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
 
 const navItems = [
     {
@@ -295,22 +294,15 @@ const AppSidebar = () => {
                 <>
                 <img
                     className="dark:hidden"
-                    src="/images/logo/logo.svg"
+                    src="../img/LogoSidontaqNav.jpeg"
                     alt="Logo"
-                    width={150}
-                    height={40}
-                />
-                <img
-                    className="hidden dark:block"
-                    src="/images/logo/logo-dark.svg"
-                    alt="Logo"
-                    width={150}
+                    width={200}
                     height={40}
                 />
                 </>
             ) : (
                 <img
-                src="/images/logo/logo-icon.svg"
+                src="../img/LogoSidontaq.png"
                 alt="Logo"
                 width={32}
                 height={32}
@@ -355,7 +347,6 @@ const AppSidebar = () => {
                 </div>
             </div>
             </nav>
-            {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
         </div>
         </aside>
     );
