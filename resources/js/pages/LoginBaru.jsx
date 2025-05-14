@@ -5,6 +5,7 @@ const LoginBaru = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [error, setError] = useState('');
 
   const navigate = useNavigate();
 
@@ -20,10 +21,37 @@ const LoginBaru = () => {
     setRemember(e.target.checked);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // For now, just navigate to dashboardhome for testing
-    navigate('/dashboardhome');
+    setError('');
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: username,
+          password: password,
+          remember: remember,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === true) {
+        if (data.role === 'admin') {
+          navigate('/dashboardhome');
+        } else {
+          setError('Unauthorized role');
+        }
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -106,6 +134,12 @@ const LoginBaru = () => {
                 Ingat Saya
               </label>
             </div>
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 text-red-600 font-semibold">
+                {error}
+              </div>
+            )}
             {/* Forgot Password Link */}
             <div className="mb-6 text-blue-500">
               <a href="/lupapassword" className="hover:underline">

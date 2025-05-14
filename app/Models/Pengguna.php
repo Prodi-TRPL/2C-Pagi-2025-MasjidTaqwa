@@ -15,6 +15,11 @@ class Pengguna extends Authenticatable
 
     protected $fillable = ['nama', 'email', 'password', 'role', 'nomor_hp', 'created_at'];
 
+    public function getAuthIdentifierName()
+    {
+        return 'pengguna_id';
+    }
+
     public function donasi()
     {
         return $this->hasMany(Donasi::class, 'pengguna_id');
