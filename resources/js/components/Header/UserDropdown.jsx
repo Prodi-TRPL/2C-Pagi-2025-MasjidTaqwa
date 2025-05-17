@@ -1,11 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState({ name: "", email: "" });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser({
+          name: parsedUser.name || "",
+          email: parsedUser.email || "",
+        });
+      } catch (error) {
+        console.error("Failed to parse user data from localStorage", error);
+      }
+    }
+  }, []);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -13,6 +29,13 @@ export default function UserDropdown() {
 
   function closeDropdown() {
     setIsOpen(false);
+  }
+
+  function handleLogout() {
+    // Remove token from localStorage
+    localStorage.removeItem('token');
+    // Navigate to login page and replace history to prevent back navigation
+    navigate('/', { replace: true });
   }
 
   return (
@@ -26,7 +49,7 @@ export default function UserDropdown() {
         </span>
         {/* Nama Pengguna */}
         <span className="hidden sm:block mr-1 font-medium text-theme-sm">
-          "User"
+          {user.name || "User"}
         </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -56,11 +79,11 @@ export default function UserDropdown() {
         <div>
           {/* Nama Pengguna */}
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            "User"
+            {user.name || "User"}
           </span>
           {/* Email Pengguna */}
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            "user@gmail.com"
+            {user.email || "user@gmail.com"}
           </span>
         </div>
 
@@ -92,7 +115,10 @@ export default function UserDropdown() {
           </li>
           <li>
             <DropdownItem
-              onItemClick={closeDropdown}
+              onItemClick={() => {
+                closeDropdown();
+                handleLogout();
+              }}
               tag="button"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >

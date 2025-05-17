@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 import '../css/app.css'; // Tailwind
@@ -16,6 +16,26 @@ import ScrollToTop from './components/LandingPage/ScrollToTop';
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
 import AppLayout from './layout/AppLayout'; // Dashboard layout component
+
+// PrivateRoute component to protect dashboard routes
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    // Not logged in, redirect to login
+    return <Navigate to="/loginbaru" replace />;
+  }
+  return children;
+};
+
+// PublicRoute component to redirect logged-in users away from login page
+const PublicRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    // Logged in, redirect to dashboard
+    return <Navigate to="/dashboardhome" replace />;
+  }
+  return children;
+};
 
 // Komponen wrapper untuk routing dengan animasi transisi
 const AppRoutes = () => {
@@ -40,12 +60,26 @@ const AppRoutes = () => {
             <Route path="/hubungi" element={<Hubungi />} />
             <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
-            <Route path="/loginbaru" element={<LoginBaru />} />
+            <Route
+              path="/loginbaru"
+              element={
+                <PublicRoute>
+                  <LoginBaru />
+                </PublicRoute>
+              }
+            />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/lupapassword" element={<LupaPassword />} />
 
-            {/* Dashboard routes wrapped in layout */}
-            <Route path="/dashboardhome" element={<AppLayout />}>
+            {/* Dashboard routes wrapped in layout and protected */}
+            <Route
+              path="/dashboardhome"
+              element={
+                <PrivateRoute>
+                  <AppLayout />
+                </PrivateRoute>
+              }
+            >
               <Route index element={<DashboardHome />} />
               {/* Add other dashboard routes here */}
             </Route>

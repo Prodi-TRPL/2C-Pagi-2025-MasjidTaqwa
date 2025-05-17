@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Pengguna extends Authenticatable
 {
+    use HasApiTokens;
     protected $table = 'pengguna';
     protected $primaryKey = 'pengguna_id';
     public $incrementing = false;

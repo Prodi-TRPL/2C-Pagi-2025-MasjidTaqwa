@@ -42,6 +42,11 @@ const LoginBaru = () => {
       const { token, user } = response.data;
       if (user.role === 'admin') {
         localStorage.setItem('token', token);
+        // Store user info in localStorage with normalized keys
+        localStorage.setItem('user', JSON.stringify({
+          name: user.nama || '',
+          email: user.email || '',
+        }));
         navigate('/dashboardhome', { replace: true });
       } else {
         setError('Anda tidak memiliki akses sebagai admin.');

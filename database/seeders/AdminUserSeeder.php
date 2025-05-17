@@ -11,15 +11,15 @@ class AdminUserSeeder extends Seeder
 {
     public function run()
     {
-        $adminEmail = 'admin@gmail.com';
+        $adminEmail = 'diva@gmail.com';
         $existingAdmin = Pengguna::where('email', $adminEmail)->first();
 
         if (!$existingAdmin) {
             $admin = new Pengguna();
             $admin->pengguna_id = (string) Str::uuid();
-            $admin->nama = 'Admin New';
+            $admin->nama = 'Diva Satria';
             $admin->email = $adminEmail;
-            $admin->password = Hash::make('admin123'); // Known password
+            $admin->password = Hash::make('diva123'); // Known password
             $admin->role = 'admin';
             $admin->nomor_hp = '081234567891';
             $admin->created_at = now();
