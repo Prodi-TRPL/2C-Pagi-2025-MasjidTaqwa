@@ -26,11 +26,17 @@ const LoginBaru = () => {
     setError('');
 
     try {
+      // Call CSRF cookie endpoint before login
+      await fetch('/sanctum/csrf-cookie', {
+        credentials: 'include',
+      });
+
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           email: username,
           password: password,

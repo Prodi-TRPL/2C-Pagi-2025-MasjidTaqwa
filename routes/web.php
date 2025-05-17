@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,8 +14,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Named login route to fix "Route [login] not defined" error
+Route::get('/login', function () {
+    return view('react-main');
+})->name('login');
+
 // Route untuk menangani semua URL lainnya
 Route::get('/{any}', function () {
     return view('react-main');
 })->where('any', '.*');
 
+// Add logout route with web middleware
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

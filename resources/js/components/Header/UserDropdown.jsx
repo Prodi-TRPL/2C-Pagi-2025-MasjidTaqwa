@@ -10,11 +10,16 @@ export default function UserDropdown() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch current authenticated user info
+    // Fetch current authenticated user info with credentials
     axios
-      .get("/api/user")
+      .get("/api/user", { withCredentials: true })
       .then((response) => {
-        setUser(response.data);
+        // Adjust if user data is nested
+        if (response.data.data) {
+          setUser(response.data.data);
+        } else {
+          setUser(response.data);
+        }
       })
       .catch(() => {
         setUser(null);
@@ -31,9 +36,9 @@ export default function UserDropdown() {
 
   function handleLogout() {
     axios
-      .post("/api/logout")
+      .post("/logout", {}, { withCredentials: true }) // Changed from /api/logout to /logout
       .then(() => {
-        navigate("/beranda");
+        navigate("/");
       })
       .catch(() => {
         // Handle error if needed
