@@ -1,30 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Fetch current authenticated user info with credentials
-    axios
-      .get("/api/user", { withCredentials: true })
-      .then((response) => {
-        // Adjust if user data is nested
-        if (response.data.data) {
-          setUser(response.data.data);
-        } else {
-          setUser(response.data);
-        }
-      })
-      .catch(() => {
-        setUser(null);
-      });
-  }, []);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -32,17 +13,6 @@ export default function UserDropdown() {
 
   function closeDropdown() {
     setIsOpen(false);
-  }
-
-  function handleLogout() {
-    axios
-      .post("/logout", {}, { withCredentials: true }) // Changed from /api/logout to /logout
-      .then(() => {
-        navigate("/");
-      })
-      .catch(() => {
-        // Handle error if needed
-      });
   }
 
   return (
@@ -56,7 +26,7 @@ export default function UserDropdown() {
         </span>
         {/* Nama Pengguna */}
         <span className="hidden sm:block mr-1 font-medium text-theme-sm">
-          {user ? user.nama : "Loading..."}
+          "User"
         </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -86,11 +56,11 @@ export default function UserDropdown() {
         <div>
           {/* Nama Pengguna */}
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user ? user.nama : "Loading..."}
+            "User"
           </span>
           {/* Email Pengguna */}
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user ? user.email : "Loading..."}
+            "user@gmail.com"
           </span>
         </div>
 
@@ -99,7 +69,7 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              to="/profile"
+              to="/dashboardhome"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg
@@ -124,7 +94,6 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="button"
-              onClick={handleLogout}
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <svg

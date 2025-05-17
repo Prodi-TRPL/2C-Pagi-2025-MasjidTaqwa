@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const LoginBaru = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState('');
 
   const navigate = useNavigate();
 
-  const handleUsernameChange = (e) => {
-    setUsername(e.target.value);
+  useEffect(() => {
+    // Redirect to dashboard if token exists
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboardhome', { replace: true });
+    }
+  }, [navigate]);
+
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
   };
 
   const handlePasswordChange = (e) => {
@@ -24,39 +33,25 @@ const LoginBaru = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     try {
-      // Call CSRF cookie endpoint before login
-      await fetch('/sanctum/csrf-cookie', {
-        credentials: 'include',
+      const response = await axios.post('/api/login', {
+        email,
+        password,
       });
-
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: username,
-          password: password,
-          remember: remember,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.status === true) {
-        if (data.role === 'admin') {
-          navigate('/dashboardhome');
-        } else {
-          setError('Unauthorized role');
-        }
+      // Assuming response data contains token and user info with role
+      const { token, user } = response.data;
+      if (user.role === 'admin') {
+        localStorage.setItem('token', token);
+        navigate('/dashboardhome', { replace: true });
       } else {
-        setError(data.message || 'Login failed');
+        setError('Anda tidak memiliki akses sebagai admin.');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Login gagal. Silakan coba lagi.');
+      }
     }
   };
 
@@ -107,8 +102,9 @@ const LoginBaru = () => {
                 name="email"
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:border-blue-500"
                 autoComplete="off"
-                value={username}
-                onChange={handleUsernameChange}
+                value={email}
+                onChange={handleEmailChange}
+                required
               />
             </div>
             {/* Password Input */}
@@ -124,6 +120,7 @@ const LoginBaru = () => {
                 autoComplete="off"
                 value={password}
                 onChange={handlePasswordChange}
+                required
               />
             </div>
             {/* Remember Me Checkbox */}
