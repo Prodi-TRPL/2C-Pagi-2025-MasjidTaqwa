@@ -46,7 +46,9 @@ const LoginBaru = () => {
         localStorage.setItem('user', JSON.stringify({
           name: user.nama || '',
           email: user.email || '',
+          role: user.role || '',
         }));
+        localStorage.setItem('role', user.role || '');
         navigate('/dashboardhome', { replace: true });
       } else {
         setError('Anda tidak memiliki akses sebagai admin.');
