@@ -1,6 +1,37 @@
 Analisis Halaman Masjid Taqwa
 Dokumen ini berisi analisis mendetail mengenai tampilan, fungsionalitas, dan data yang terlibat untuk setiap halaman dan komponen dalam aplikasi Sistem Informasi Manajemen Donasi Pembangunan Masjid Taqwa Muhammadiyah Batam Kota.
 
+- **Environment & Origin**
+    - Laravel & React dijalankan bersamaan di `http://localhost:8000` → tidak perlu konfigurasi CORS.
+- **Login Logic (`LoginBaru.jsx`)**
+    1. **Form State**
+        - `useState` untuk `email`, `password`, dan `errorMessage`.
+    2. **HTTP Request**
+        - `axios.post('/api/login', { email, password })`.
+    3. **Response Handling**
+        - Jika sukses **dan** `role === 'admin'`:
+            - Simpan `token` dan `user` (`{ name, email }`) di `localStorage`.
+            - Redirect ke `/dashboard` dengan `useNavigate(…, { replace: true })`.
+        - Jika gagal atau bukan admin:
+            - Set `errorMessage` → tampilkan alert Tailwind merah.
+- **Protected Routes (di `App.jsx` atau wrapper)**
+    - Cek `localStorage.getItem('token')` sebelum render route dashboard.
+    - Jika token tidak ada → redirect ke `/login`.
+    - Jika token ada dan user mencoba akses `/login` → redirect ke `/dashboard`.
+- **Persistensi Setelah Refresh**
+    - Saat `DashboardHome.jsx` mount, pengecekan token di `localStorage`:
+        - Masih valid → biarkan di dashboard.
+        - Tidak ada/invalid → redirect ke login.
+- **Logout Logic (`UserDropdown.jsx`)**
+    1. `handleLogout()` menghapus `token` **dan** `user` dari `localStorage`.
+    2. Redirect ke `/` dengan `{ replace: true }` untuk mencegah “back button” kembali ke dashboard.
+    3. Proteksi route (lihat Protected Routes) memastikan back button tidak bisa akses dashboard tanpa token.
+- **User Dropdown (dinamis)**
+    - Saat mount, baca `localStorage.getItem('user')` → `JSON.parse` → simpan ke state (`useState`/`useEffect`).
+    - Tampilkan `user.name` dan `user.email` di dropdown alih-alih teks statis.
+
+catatan agar setiap kali butuh mengingat flow auth, pengecekan token, atau storage key (`token`, `user`).
+
 1. Halaman Beranda (resources/js/pages/Beranda.jsx)
 Tampilan
 Halaman Beranda merupakan halaman utama yang menampilkan berbagai komponen landing page, antara lain:
