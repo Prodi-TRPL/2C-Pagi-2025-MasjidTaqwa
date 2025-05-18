@@ -33,7 +33,7 @@ const HomeContentSignUp = () => {
             {/* Bottom green layout with fade-left animation */}
             <section
                 className="py-0 md:py-4 lg:py-8 px-0 md:px-3 lg:px-6 z-10 relative"
-                style={{ background: 'linear-gradient(to right, #5ABF9A 85%, #5ABF9A 80%, #ffffff 100%)' }}
+                style={{ background: '#5ABF9A'}}
                 data-aos="fade-right"
             >
                 <div className="max-w-7xl mx-auto px-0 md:px-5 lg:px-15">
