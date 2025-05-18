@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const LoginBaru = () => {
   const [email, setEmail] = useState('');
@@ -49,6 +50,15 @@ const LoginBaru = () => {
           role: user.role || '',
         }));
         localStorage.setItem('role', user.role || '');
+        await Swal.fire({
+          icon: 'success',
+          title: 'Login berhasil!',
+          text: 'Selamat datang kembali di platform kami 🎉',
+          timer: 3000,
+          showConfirmButton: false,
+          timerProgressBar: true,
+          position: 'center',
+        });
         navigate('/dashboardhome', { replace: true });
       } else {
         setError('Anda tidak memiliki akses sebagai admin.');

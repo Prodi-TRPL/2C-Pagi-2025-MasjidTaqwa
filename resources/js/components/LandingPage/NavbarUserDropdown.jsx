@@ -4,10 +4,12 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTachometerAlt, faUser, faHistory, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import Swal from "sweetalert2";
 
 export default function NavbarUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [role, setRole] = useState(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +26,13 @@ export default function NavbarUserDropdown() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isOpen && isLoggingOut) {
+      handleLogout();
+      setIsLoggingOut(false);
+    }
+  }, [isOpen, isLoggingOut]);
+
   function toggleDropdown() {
     setIsOpen(!isOpen);
   }
@@ -32,10 +41,29 @@ export default function NavbarUserDropdown() {
     setIsOpen(false);
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-    navigate("/", { replace: true });
+    const result = await Swal.fire({
+      icon: "success",
+      title: "Logout berhasil!",
+      text: "Anda telah keluar dari platform.",
+      timer: 2000,
+      showConfirmButton: false,
+      timerProgressBar: true,
+      position: "center",
+      allowOutsideClick: true,
+      customClass: {
+        container: "z-[100000]",
+        popup: "z-[100000]",
+        backdrop: "bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full",
+      },
+    });
+    if (result.isDismissed) {
+      navigate("/", { replace: true });
+    } else {
+      navigate("/", { replace: true });
+    }
   }
 
   return (
@@ -76,7 +104,7 @@ export default function NavbarUserDropdown() {
         <ul className="flex flex-col gap-1">
           {role === "admin" && (
             <>
-            <li>
+              <li>
                 <DropdownItem
                   onItemClick={closeDropdown}
                   tag="a"
@@ -101,8 +129,8 @@ export default function NavbarUserDropdown() {
               <li>
                 <DropdownItem
                   onItemClick={() => {
+                    setIsLoggingOut(true);
                     closeDropdown();
-                    handleLogout();
                   }}
                   tag="button"
                   className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
@@ -129,20 +157,9 @@ export default function NavbarUserDropdown() {
               </li>
               <li>
                 <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/riwayat-donasi"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faHistory} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-                  Riwayat Donasi
-                </DropdownItem>
-              </li>
-              <li>
-                <DropdownItem
                   onItemClick={() => {
+                    setIsLoggingOut(true);
                     closeDropdown();
-                    handleLogout();
                   }}
                   tag="button"
                   className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"

@@ -4,10 +4,12 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome, faUserEdit, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import Swal from "sweetalert2";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState({ name: "", email: "" });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +27,13 @@ export default function UserDropdown() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isOpen && isLoggingOut) {
+      handleLogout();
+      setIsLoggingOut(false);
+    }
+  }, [isOpen, isLoggingOut]);
+
   function toggleDropdown() {
     setIsOpen(!isOpen);
   }
@@ -33,11 +42,28 @@ export default function UserDropdown() {
     setIsOpen(false);
   }
 
-  function handleLogout() {
-    // Remove token from localStorage
+  async function handleLogout() {
     localStorage.removeItem('token');
-    // Navigate to login page and replace history to prevent back navigation
-    navigate('/', { replace: true });
+    const result = await Swal.fire({
+        icon: 'success',
+        title: 'Logout berhasil!',
+        text: 'Anda telah keluar dari platform.',
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true,
+        position: 'center',
+        allowOutsideClick: true,
+        customClass: {
+          container: 'z-[100000]', // increased z-index
+          popup: 'z-[100000]',
+          backdrop: 'bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full'
+        }
+      });
+    if (result.isDismissed) {
+      navigate('/', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
   }
 
   return (
@@ -49,7 +75,6 @@ export default function UserDropdown() {
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
           <img src="../img/user/admin.jpeg" alt="User" />
         </span>
-        {/* Nama Pengguna */}
         <span className="hidden sm:block mr-1 font-medium text-theme-sm">
           {user.name || "User"}
         </span>
@@ -79,11 +104,9 @@ export default function UserDropdown() {
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
         <div>
-          {/* Nama Pengguna */}
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
             {user.name || "User"}
           </span>
-          {/* Email Pengguna */}
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             {user.email || "user@gmail.com"}
           </span>
@@ -115,8 +138,8 @@ export default function UserDropdown() {
           <li>
             <DropdownItem
               onItemClick={() => {
+                setIsLoggingOut(true);
                 closeDropdown();
-                handleLogout();
               }}
               tag="button"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
