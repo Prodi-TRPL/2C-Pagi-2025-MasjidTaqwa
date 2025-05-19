@@ -25,7 +25,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email atau password salah'], 401);
         }
 
-        if ($user->role !== 'admin') {
+        if ($user->role !== 'admin' && $user->role !== 'donatur') {
             return response()->json(['message' => 'Anda tidak memiliki akses sebagai admin'], 403);
         }
 

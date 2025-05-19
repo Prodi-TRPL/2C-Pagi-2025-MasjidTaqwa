@@ -3,12 +3,13 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTachometerAlt, faUser, faHistory, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { faTachometerAlt, faUser, faHistory, faRightFromBracket, faBell } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 
 export default function NavbarUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [role, setRole] = useState(null);
+  const [user, setUser] = useState({ name: "", email: "" });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
@@ -20,6 +21,10 @@ export default function NavbarUserDropdown() {
         if (parsedUser.role) {
           setRole(parsedUser.role);
         }
+        setUser({
+          name: parsedUser.name || "",
+          email: parsedUser.email || "",
+        });
       } catch (error) {
         console.error("Failed to parse user data from localStorage", error);
       }
@@ -76,6 +81,9 @@ export default function NavbarUserDropdown() {
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
           <img src="/img/user/admin.jpeg" alt="User avatar" />
         </span>
+        <span className="hidden sm:block mr-1 font-medium text-theme-sm">
+          {user.name || "User"}
+        </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -101,6 +109,14 @@ export default function NavbarUserDropdown() {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[220px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
+        <div className="mb-2 px-3">
+          <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
+            {user.name || "User"}
+          </span>
+          <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
+            {user.email || "user@example.com"}
+          </span>
+        </div>
         <ul className="flex flex-col gap-1">
           {role === "admin" && (
             <>
@@ -113,6 +129,17 @@ export default function NavbarUserDropdown() {
                 >
                   <FontAwesomeIcon icon={faUser} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
                   Profile
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/notifikasi"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faBell} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Notifikasi
                 </DropdownItem>
               </li>
               <li>
@@ -153,6 +180,39 @@ export default function NavbarUserDropdown() {
                 >
                   <FontAwesomeIcon icon={faUser} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
                   Profile
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/notifikasi"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faBell} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Notifikasi
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/riwayat-transaksi"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faHistory} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Riwayat Transaksi
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/progress-pembangunan"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faTachometerAlt} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Progress Pembangunan
                 </DropdownItem>
               </li>
               <li>

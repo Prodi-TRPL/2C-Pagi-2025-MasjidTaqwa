@@ -13,6 +13,8 @@ import SignUp from './pages/SignUp';
 import LupaPassword from './pages/LupaPassword';
 import DashboardHome from './pages/dashboard/DashboardAdmin/DashboardHome';
 import ScrollToTop from './components/LandingPage/ScrollToTop';
+import DonaturUserProfile from './pages/DonaturUserProfile';
+
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
 import AppLayout from './layout/AppLayout'; // Dashboard layout component
@@ -60,6 +62,7 @@ const AppRoutes = () => {
             <Route path="/hubungi" element={<Hubungi />} />
             <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
+            <Route path="/profile" element={<DonaturUserProfile />} />
             <Route
               path="/loginbaru"
               element={

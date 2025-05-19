@@ -43,7 +43,6 @@ const LoginBaru = () => {
       const { token, user } = response.data;
       if (user.role === 'admin') {
         localStorage.setItem('token', token);
-        // Store user info in localStorage with normalized keys
         localStorage.setItem('user', JSON.stringify({
           name: user.nama || '',
           email: user.email || '',
@@ -60,6 +59,24 @@ const LoginBaru = () => {
           position: 'center',
         });
         navigate('/dashboardhome', { replace: true });
+      } else if (user.role === 'donatur') {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify({
+          name: user.nama || '',
+          email: user.email || '',
+          role: user.role || '',
+        }));
+        localStorage.setItem('role', user.role || '');
+        await Swal.fire({
+          icon: 'success',
+          title: 'Login berhasil!',
+          text: 'Selamat datang kembali di platform kami 🎉',
+          timer: 3000,
+          showConfirmButton: false,
+          timerProgressBar: true,
+          position: 'center',
+        });
+        navigate('/', { replace: true });
       } else {
         setError('Anda tidak memiliki akses sebagai admin.');
       }
