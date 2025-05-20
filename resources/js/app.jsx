@@ -14,7 +14,8 @@ import LupaPassword from './pages/LupaPassword';
 import DashboardHome from './pages/dashboard/DashboardAdmin/DashboardHome';
 import ScrollToTop from './components/LandingPage/ScrollToTop';
 import DonaturUserProfile from './pages/DonaturUserProfile';
-
+import DonaturUserNotifikasi from './pages/DonaturUserNotifikasi';
+import DonaturUserRiwayatTransaksi from './pages/DonaturUserRiwayatTransaksi';
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
 import AppLayout from './layout/AppLayout'; // Dashboard layout component
@@ -63,6 +64,7 @@ const AppRoutes = () => {
             <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
             <Route path="/profile" element={<DonaturUserProfile />} />
+            <Route path="/riwayat-transaksi" element={<DonaturUserRiwayatTransaksi />} />
             <Route
               path="/loginbaru"
               element={
@@ -85,7 +87,9 @@ const AppRoutes = () => {
             >
               <Route index element={<DashboardHome />} />
               {/* Add other dashboard routes here */}
+              <Route path="notifikasi" element={<DonaturUserNotifikasi />} />
             </Route>
+            <Route path="/notifikasi" element={<DonaturUserNotifikasi />} />
           </Routes>
         </CSSTransition>
       </TransitionGroup>
