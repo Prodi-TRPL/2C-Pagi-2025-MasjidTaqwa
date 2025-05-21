@@ -2,7 +2,7 @@ import React from "react";
 
 export const SimpleFooter = () => {
   return (
-    <div className="max-w-7xl mx-auto px-4 lg:px-15 pt-16">
+    <div className="max-w-7xl mx-auto px-4 lg:px-15 pt-16 mt-10 border-t border-gray-300 border-opacity-50">
       <div className="grid gap-16 row-gap-10 mb-8 lg:grid-cols-6">
         <div className="md:max-w-md lg:col-span-2">
           <a

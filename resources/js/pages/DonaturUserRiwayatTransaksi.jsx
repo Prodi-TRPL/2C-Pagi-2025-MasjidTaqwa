@@ -25,7 +25,7 @@ import NavbarBaru from '../components/LandingPage/NavbarBaru';
 import { SimpleFooter } from '../components/LandingPage/SimpleFooter';
 
 const primaryColor = '#59B997';
-const contrastColor = '#ffffff';
+const contrastColor = 'black';
 
 const statusOptions = ['Semua', 'Menunggu', 'Diterima', 'Kadaluarsa'];
 
@@ -110,7 +110,7 @@ function DonaturUserRiwayatTransaksi() {
   return (
     <>
       <NavbarBaru />
-      <Container maxWidth="lg" sx={{ mt: 15, mb: 4}}>
+      <Container maxWidth="lg" sx={{ pt: 4, pb: 4, mt: 12, backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: 2 }}>
         <Typography 
           variant="h5" 
           gutterBottom 
