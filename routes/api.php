@@ -6,6 +6,7 @@ use App\Http\Controllers\DonationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DonasiController;
 use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,4 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifikasi/mark-as-read/{id}', [NotifikasiController::class, 'markAsRead']);
     Route::post('/notifikasi/mark-all-as-read', [NotifikasiController::class, 'markAllAsRead']);
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/donatur/profile', [ProfileController::class, 'getProfile']);
 });

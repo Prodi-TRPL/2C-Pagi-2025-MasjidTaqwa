@@ -117,3 +117,10 @@ return [
     'password_timeout' => 10800,
 
 ];
+
+'guards' => [
+    'sanctum' => [
+        'driver' => 'sanctum',
+        'provider' => 'users',
+    ],
+],
