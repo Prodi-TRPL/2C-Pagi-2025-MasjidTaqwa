@@ -1,165 +1,720 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {
+  Box,
+  Container,
+  Typography,
+  Avatar,
+  Card,
+  TextField,
+  Button,
+  IconButton,
+  InputAdornment,
+  Snackbar,
+  Alert,
+  Fade,
+  useTheme,
+  useMediaQuery,
+  Grid,
+} from '@mui/material';
+import {
+  Visibility,
+  VisibilityOff,
+  Email as EmailIcon,
+  Lock as LockIcon,
+  AccountCircle as AccountCircleIcon,
+  MonetizationOn as MonetizationOnIcon,
+  Notifications as NotificationsIcon,
+  History as HistoryIcon,
+  TrendingUp as TrendingUpIcon,
+  Edit as EditIcon,
+  Save as SaveIcon,
+  Logout as LogoutIcon,
+} from '@mui/icons-material';
 import NavbarBaru from '../components/LandingPage/NavbarBaru';
-import { SimpleFooter } from "../components/LandingPage/SimpleFooter";
+import { SimpleFooter } from '../components/LandingPage/SimpleFooter';
 
 const DonaturUserProfile = () => {
-    const [profile, setProfile] = useState({
-        nama: '',
-        created_at: '',
-        email: '',
-        nomor_hp: '',
-        alamat: 'Jl. Kenanga No. 15, Bandung, Jawa Barat',
-        status: 'Aktif',
-        profile_image: '/img/user/admin.jpeg' // default profile image path
-    });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    navigate('/loginbaru');
-                    return;
-                }
+  const [profile, setProfile] = useState({
+    nama: '',
+    email: '',
+    profile_image: '/img/user/admin.jpeg',
+    created_at: '',
+    totalDonationsCount: 0,
+    totalDonationsAmount: 0,
+  });
 
-                const response = await axios.get('/api/donatur/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-                setProfile({
-                    nama: response.data.nama || 'Muhammad Addin',
-                    created_at: response.data.created_at ? 
-                        new Date(response.data.created_at).toLocaleDateString('id-ID', { 
-                            day: 'numeric', 
-                            month: 'long', 
-                            year: 'numeric' 
-                        }) : '15 Januari 2023',
-                    email: response.data.email || 'addin@gmail.com',
-                    nomor_hp: response.data.nomor_hp || '081234567890',
-                    alamat: response.data.alamat || 'Jl. Kenanga No. 15, Bandung, Jawa Barat',
-                    status: 'Aktif',
-                    profile_image: response.data.profile_image || '/img/user/admin.jpeg'
-                });
-                setLoading(false);
-            } catch (err) {
-                setError('Gagal memuat profil. Silakan coba lagi.');
-                setLoading(false);
-                console.error(err);
-            }
-        };
+  const [editNama, setEditNama] = useState(false);
+  const [namaInput, setNamaInput] = useState('');
 
-        fetchProfile();
-    }, [navigate]);
+  const [passwords, setPasswords] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  });
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/loginbaru', { replace: true });
+  const [showPassword, setShowPassword] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmNewPassword: false,
+  });
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/loginbaru');
+          return;
+        }
+        const response = await axios.get('/api/donatur/profile', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = response.data;
+
+        const statsResponse = await axios.get('/api/donatur/donations/stats', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const stats = statsResponse.data;
+
+        setProfile({
+          nama: data.nama || '',
+          email: data.email || '',
+          profile_image: data.profile_image || '/img/user/admin.jpeg',
+          created_at: data.created_at
+            ? new Date(data.created_at).toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })
+            : '',
+          totalDonationsCount: stats.total_count || 0,
+          totalDonationsAmount: stats.total_amount || 0,
+        });
+        setNamaInput(data.nama || '');
+        setLoading(false);
+      } catch (err) {
+        setError('Gagal memuat profil. Silakan coba lagi.');
+        setLoading(false);
+      }
     };
+    fetchProfile();
+  }, [navigate]);
 
-    if (loading) {
-        return (
-            <div className="pt-16 relative min-h-screen bg-gray-50 dark:bg-gray-900">
-                <div className="relative z-20">
-                    <NavbarBaru />
-                </div>
-                <div className="flex justify-center items-center h-screen">
-                    <p>Memuat profil...</p>
-                </div>
-                <div className="relative z-10">
-                    <SimpleFooter />
-                </div>
-            </div>
-        );
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/loginbaru', { replace: true });
+  };
+
+  const handleToggleEditNama = () => {
+    if (editNama) {
+      handleSaveNama();
     }
+    setEditNama(!editNama);
+  };
 
-    if (error) {
-        return (
-            <div className="pt-16 relative min-h-screen bg-gray-50 dark:bg-gray-900">
-                <div className="relative z-20">
-                    <NavbarBaru />
-                </div>
-                <div className="text-red-500 text-center mt-4">
-                    {error}
-                </div>
-                <div className="relative z-10">
-                    <SimpleFooter />
-                </div>
-            </div>
-        );
+  const handleNamaChange = (e) => {
+    setNamaInput(e.target.value);
+  };
+
+  const handleSaveNama = async () => {
+    if (!namaInput.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Nama pengguna tidak boleh kosong.',
+        severity: 'error',
+      });
+      return;
     }
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/loginbaru');
+        return;
+      }
+      await axios.put(
+        '/api/donatur/profile',
+        { nama: namaInput },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProfile((prev) => ({ ...prev, nama: namaInput }));
+      setSnackbar({
+        open: true,
+        message: 'Nama pengguna berhasil diperbarui.',
+        severity: 'success',
+      });
+      setEditNama(false);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: 'Gagal memperbarui nama pengguna.',
+        severity: 'error',
+      });
+    }
+  };
 
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswords((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const toggleShowPassword = (field) => {
+    setShowPassword((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const handleSubmitPasswordChange = async () => {
+    if (
+      !passwords.currentPassword ||
+      !passwords.newPassword ||
+      !passwords.confirmNewPassword
+    ) {
+      setSnackbar({
+        open: true,
+        message: 'Semua kolom password harus diisi.',
+        severity: 'error',
+      });
+      return;
+    }
+    if (passwords.newPassword !== passwords.confirmNewPassword) {
+      setSnackbar({
+        open: true,
+        message: 'Password baru dan konfirmasi tidak cocok.',
+        severity: 'error',
+      });
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/loginbaru');
+        return;
+      }
+      await axios.post(
+        '/api/donatur/change-password',
+        {
+          current_password: passwords.currentPassword,
+          new_password: passwords.newPassword,
+          new_password_confirmation: passwords.confirmNewPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSnackbar({
+        open: true,
+        message: 'Password berhasil diubah.',
+        severity: 'success',
+      });
+      setPasswords({
+        currentPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.message ||
+          'Gagal mengubah password. Silakan coba lagi.',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const navItems = [
+    {
+      label: 'Notifikasi',
+      icon: <NotificationsIcon fontSize="large" sx={{ color: '#59B997' }} />,
+      href: '/donatur/notifikasi',
+    },
+    {
+      label: 'Riwayat Transaksi',
+      icon: <HistoryIcon fontSize="large" sx={{ color: '#59B997' }} />,
+      href: '/donatur/riwayat-transaksi',
+    },
+    {
+      label: 'Progress Pembangunan',
+      icon: <TrendingUpIcon fontSize="large" sx={{ color: '#59B997' }} />,
+      href: '/donatur/progress-pembangunan',
+    },
+  ];
+
+  if (loading) {
     return (
-        <div className="pt-16 relative min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="relative z-20">
-                <NavbarBaru />
-            </div>
-
-            <div className="py-8 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden transition hover:shadow-lg dark:bg-gray-800">
-                    <div className="p-6">
-                        <div className="flex items-center space-x-6 mb-6">
-                            <img
-                                className="w-24 h-24 rounded-full object-cover border-2 border-green-600 dark:border-blue-400"
-                                src={profile.profile_image}
-                                alt="Profile"
-                            />
-                            <div>
-                                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{profile.nama}</h1>
-                                <p className="text-gray-600 dark:text-gray-300">Terdaftar sejak {profile.created_at}</p>
-                            </div>
-                        </div>
-
-                        <p className="text-gray-600 mb-6 dark:text-gray-300">Manajemen profil dan preferensi akun Anda</p>
-
-                        <div className="border-t border-gray-200 pt-6 dark:border-gray-700">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-                                {[
-                                    { label: 'Nama Lengkap', value: profile.nama },
-                                    { label: 'Email', value: profile.email, note: 'Email tidak dapat diubah' },
-                                    { label: 'Nomor Telepon', value: profile.nomor_hp },
-                                    { label: 'Status Akun', value: (
-                                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                                            profile.status === 'Aktif'
-                                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                        }`}>
-                                            {profile.status}
-                                        </span>
-                                    )},
-                                    { label: 'Alamat', value: profile.alamat },
-                                ].map((item, idx) => (
-                                    <div key={idx}>
-                                        <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">{item.label}</label>
-                                        <p className="mt-1 text-sm text-gray-900 dark:text-white">{item.value}</p>
-                                        {item.note && <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">{item.note}</p>}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Tombol edit profil */}
-                            <div className="flex justify-center">
-                                <button className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition duration-150 ease-in-out dark:bg-green-700 dark:hover:bg--800">
-                                    Edit Profil
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="relative z-10">
-                <SimpleFooter />
-            </div>
-        </div>
+      <Box
+        className="flex flex-col min-h-screen"
+        sx={{ backgroundColor: '#f0f4f8' }}
+      >
+        <NavbarBaru />
+        <Box className="flex-grow flex items-center justify-center">
+          <Typography variant="h6" color="textSecondary">
+            Memuat profil...
+          </Typography>
+        </Box>
+        <SimpleFooter />
+      </Box>
     );
+  }
+
+  if (error) {
+    return (
+      <Box
+        className="flex flex-col min-h-screen"
+        sx={{ backgroundColor: '#f0f4f8' }}
+      >
+        <NavbarBaru />
+        <Box className="flex-grow flex items-center justify-center">
+          <Typography variant="h6" color="error">
+            {error}
+          </Typography>
+        </Box>
+        <SimpleFooter />
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <NavbarBaru />
+      <Container
+        component="main"
+        sx={{
+          flexGrow: 1,
+          mt: 12,
+          py: 4,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+          <Fade in timeout={600}>
+            <div className="flex flex-col md:flex-row flex-grow w-full gap-x-6">
+              {/* Left profile section with fixed width */}
+              <div className="w-full md:w-1/3 flex flex-col flex-shrink-0">
+              <Card
+                elevation={6}
+                sx={{
+                  borderRadius: 12,
+                  p: 4,
+                  bgcolor: 'white',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  flexGrow: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <Avatar
+                  src={profile.profile_image}
+                  alt={profile.nama}
+                  sx={{ width: 110, height: 110, mb: 2, boxShadow: 3 }}
+                />
+                <Box sx={{ width: '100%', mb: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <TextField
+                    label="Nama Pengguna"
+                    value={namaInput}
+                    onChange={handleNamaChange}
+                    fullWidth
+                    variant="outlined"
+                    InputProps={{
+                      readOnly: !editNama,
+                      startAdornment: !editNama ? (
+                        <InputAdornment position="start" sx={{ color: 'white' }}>
+                          <AccountCircleIcon sx={{ color: '#59B997', mr: 1 }} />
+                        </InputAdornment>
+                      ) : null,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleToggleEditNama}
+                            edge="end"
+                            color="primary"
+                            aria-label={editNama ? 'Simpan Nama' : 'Edit Nama'}
+                          >
+                            {editNama ? <SaveIcon /> : <EditIcon />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      bgcolor: editNama ? 'white' : '#f5f7fa',
+                      borderRadius: 2,
+                      color: editNama ? 'black' : 'black',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#59B997',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: editNama ? 'black' : '#59B997',
+                      },
+                      '& .MuiInputBase-input': {
+                        color: editNama ? 'black' : 'black',
+                      },
+                      transition: 'background-color 0.3s, color 0.3s, border-color 0.3s',
+                    }}
+                  />
+                  </Box>
+                  <TextField
+                    label="Email"
+                    value={profile.email}
+                    fullWidth
+                    variant="outlined"
+                    InputProps={{
+                      readOnly: true,
+                      startAdornment: (
+                        <InputAdornment position="start" sx={{ color: '#59B997' }}>
+                          <EmailIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      bgcolor: '#f5f7fa',
+                      borderRadius: 2,
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#59B997',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: '#59B997',
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'black',
+                      },
+                    }}
+                  />
+                  <Box sx={{ mt: 3 }}>
+                  <Box
+                    sx={{
+                      borderBottom: '2px solid rgba(0, 0, 0, 0.2)',
+                      mb: 3,
+                      width: '100%',
+                    }}
+                  />
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-start',
+                        gap: 1,
+                        mt: 2,
+                      }}
+                    >
+                    {navItems.map(({ label, icon, href }) => (
+                      <Button
+                        key={label}
+                        variant="outlined"
+                        startIcon={icon}
+                        href={href}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        gap: 1,
+                        width: '100%',
+                        color: '#59B997',
+                        borderColor: '#59B997',
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          backgroundColor: '#59B997',
+                          borderColor: '#59B997',
+                          color: '#fff',
+                          '& svg': {
+                            color: '#fff',
+                          },
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        },
+                      }}
+                      >
+                        {label}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outlined"
+                      startIcon={<LogoutIcon fontSize="large" color="error" />}
+                      onClick={handleLogout}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        gap: 1,
+                        width: '100%',
+                        color: theme.palette.error.main,
+                        borderColor: theme.palette.error.main,
+                        transition: 'color 0.3s, border-color 0.3s, background-color 0.3s, box-shadow 0.3s',
+                        '& svg': {
+                          transition: 'color 0.3s',
+                        },
+                        '&:hover': {
+                          backgroundColor: theme.palette.error.main,
+                          borderColor: theme.palette.error.dark,
+                          color: '#fff',
+                          '& svg': {
+                            color: '#fff',
+                          },
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        },
+                      }}
+                    >
+                      Keluar
+                    </Button>
+                  </Box>
+                  </Box>
+                </Box>
+              </Card>
+            </div>
+
+            {/* Right side with flex-1 to fill remaining space */}
+            <div className="flex flex-col flex-1 space-y-4">
+              <Card
+                elevation={6}
+                sx={{
+                  borderRadius: 12,
+                  p: 4,
+                  bgcolor: 'white',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flex: 1,
+                  width: '100%',
+                }}
+              >
+              <Typography
+                variant="h5"
+                gutterBottom
+                sx={{
+                  fontWeight: 'bold',
+                  color: '#59B997',
+                  mb: 3,
+                  transition: 'color 0.3s ease',
+                }}
+              >
+                Statistik Donasi
+              </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-around',
+                    width: '100%',
+                    mt: 2,
+                  }}
+                >
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      flex: 1,
+                      mr: 1,
+                      p: 2,
+                      borderRadius: 2,
+                      textAlign: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.3s',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                      },
+                    }}
+                  >
+                    <MonetizationOnIcon
+                      color="primary"
+                      sx={{ fontSize: 40, mb: 1 }}
+                    />
+                    <Typography variant="h6" fontWeight={700}>
+                      {profile.totalDonationsCount} Kali Donasi
+                    </Typography>
+                  </Card>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      flex: 1,
+                      ml: 1,
+                      p: 2,
+                      borderRadius: 2,
+                      textAlign: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.3s',
+                      '&:hover': {
+                        transform: 'scale(1.05)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                      },
+                    }}
+                  >
+                    <TrendingUpIcon
+                      color="primary"
+                      sx={{ fontSize: 40, mb: 1 }}
+                    />
+                    <Typography variant="h6" fontWeight={700}>
+                      Rp {profile.totalDonationsAmount.toLocaleString()}
+                    </Typography>
+                  </Card>
+                </Box>
+              </Card>
+
+              <Card
+                elevation={6}
+                sx={{
+                  borderRadius: 12,
+                  p: isMobile ? 5 : 8,
+                  bgcolor: 'white',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  height: '100%',
+                  flex: 1,
+                  width: '100%',
+                }}
+              >
+              <Typography
+                variant="h5"
+                gutterBottom
+                sx={{
+                  fontWeight: 'bold',
+                  color: '#59B997',
+                  mb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  transition: 'color 0.3s ease',
+                }}
+              >
+                <LockIcon sx={{ mr: 1 }} />
+                Ganti Password
+              </Typography>
+                <TextField
+                  label="Password Lama"
+                  name="currentPassword"
+                  type={showPassword.currentPassword ? 'text' : 'password'}
+                  value={passwords.currentPassword}
+                  onChange={handlePasswordChange}
+                  fullWidth
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => toggleShowPassword('currentPassword')}
+                          edge="end"
+                          aria-label="toggle password visibility"
+                        >
+                          {showPassword.currentPassword ? (
+                            <VisibilityOff />
+                          ) : (
+                            <Visibility />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <TextField
+                  label="Password Baru"
+                  name="newPassword"
+                  type={showPassword.newPassword ? 'text' : 'password'}
+                  value={passwords.newPassword}
+                  onChange={handlePasswordChange}
+                  fullWidth
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => toggleShowPassword('newPassword')}
+                          edge="end"
+                          aria-label="toggle password visibility"
+                        >
+                          {showPassword.newPassword ? (
+                            <VisibilityOff />
+                          ) : (
+                            <Visibility />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <TextField
+                  label="Konfirmasi Password Baru"
+                  name="confirmNewPassword"
+                  type={showPassword.confirmNewPassword ? 'text' : 'password'}
+                  value={passwords.confirmNewPassword}
+                  onChange={handlePasswordChange}
+                  fullWidth
+                  variant="outlined"
+                  sx={{ mb: 3 }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => toggleShowPassword('confirmNewPassword')}
+                          edge="end"
+                          aria-label="toggle password visibility"
+                        >
+                          {showPassword.confirmNewPassword ? (
+                            <VisibilityOff />
+                          ) : (
+                            <Visibility />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(0,128,0,0.3)',
+                    transition: 'background-color 0.3s',
+                    '&:hover': {
+                      backgroundColor: theme.palette.primary.dark,
+                    },
+                  }}
+                  onClick={handleSubmitPasswordChange}
+                >
+                  Perbarui Password
+                </Button>
+              </Card>
+            </div>
+          </div>
+        </Fade>
+      </Container>
+      <Box sx={{ zIndex: 10 }}>
+        <SimpleFooter />
+      </Box>
+    </Box>
+  );
 };
 
 export default DonaturUserProfile;
