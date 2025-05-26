@@ -204,3 +204,13 @@ Referensi Dokumen Pendukung
 SKPPL_MasjidTaqwa.md: Spesifikasi kebutuhan dan perancangan perangkat lunak yang menjelaskan kebutuhan fungsional, use case, dan struktur data.
 db_sidontaq.sql: Skema basis data yang mendefinisikan tabel donasi, pengguna, laporan keuangan, pengeluaran, proyek pembangunan, dan lainnya.
 Dokumen ini menjadi acuan dalam memahami hubungan antara halaman frontend dengan data dan fungsionalitas backend.
+23. Halaman DonaturUserProfile (resources/js/pages/DonaturUserProfile.jsx) Tampilan Halaman profil donatur yang menampilkan informasi pengguna, statistik donasi, dan fitur ganti password. Komponen yang Dipecah
+ProfileInfo (resources/js/components/DonaturUserProfile/ProfileInfo.jsx)
+DonationStats (resources/js/components/DonaturUserProfile/DonationStats.jsx)
+PasswordChange (resources/js/components/DonaturUserProfile/PasswordChange.jsx) Fungsionalitas
+Memuat data profil dan statistik donasi dari API.
+Mengelola pengeditan nama pengguna.
+Mengelola perubahan password dengan validasi.
+Menangani navigasi dan logout. Data yang Terlibat
+Data profil pengguna dan statistik donasi diambil dari API.
+Token otentikasi disimpan di localStorage.
