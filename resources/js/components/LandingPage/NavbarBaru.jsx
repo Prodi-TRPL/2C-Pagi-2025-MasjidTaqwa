@@ -39,7 +39,7 @@ export default function NavbarBaru() {
             <Link
               to="/loginbaru"
               aria-label="masuk"
-              className="bg-[#59B997] text-white z-[999] relative px-3 py-1.5 shadow rounded-xl flex-center border border-[#59B997] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#59B997]"
+              className="bg-[#94ae19] text-white z-[999] relative px-3 py-1.5 shadow rounded-xl flex-center border border-[#94ae19] transition-colors duration-300 ease-in-out hover:bg-white hover:text-[#94ae19]"
             >
               Masuk
             </Link>

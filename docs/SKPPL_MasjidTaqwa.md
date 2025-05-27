@@ -1067,3 +1067,36 @@ Berikut adalah daftar tabel utama dalam basis data Sistem Informasi Manajemen Do
 ## 7. Matriks Keterunutan
 
 *(Matriks Keterunutan placeholder)*
+
+## 8. Color Pallete
+Kategori	Peran	Kode Hex	Deskripsi
+🎯 Primary Brand Color	Primary	#59B997	Warna utama brand (toska segar)
+🎯	Primary Dark	#3B7F6D	Untuk hover tombol, header, footer
+🎯	Primary Light	#8CD2B2	Untuk elemen ringan, icon background
+🎯	Primary Extra Light	#DFF3ED	Latar lembut (misalnya form section)
+
+| 📘 Secondary (Aksen) | Secondary | #407C87 | Biru kehijauan untuk keseimbangan |
+| 📘 | Secondary Light | #89C0C8 | Background badge/icon |
+| 📘 | Secondary Soft | #D6ECEF | Alternatif soft section background |
+
+| ⚪ Neutral (Netral) | Background | #F5FBF8 | Latar utama yang lembut |
+| ⚪ | Surface | #FFFFFF | Warna putih bersih |
+| ⚪ | Border | #D9E2DC | Untuk garis batas ringan |
+| ⚪ | Divider | #B0C4BA | Garis pemisah konten ringan |
+
+| 🔤 Text (Teks) | Text Primary | #222831 | Hitam modern, cocok untuk teks utama |
+| 🔤 | Text Secondary | #4E5D58 | Untuk deskripsi/teks pendukung |
+| 🔤 | Text Disabled | #A0AFA9 | Placeholder dan teks nonaktif |
+
+| ✨ Aksen & Notifikasi | Accent / Highlight | #F6C453 | Emas pastel untuk CTA penting |
+| ✨ | Error | #D94B4B | Merah untuk pesan error |
+| ✨ | Success | #4CAF50 | Hijau untuk sukses/berhasil |
+| ✨ | Warning | #F7B801 | Kuning untuk peringatan |
+
+
+## 9. Font Pairing - Elegan dan Mudah Dibaca
+| Jenis Teks      | Font Pilihan                                                         | Cadangan     |
+| --------------- | -------------------------------------------------------------------- | ------------ |
+| **Heading**     | [Poppins](https://fonts.google.com/specimen/Poppins) – Semibold/Bold | `sans-serif` |
+| **Body Text**   | [Open Sans](https://fonts.google.com/specimen/Open+Sans) – Regular   | `sans-serif` |
+| **Alternative** | Lato, Nunito Sans                                                    |              |

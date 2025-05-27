@@ -1,19 +1,19 @@
 import React, { useEffect } from "react";
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMosque } from '@fortawesome/free-solid-svg-icons';
-import {faHandHoldingDollar} from '@fortawesome/free-solid-svg-icons';
-import {faMoneyCheck} from '@fortawesome/free-solid-svg-icons';
-import {faHelmetSafety} from '@fortawesome/free-solid-svg-icons';
+import AOS from "aos";
+import "aos/dist/aos.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMosque } from "@fortawesome/free-solid-svg-icons";
+import { faHandHoldingDollar } from "@fortawesome/free-solid-svg-icons";
+import { faMoneyCheck } from "@fortawesome/free-solid-svg-icons";
+import { faHelmetSafety } from "@fortawesome/free-solid-svg-icons";
 
 const HomePage = () => {
   useEffect(() => {
     AOS.init({
       duration: 800,
-      easing: 'ease-in-out',
-      once: true,
+      easing: "ease-in-out",
     });
+    AOS.refresh();
   }, []);
 
   const cards = [
@@ -42,14 +42,14 @@ const HomePage = () => {
   return (
     <div className="w-full">
       {/* Section: Keunggulan SIDONTAQ */}
-      <div id="keunggulan" className="w-full py-16 bg-gray-50">
-<div className="max-w-7xl mx-auto px-4 lg:px-15">
+      <div id="keunggulan" className="w-full py-16 bg-gray-50 font-sans text-[#222831]">
+        <div className="max-w-7xl mx-auto px-4 lg:px-15">
           {/* Judul */}
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#59B997] font-poppins">
               Keunggulan SIDONTAQ
             </h2>
-            <p className="text-gray-600 mt-2">
+            <p className="text-[#4E5D58] mt-2 font-open-sans">
               Donasi lebih mudah, transparan, dan aman untuk mendukung pembangunan Masjid Taqwa Muhammadiyah.
             </p>
           </div>
@@ -64,12 +64,12 @@ const HomePage = () => {
                 className="group bg-white rounded-xl shadow-md p-6 flex flex-col items-center text-center transition-transform hover:scale-105 duration-300"
               >
                 <div className="mb-4">
-                  <div className="w-14 h-14 flex items-center justify-center rounded-full bg-green-600 text-white text-2xl transition-all duration-300 ease-in-out group-hover:bg-white group-hover:text-green-600 group-hover:border group-hover:border-green-600">
+                  <div className="w-14 h-14 flex items-center justify-center rounded-full bg-[#59B997] text-white text-2xl transition-all duration-300 ease-in-out group-hover:bg-white group-hover:text-[#59B997] group-hover:border group-hover:border-[#59B997]">
                     {item.icon}
                   </div>
                 </div>
-                <p className="font-semibold text-gray-700">{item.title}</p>
-                <p className="text-sm text-gray-500 mt-1">{item.desc}</p>
+                <p className="font-semibold text-[#222831]">{item.title}</p>
+                <p className="text-sm text-[#4E5D58] mt-1">{item.desc}</p>
               </div>
             ))}
           </div>
