@@ -42,8 +42,10 @@ const navItems = [
         name: "Tables",
         icon: <TableIcon />,
         subItems: [
-            { name: "Pengeluaran", path: "/dashboardhome/pengeluaran" }
-        ],
+  { name: "Pengeluaran", path: "/dashboardhome/pengeluaran" },
+  { name: "kategoriPengeluaran", path: "/dashboardhome/KategoriPengeluaran" }
+],
+
     },
     {
         name: "Pages",

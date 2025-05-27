@@ -8,7 +8,7 @@ use App\Http\Controllers\DonasiController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PengeluaranController;
-
+use App\Http\Controllers\KategoriPengeluaranController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +47,11 @@ Route::post('/pengeluaran', [PengeluaranController::class, 'store']); // Simpan 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::apiResource('Pengeluaran', PengeluaranController::class);
 
+    // ========================
+// API CRUD Kategori Pengeluaran
+// ========================
+Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
+
+
 });
+

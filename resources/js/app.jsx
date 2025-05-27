@@ -16,7 +16,8 @@ import ScrollToTop from './components/LandingPage/ScrollToTop';
 import DonaturUserProfile from './pages/DonaturUserProfile';
 import DonaturUserNotifikasi from './pages/DonaturUserNotifikasi';
 import DonaturUserRiwayatTransaksi from './pages/DonaturUserRiwayatTransaksi';
-import Pengeluaran from './pages/dashboard/DashboardAdmin/Pengeluaran'; 
+import Pengeluaran from './pages/dashboard/DashboardAdmin/Pengeluaran';
+import KategoriPengeluaran from './pages/dashboard/DashboardAdmin/KategoriPengeluaran'
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
 import AppLayout from './layout/AppLayout'; // Dashboard layout component
@@ -90,6 +91,8 @@ const AppRoutes = () => {
               {/* Add other dashboard routes here */}
               <Route path="notifikasi" element={<DonaturUserNotifikasi />} />
               <Route path="Pengeluaran" element={<Pengeluaran />} />
+               <Route path="KategoriPengeluaran" element={<KategoriPengeluaran />} />
+              
             </Route>
             <Route path="/notifikasi" element={<DonaturUserNotifikasi />} />
           </Routes>

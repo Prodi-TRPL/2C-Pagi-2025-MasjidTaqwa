@@ -76,7 +76,7 @@ export default function DesktopMenu({ menu }) {
       onHoverEnd={toggleHoverMenu}
       key={menu.name}
     >
-      <span className="flex-center gap-1 cursor-pointer px-3 py-1 rounded-xl text-black transition-colors duration-300 ease-in-out hover:bg-[#94ae19] hover:text-white">
+      <span className="flex-center gap-1 cursor-pointer px-3 py-1 rounded-xl text-black transition-colors duration-300 ease-in-out hover:bg-[#59B997] hover:text-white">
         {menu.link ? (
           menu.link.includes('#') ? (
             <HashLink
@@ -122,8 +122,8 @@ export default function DesktopMenu({ menu }) {
                       {menu?.subMenuHeading?.[i]}
                     </p>
                   )}
-                  <div className="flex-center gap-x-4 group/menubox cursor-pointer hover:text-[#94ae19]">
-                    <div className="bg-gray-200 w-fit p-2 rounded-md group-hover/menubox:bg-[#94ae19] group-hover/menubox:text-white duration-300">
+                  <div className="flex-center gap-x-4 group/menubox cursor-pointer hover:text-[#59B997]">
+                    <div className="bg-gray-200 w-fit p-2 rounded-md group-hover/menubox:bg-[#59B997] group-hover/menubox:text-white duration-300">
                       {submenu.icon ? <submenu.icon /> : null}
                     </div>
                     <div>
@@ -133,14 +133,14 @@ export default function DesktopMenu({ menu }) {
                             <HashLink
                               smooth
                               to={submenu.link}
-                              className="hover:text-[#94ae19]"
+                              className="hover:text-[#59B997]"
                               scroll={el => scrollWithOffset(el)}
                               onClick={(e) => handleHashLinkClick(e, submenu.link)}
                             >
                               {submenu.name}
                             </HashLink>
                           ) : (
-                            <Link to={submenu.link} className="hover:text-[#94ae19]">{submenu.name}</Link>
+                            <Link to={submenu.link} className="hover:text-[#59B997]">{submenu.name}</Link>
                           )
                         ) : (
                           submenu.name
