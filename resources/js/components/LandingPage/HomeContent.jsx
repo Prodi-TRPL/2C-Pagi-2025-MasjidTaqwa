@@ -24,7 +24,7 @@ const HomeContent = () => {
                     <p className="text-gray-600 mb-6">
                     Dengan sistem donasi yang transparan dan aman, setiap rupiah yang Anda berikan akan langsung mendukung pembangunan masjid dan pelayanan terbaik untuk jamaah.
                     </p>
-                    <a href="#" className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition duration-300">
+                    <a href="Donasi" className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition duration-300">
                         Donasi Sekarang
                     </a>
                 </div>

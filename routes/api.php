@@ -21,6 +21,8 @@ use App\Http\Controllers\KategoriPengeluaranController;
 |
 */
 
+// routes/api.php
+Route::post('/donasi', [DonasiController::class, 'prosesDonasi']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

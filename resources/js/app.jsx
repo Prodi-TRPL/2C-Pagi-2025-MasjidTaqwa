@@ -17,6 +17,7 @@ import DonaturUserProfile from './pages/DonaturUserProfile';
 import DonaturUserNotifikasi from './pages/DonaturUserNotifikasi';
 import DonaturUserRiwayatTransaksi from './pages/DonaturUserRiwayatTransaksi';
 import Pengeluaran from './pages/dashboard/DashboardAdmin/Pengeluaran';
+import DonasiSekarang from './pages/DonasiSekarang';
 import KategoriPengeluaran from './pages/dashboard/DashboardAdmin/KategoriPengeluaran'
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
@@ -63,6 +64,7 @@ const AppRoutes = () => {
             {/* Public routes */}
             <Route path="/" element={<Beranda />} />
             <Route path="/hubungi" element={<Hubungi />} />
+            <Route path="/Donasi" element={<DonasiSekarang />} />
             <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
             <Route path="/profile" element={<DonaturUserProfile />} />

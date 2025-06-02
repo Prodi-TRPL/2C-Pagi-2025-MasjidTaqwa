@@ -10,5 +10,10 @@
 </head>
 <body>
     <div id="app"></div>
+
+    <!-- index.html dalam folder public -->
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" 
+        data-client-key="ISI_DENGAN_CLIENT_KEY_MU"></script>
+
 </body>
 </html>
