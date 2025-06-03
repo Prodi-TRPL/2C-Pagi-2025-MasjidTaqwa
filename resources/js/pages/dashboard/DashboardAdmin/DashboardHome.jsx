@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import MonthlySalesChart from "../../../components/ecommerce/MonthlySalesChart";
+import MonthlySalesChart from "../../../components/ecommerce/MonthlyReportChart";
 import EcommerceMetrics from "../../../components/ecommerce/EcommerceMetrics";
 import WelcomeCard from "../../../components/ecommerce/WelcomeCard";
 import MetrikPendapatan from "../../../components/ecommerce/MetrikPendapatan";

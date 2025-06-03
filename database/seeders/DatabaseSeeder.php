@@ -18,3 +18,10 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 }
+
+// database/seeders/DatabaseSeeder.php
+public function run(): void {
+    $this->call([
+        ReportAmounSeeder::class,
+    ]);
+}
