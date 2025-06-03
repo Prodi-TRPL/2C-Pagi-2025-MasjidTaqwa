@@ -2,9 +2,6 @@ import React, { useState } from "react";
 import axios from "axios";
 import 'aos/dist/aos.css';
 
-
-
-
 const DonationFirstPage = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -23,11 +20,9 @@ const DonationFirstPage = () => {
     setLoading(true);
 
     try {
-      // Kirim data form ke Laravel API
       const response = await axios.post("/api/donasi", formData);
       const { snap_token } = response.data;
 
-      // Jalankan Midtrans Snap di React
       window.snap.pay(snap_token, {
         onSuccess: function(result) {
           alert("Pembayaran berhasil!");
@@ -52,52 +47,54 @@ const DonationFirstPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-10 px-4">
-      <div className="max-w-md w-full p-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-700">Form Donasi</h2>
+    <div className="min-h-full flex items-center justify-center bg-gradient-to-b from-white to-gray-100 px-4 py-12">
+      <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 transition-all">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
+          Donasi Sekarang
+        </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-12">
           <div>
-            <label className="block text-gray-600">Nama:</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
               required
+              className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#59B997] transition"
             />
           </div>
 
           <div>
-            <label className="block text-gray-600">Email:</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email Aktif</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
               required
+              className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#59B997] transition"
             />
           </div>
 
           <div>
-            <label className="block text-gray-600">Jumlah Donasi (Rp):</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah Donasi (Rp)</label>
             <input
               type="number"
               name="amount"
               value={formData.amount}
               onChange={handleChange}
-              className="w-full p-2 border rounded"
               required
+              className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#59B997] transition"
             />
           </div>
 
-          <div className="text-center">
+          <div className="pt-4">
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#59B997] text-white px-4 py-2 rounded hover:bg-[#47a07f] disabled:opacity-50"
+              className="w-full bg-[#59B997] text-white font-semibold py-2 rounded-lg hover:bg-[#47a07f] transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Memproses..." : "Donasi Sekarang"}
             </button>
