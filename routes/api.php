@@ -57,3 +57,8 @@ Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
 
 });
 
+use App\Http\Controllers\DonationHistoryController;
+
+Route::get('/donations', [DonationHistoryController::class, 'index']);
+
+
