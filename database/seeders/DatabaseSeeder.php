@@ -15,13 +15,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminUserSeeder::class,
             DonorsUserSeeder::class,
+            ReportAmountSeeder::class,
         ]);
     }
-}
-
-// database/seeders/DatabaseSeeder.php
-public function run(): void {
-    $this->call([
-        ReportAmounSeeder::class,
-    ]);
 }

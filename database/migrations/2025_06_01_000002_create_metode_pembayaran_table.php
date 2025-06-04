@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('donation_histories', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::create('metode_pembayaran', function (Blueprint $table) {
+            $table->uuid('metode_pembayaran_id')->primary();
+            $table->string('nama_metode', 50)->nullable();
         });
     }
 
@@ -22,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('donation_histories');
+        Schema::dropIfExists('metode_pembayaran');
     }
-};
+}; 
