@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation } from "react-router-dom";
 import { useSidebar } from "../context/SidebarContext";
 
 // Import icons from React Icons library
@@ -27,12 +27,12 @@ const navItems = [
     {
         icon: <FaHandHoldingHeart className="w-5 h-5" />,
         name: "Data Donasi",
-        path: "/donasi",
+        path: "/dashboardhome/datadonasi",
     },
     {
         icon: <FaBuilding className="w-5 h-5" />,
         name: "Proyek Pembangunan",
-        path: "/proyek",
+        path: "/dashboardhome/proyek-pembangunan",
     },
     {
         icon: <FaMoneyBillWave className="w-5 h-5" />,
@@ -42,22 +42,22 @@ const navItems = [
     {
         icon: <BsFileEarmarkBarGraph className="w-5 h-5" />,
         name: "Laporan Keuangan",
-        path: "/laporan",
+        path: "/dashboardhome/laporan-keuangan",
     },
     {
         icon: <MdCategory className="w-5 h-5" />,
         name: "Kategori Pengeluaran",
-        path: "/dashboardhome/KategoriPengeluaran",
+        path: "/dashboardhome/kategoripengaluaran",
     },
     {
         icon: <MdPayment className="w-5 h-5" />,
         name: "Metode Pembayaran",
-        path: "/metode-pembayaran",
+        path: "/dashboardhome/metode-pembayaran",
     },
     {
         icon: <MdNotifications className="w-5 h-5" />,
         name: "Notifikasi",
-        path: "/notifikasi",
+        path: "/dashboardhome/notifikasi",
     },
 ];
 
