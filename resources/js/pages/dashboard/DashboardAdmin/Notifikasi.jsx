@@ -3,7 +3,7 @@ import React from "react";
 const Notifikasi = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Notifikasi</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4">Notifikasi testing</h1>
       <div className="p-8 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
