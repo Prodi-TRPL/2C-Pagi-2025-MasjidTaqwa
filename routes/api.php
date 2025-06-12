@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminGraphAmountController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DonationController;
@@ -57,3 +58,10 @@ Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
 
 });
 
+use App\Http\Controllers\DonationHistoryController;
+
+Route::get('/donations', [DonationHistoryController::class, 'index']);
+
+
+// routes/api.php
+Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyReport']);
