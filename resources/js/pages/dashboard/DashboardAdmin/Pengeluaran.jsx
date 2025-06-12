@@ -132,7 +132,7 @@ const Pengeluaran = () => {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Judul */}
       <div className="bg-white shadow rounded-xl p-8 mb-6">
         <h1 className="text-2xl font-bold mb-1">Pengeluaran</h1>
