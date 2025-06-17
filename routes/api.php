@@ -65,3 +65,8 @@ Route::get('/donations', [DonationHistoryController::class, 'index']);
 
 // routes/api.php
 Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyReport']);
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/reset-password-langsung', [AuthController::class, 'resetPasswordLangsung']);
+
+
