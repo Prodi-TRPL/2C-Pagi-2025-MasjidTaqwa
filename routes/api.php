@@ -42,6 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/donatur/profile', [ProfileController::class, 'getProfile']);
+    Route::post('/donatur/change-password', [ProfileController::class, 'updatePassword']);
+
+    // Route CRUD ProyekPembangunan
+    Route::apiResource('ProyekPembangunan', ProyekPembangunanController::class);
 });
 // PENGELUARAN - SEMENTARA TANPA LOGIN AGAR BISA TESTING
 Route::post('/pengeluaran', [PengeluaranController::class, 'store']); // Simpan pengeluaran
