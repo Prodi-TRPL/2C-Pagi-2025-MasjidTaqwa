@@ -10,6 +10,7 @@ use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\KategoriPengeluaranController;
+use App\Http\Controllers\LaporanKeuanganController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,3 +66,7 @@ Route::get('/donations', [DonationHistoryController::class, 'index']);
 
 // routes/api.php
 Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyReport']);
+
+// Laporan Keuangan routes
+Route::get('/laporan-keuangan', [LaporanKeuanganController::class, 'index']);
+Route::post('/laporan-keuangan', [LaporanKeuanganController::class, 'store']);
