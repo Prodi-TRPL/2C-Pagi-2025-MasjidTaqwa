@@ -51,43 +51,12 @@ class NotifikasiController extends Controller
     /**
      * Mark a notification as read.
      */
-    public function markAsRead($id)
-    {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $notification = Notifikasi::where('notifikasi_id', $id)
-            ->where('pengguna_id', $user->pengguna_id)
-            ->first();
-
-        if (!$notification) {
-            return response()->json(['message' => 'Notification not found'], 404);
-        }
-
-        $notification->status = 'dibaca';
-        $notification->save();
-
-        return response()->json(['message' => 'Notification marked as read']);
-    }
+ 
 
     /**
      * Mark all notifications as read.
      */
-    public function markAllAsRead()
-    {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
 
-        Notifikasi::where('pengguna_id', $user->pengguna_id)
-            ->where('status', 'terkirim')
-            ->update(['status' => 'dibaca']);
-
-        return response()->json(['message' => 'All notifications marked as read']);
-    }
 
     /**
      * Delete a notification.
