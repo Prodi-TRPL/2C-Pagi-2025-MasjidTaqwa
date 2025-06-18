@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers;
 use App\Models\DonationHistory;
 
-class DonationController extends Controller
+class DonationHistoryController extends Controller
 {
     public function index()
     {

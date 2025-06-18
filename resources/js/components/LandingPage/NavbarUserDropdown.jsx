@@ -8,27 +8,40 @@ import Swal from "sweetalert2";
 
 export default function NavbarUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [role, setRole] = useState(null);
-  const [user, setUser] = useState({ name: "", email: "" });
+  const [role, setRole] = useState("donatur"); // default ke donatur
+  const [user, setUser] = useState({ name: "User", email: "user@example.com" });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
       try {
-        const parsedUser = JSON.parse(userData);
-        if (parsedUser.role) {
-          setRole(parsedUser.role);
-        }
-        setUser({
-          name: parsedUser.name || "",
-          email: parsedUser.email || "",
+        const res = await fetch("/api/donatur/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-      } catch (error) {
-        console.error("Failed to parse user data from localStorage", error);
+
+        if (!res.ok) throw new Error("Gagal mengambil profil");
+
+        const data = await res.json();
+
+        setUser({
+          name: data.nama || "User",
+          email: data.email || "user@example.com",
+        });
+
+        setRole("donatur"); // kamu bisa sesuaikan jika ingin dinamis
+      } catch (err) {
+        console.error("Gagal ambil user:", err);
       }
-    }
+    };
+
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -49,6 +62,7 @@ export default function NavbarUserDropdown() {
   async function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+
     const result = await Swal.fire({
       icon: "success",
       title: "Logout berhasil!",
@@ -64,9 +78,8 @@ export default function NavbarUserDropdown() {
         backdrop: "bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full",
       },
     });
-    if (result.isDismissed) {
-      navigate("/", { replace: true });
-    } else {
+
+    if (result.isDismissed || result.isConfirmed) {
       navigate("/", { replace: true });
     }
   }
@@ -82,12 +95,10 @@ export default function NavbarUserDropdown() {
           <img src="/img/user/admin.jpeg" alt="User avatar" />
         </span>
         <span className="hidden sm:block mr-1 font-medium text-theme-sm">
-          {user.name || "User"}
+          {user.name}
         </span>
         <svg
-          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           width="18"
           height="20"
           viewBox="0 0 18 20"
@@ -111,107 +122,38 @@ export default function NavbarUserDropdown() {
       >
         <div className="mb-2 px-3">
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user.name || "User"}
+            {user.name}
           </span>
           <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user.email || "user@example.com"}
+            {user.email}
           </span>
         </div>
-        <ul className="flex flex-col gap-1">
-          {role === "admin" && (
-            <>
-              <li>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/profile"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faUser} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-                  Profile
-                </DropdownItem>
-              </li>
-              <li>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/notifikasi"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faBell} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-                  Notifikasi
-                </DropdownItem>
-              </li>
-              <li>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/dashboardhome"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faTachometerAlt} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-                  Dashboard
-                </DropdownItem>
-              </li>
-              <li>
-                <DropdownItem
-                  onItemClick={() => {
-                    setIsLoggingOut(true);
-                    closeDropdown();
-                  }}
-                  tag="button"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faRightFromBracket} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-                  Keluar
-                </DropdownItem>
-              </li>
-            </>
-          )}
 
+        <ul className="flex flex-col gap-1">
+          {/* Donatur menu */}
           {role === "donatur" && (
             <>
               <li>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/profile"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faUser} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                <DropdownItem onItemClick={closeDropdown} tag="a" to="/profile" className="...">
+                  <FontAwesomeIcon icon={faUser} className="..." />
                   Profile
                 </DropdownItem>
               </li>
               <li>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/notifikasi"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faBell} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                <DropdownItem onItemClick={closeDropdown} tag="a" to="/notifikasi" className="...">
+                  <FontAwesomeIcon icon={faBell} className="..." />
                   Notifikasi
                 </DropdownItem>
               </li>
               <li>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/riwayat-transaksi"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faHistory} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                <DropdownItem onItemClick={closeDropdown} tag="a" to="/riwayat-transaksi" className="...">
+                  <FontAwesomeIcon icon={faHistory} className="..." />
                   Riwayat Transaksi
                 </DropdownItem>
               </li>
               <li>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  tag="a"
-                  to="/progress-pembangunan"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                >
-                  <FontAwesomeIcon icon={faTachometerAlt} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                <DropdownItem onItemClick={closeDropdown} tag="a" to="/progress-pembangunan" className="...">
+                  <FontAwesomeIcon icon={faTachometerAlt} className="..." />
                   Progress Pembangunan
                 </DropdownItem>
               </li>
@@ -222,9 +164,9 @@ export default function NavbarUserDropdown() {
                     closeDropdown();
                   }}
                   tag="button"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                  className="..."
                 >
-                  <FontAwesomeIcon icon={faRightFromBracket} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  <FontAwesomeIcon icon={faRightFromBracket} className="..." />
                   Keluar
                 </DropdownItem>
               </li>

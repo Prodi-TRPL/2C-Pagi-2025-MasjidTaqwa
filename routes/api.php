@@ -42,7 +42,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/donatur/profile', [ProfileController::class, 'getProfile']);
+    Route::put('/donatur/profile', [ProfileController::class, 'update']); //
 });
+
 // PENGELUARAN - SEMENTARA TANPA LOGIN AGAR BISA TESTING
 Route::post('/pengeluaran', [PengeluaranController::class, 'store']); // Simpan pengeluaran
 
@@ -65,3 +67,8 @@ Route::get('/donations', [DonationHistoryController::class, 'index']);
 
 // routes/api.php
 Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyReport']);
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/reset-password-langsung', [AuthController::class, 'resetPasswordLangsung']);
+
+
