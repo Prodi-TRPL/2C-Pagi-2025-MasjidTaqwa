@@ -531,7 +531,7 @@ const PasswordChange = ({
             boxShadow: '0 6px 20px rgba(89, 185, 151, 0.6)',
             transform: 'translateY(-2px)',
           },
-          alignSelf: isMobile ? 'stretch' : 'flex-start',
+          alignSelf: isMobile ? 'stretch' : 'flex-end',
         }}
       >
         Ubah Password
