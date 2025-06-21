@@ -16,6 +16,7 @@ import ScrollToTop from './components/LandingPage/ScrollToTop';
 import DonaturUserProfile from './pages/DonaturUserProfile';
 import DonaturUserNotifikasi from './pages/DonaturUserNotifikasi';
 import DonaturUserRiwayatTransaksi from './pages/DonaturUserRiwayatTransaksi';
+import DonaturUserPembangunan from './pages/DonaturUserPembangunan';
 import Pengeluaran from './pages/dashboard/DashboardAdmin/Pengeluaran';
 import DonasiSekarang from './pages/DonasiSekarang';
 import KategoriPengeluaran from './pages/dashboard/DashboardAdmin/KategoriPengeluaran';
@@ -74,6 +75,7 @@ const AppRoutes = () => {
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
             <Route path="/profile" element={<DonaturUserProfile />} />
             <Route path="/riwayat-transaksi" element={<DonaturUserRiwayatTransaksi />} />
+            <Route path="/pembangunan" element={<DonaturUserPembangunan />} />
             <Route
               path="/loginbaru"
               element={
