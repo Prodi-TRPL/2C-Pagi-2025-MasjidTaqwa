@@ -10,14 +10,12 @@ import {
   Typography, 
   TextField, 
   MenuItem, 
-  Fade,
   Zoom,
   Paper,
   Skeleton,
   IconButton,
   Tooltip,
   Chip,
-  Divider,
   Button,
   InputAdornment,
   useMediaQuery,
@@ -31,11 +29,12 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SortIcon from '@mui/icons-material/Sort';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import Badge from "../components/ui/badge/Badge";
+import Badge from "../components/ui/badge/Badge"; // Assuming this is your custom Badge component
 import axios from "axios";
-import { format } from "date-fns";
+import { format, isToday, isYesterday } from "date-fns";
 import { id } from "date-fns/locale";
 
+// Configuration for different notification types
 const notificationTypeConfig = {
   target_tercapai: {
     label: "Target Tercapai",
@@ -57,10 +56,10 @@ const notificationTypeConfig = {
     icon: <AttachMoneyIcon fontSize="small" />,
     bgColor: "rgba(255, 152, 0, 0.1)",
     borderColor: "rgba(255, 152, 0, 0.3)",
-  }
+  },
 };
 
-// Notification card skeleton loader
+// Notification card skeleton loader component
 const NotificationSkeleton = ({ count = 3 }) => (
   <Grid container spacing={2}>
     {[...Array(count)].map((_, index) => (
@@ -79,7 +78,7 @@ const NotificationSkeleton = ({ count = 3 }) => (
   </Grid>
 );
 
-// Empty state component
+// Empty state component for when there are no notifications
 const EmptyState = ({ filterType, onReset }) => (
   <Box 
     sx={{ 
@@ -95,7 +94,7 @@ const EmptyState = ({ filterType, onReset }) => (
       <NotificationsIcon 
         sx={{ 
           fontSize: 80, 
-          color: 'rgba(89, 185, 151, 0.2)',
+          color: 'rgba(89, 185, 151, 0.2)', // Light green color from your design
           mb: 2,
         }} 
       />
@@ -140,15 +139,24 @@ const DonaturUserNotifikasi = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortOrder, setSortOrder] = useState("desc");
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0); // Key to force re-fetch
 
+  // Function to fetch notifications from the API
   const fetchNotifications = async (type = "") => {
     setLoading(true);
     setError(null);
     try {
       const params = {};
       if (type) params.tipe = type;
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token"); // Get authentication token
+      
+      if (!token) {
+        setError("Autentikasi diperlukan. Silakan login kembali.");
+        setNotifications([]);
+        setLoading(false);
+        return;
+      }
+
       const response = await axios.get("/api/notifikasi", {
         params,
         headers: {
@@ -158,18 +166,96 @@ const DonaturUserNotifikasi = () => {
       setNotifications(response.data);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
-      setError("Gagal memuat notifikasi. Silakan coba lagi.");
+      if (error.response) {
+        if (error.response.status === 401) {
+          setError("Sesi Anda telah berakhir atau tidak valid. Silakan login kembali.");
+          // Consider redirecting to login page here if authentication fails
+        } else if (error.response.data && error.response.data.message) {
+          setError(`Gagal memuat notifikasi: ${error.response.data.message}`);
+        } else {
+          setError("Gagal memuat notifikasi. Terjadi masalah pada server.");
+        }
+      } else if (error.request) {
+        setError("Gagal memuat notifikasi. Tidak ada respon dari server.");
+      } else {
+        setError("Gagal memuat notifikasi. Silakan coba lagi.");
+      }
       setNotifications([]);
     } finally {
       setTimeout(() => {
         setLoading(false);
-      }, 600); // Slight delay to show loading state
+      }, 600); // Simulate network latency for skeleton loader visibility
     }
   };
 
+  // --- MOCK DATA FOR DEVELOPMENT (REMOVE IN PRODUCTION) ---
+  // This useEffect will run when the component mounts and set mock data.
+  // Comment out or remove this block when you are ready to use your actual API.
   useEffect(() => {
-    fetchNotifications(filterType);
-  }, [filterType, refreshKey]);
+    const mockNotifications = [
+      {
+        notifikasi_id: "notif_001",
+        tipe: "donasi_diterima",
+        judul: "Donasi Anda Berhasil Diterima!",
+        pesan: "Terima kasih atas donasi sebesar Rp 500.000 untuk pembangunan Masjid Agung. Semoga menjadi amal jariyah.",
+        created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
+      },
+      {
+        notifikasi_id: "notif_002",
+        tipe: "progres_pembangunan",
+        judul: "Update Progres Pembangunan Masjid",
+        pesan: "Pembangunan Masjid Baiturrahman telah mencapai 75%. Saat ini sedang dalam tahap pemasangan atap dan jendela. Terima kasih atas dukungan Anda!",
+        created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2 hours ago
+      },
+      {
+        notifikasi_id: "notif_003",
+        tipe: "target_tercapai",
+        judul: "Selamat! Target Donasi Tercapai",
+        pesan: "Alhamdulillah, target donasi untuk Masjid Nurul Iman sebesar Rp 1.000.000.000 telah tercapai. Terima kasih kepada seluruh donatur!",
+        created_at: new Date(Date.now() - 26 * 3600 * 1000).toISOString(), // Yesterday
+      },
+      {
+        notifikasi_id: "notif_004",
+        tipe: "donasi_diterima",
+        judul: "Donasi Anda Telah Terkonfirmasi",
+        pesan: "Donasi Anda sebesar Rp 100.000 untuk Masjid Al-Ikhlas sudah kami terima dan akan segera diproses. Jazakallah Khairan.",
+        created_at: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(), // 3 days ago
+      },
+      {
+        notifikasi_id: "notif_005",
+        tipe: "progres_pembangunan",
+        judul: "Fondasi Masjid Sudah Selesai",
+        pesan: "Tahap fondasi pembangunan Masjid Raya telah rampung. Pengerjaan selanjutnya adalah pembangunan dinding. Mohon doa dan dukungannya.",
+        created_at: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(), // 7 days ago
+      },
+      {
+        notifikasi_id: "notif_006",
+        tipe: "donasi_diterima",
+        judul: "Penerimaan Donasi Cash",
+        pesan: "Kami telah menerima donasi tunai dari Anda sebesar Rp 75.000. Catatan donasi Anda telah diperbarui.",
+        created_at: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(), // 10 days ago
+      },
+    ];
+
+    // Simulate API call delay
+    setLoading(true);
+    setTimeout(() => {
+      // Apply filter to mock data
+      const filteredMock = filterType 
+        ? mockNotifications.filter(notif => notif.tipe === filterType)
+        : mockNotifications;
+      setNotifications(filteredMock);
+      setLoading(false);
+      setError(null); // Clear any previous errors when mock data is loaded
+    }, 1000); // 1 second delay for mock data
+  }, [filterType, refreshKey]); // Re-run when filterType or refreshKey changes
+  // --- END MOCK DATA BLOCK ---
+
+  // Actual API call useEffect (Uncomment and ensure token is handled properly)
+  // useEffect(() => {
+  //   fetchNotifications(filterType);
+  // }, [filterType, refreshKey]); 
+
 
   const handleFilterChange = (event) => {
     setFilterType(event.target.value);
@@ -187,30 +273,23 @@ const DonaturUserNotifikasi = () => {
     setRefreshKey(prevKey => prevKey + 1);
   };
 
+  // Formats date/time string to be human-readable, with "Hari ini" and "Kemarin"
   const formatDateTime = (dateString) => {
     try {
       const date = new Date(dateString);
-      // Format the date for today/yesterday/date
-      const today = new Date();
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      let dateText = format(date, "dd MMMM yyyy", { locale: id });
-      
-      if (date.toDateString() === today.toDateString()) {
-        dateText = "Hari ini";
-      } else if (date.toDateString() === yesterday.toDateString()) {
-        dateText = "Kemarin";
+      if (isToday(date)) {
+        return `Hari ini, ${format(date, "HH:mm", { locale: id })}`;
+      } else if (isYesterday(date)) {
+        return `Kemarin, ${format(date, "HH:mm", { locale: id })}`;
       }
-      
-      // Add the time
-      const timeText = format(date, "HH:mm", { locale: id });
-      return `${dateText}, ${timeText}`;
-    } catch {
+      return format(date, "dd MMMM yyyy, HH:mm", { locale: id }); // Correct format for full date
+    } catch (e) {
+      console.error("Error formatting date:", e);
       return dateString;
     }
   };
 
+  // Provides relative time (e.g., "5 menit yang lalu", "Kemarin")
   const getRelativeTime = (dateString) => {
     try {
       const date = new Date(dateString);
@@ -222,15 +301,16 @@ const DonaturUserNotifikasi = () => {
       } else if (diffInSeconds < 3600) {
         const minutes = Math.floor(diffInSeconds / 60);
         return `${minutes} menit yang lalu`;
-      } else if (diffInSeconds < 86400) {
+      } else if (diffInSeconds < 86400) { 
         const hours = Math.floor(diffInSeconds / 3600);
         return `${hours} jam yang lalu`;
-      } else if (diffInSeconds < 172800) {
+      } else if (diffInSeconds < 172800) { 
         return "Kemarin";
       } else {
-        return formatDateTime(dateString);
+        return formatDateTime(dateString); 
       }
-    } catch {
+    } catch (e) {
+      console.error("Error getting relative time:", e);
       return dateString;
     }
   };
@@ -328,7 +408,7 @@ const DonaturUserNotifikasi = () => {
           <Box 
             sx={{ 
               display: 'flex', 
-              gap: 2, 
+              gap: 3, 
               flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: isMobile ? 'center' : 'flex-start',
@@ -368,7 +448,7 @@ const DonaturUserNotifikasi = () => {
               </MenuItem>
               {Object.entries(notificationTypeConfig).map(([key, { label }]) => (
                 <MenuItem
-                  key={key}
+                  key={key} 
                   value={key}
                 >
                   {label}
