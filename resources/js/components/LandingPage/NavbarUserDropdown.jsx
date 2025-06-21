@@ -8,7 +8,7 @@ import Swal from "sweetalert2";
 
 export default function NavbarUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [role, setRole] = useState("donatur"); // default ke donatur
+  const [role, setRole] = useState("donatur");
   const [user, setUser] = useState({ name: "User", email: "user@example.com" });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export default function NavbarUserDropdown() {
           email: data.email || "user@example.com",
         });
 
-        setRole("donatur"); // kamu bisa sesuaikan jika ingin dinamis
+        setRole("donatur");
       } catch (err) {
         console.error("Gagal ambil user:", err);
       }
@@ -130,7 +130,6 @@ export default function NavbarUserDropdown() {
         </div>
 
         <ul className="flex flex-col gap-1">
-          {/* Donatur menu */}
           {role === "donatur" && (
             <>
               <li>
@@ -152,18 +151,16 @@ export default function NavbarUserDropdown() {
                 </DropdownItem>
               </li>
               <li>
-<<<<<<< HEAD
                 <DropdownItem
                   onItemClick={closeDropdown}
                   tag="a"
                   to="/pembangunan"
                   className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                 >
-                  <FontAwesomeIcon icon={faTachometerAlt} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-=======
-                <DropdownItem onItemClick={closeDropdown} tag="a" to="/progress-pembangunan" className="...">
-                  <FontAwesomeIcon icon={faTachometerAlt} className="..." />
->>>>>>> ibra/change-name
+                  <FontAwesomeIcon
+                    icon={faTachometerAlt}
+                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
+                  />
                   Progress Pembangunan
                 </DropdownItem>
               </li>

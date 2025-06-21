@@ -30,14 +30,10 @@ class ProfileController extends Controller
         ]);
     }
 
-<<<<<<< HEAD
-    public function updatePassword(Request $request)
-=======
     /**
-     * Memperbarui nama donatur.
+     * Memperbarui password donatur.
      */
-    public function update(Request $request)
->>>>>>> ibra/change-name
+    public function updatePassword(Request $request)
     {
         $user = $request->user();
 
@@ -45,7 +41,6 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-<<<<<<< HEAD
         $request->validate([
             'current_password' => 'required',
             'new_password' => 'required|min:8|confirmed',
@@ -61,7 +56,19 @@ class ProfileController extends Controller
         $user->save();
 
         return response()->json(['message' => 'Password berhasil diubah']);
-=======
+    }
+
+    /**
+     * Memperbarui nama donatur.
+     */
+    public function update(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user || $user->role !== 'donatur') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validated = $request->validate([
             'nama' => 'required|string|min:3|max:255',
         ]);
@@ -76,6 +83,5 @@ class ProfileController extends Controller
                 'email' => $user->email,
             ],
         ]);
->>>>>>> ibra/change-name
     }
 }

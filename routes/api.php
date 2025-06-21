@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\KategoriPengeluaranController;
 use App\Http\Controllers\LaporanKeuanganController;
+use App\Http\Controllers\ProyekPembangunanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,26 +32,27 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
-
-Route::middleware('auth:sanctum')->get('/donasi/user', [DonasiController::class, 'userDonations']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/reset-password-langsung', [AuthController::class, 'resetPasswordLangsung']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Donasi routes
+    Route::get('/donasi/user', [DonasiController::class, 'userDonations']);
+    Route::get('/donatur/donations/stats', [DonasiController::class, 'getDonationStats']);
+    
+    // Notifikasi routes
     Route::get('/notifikasi', [NotifikasiController::class, 'index']);
     Route::post('/notifikasi/mark-as-read/{id}', [NotifikasiController::class, 'markAsRead']);
     Route::post('/notifikasi/mark-all-as-read', [NotifikasiController::class, 'markAllAsRead']);
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy']);
-});
-
-Route::middleware('auth:sanctum')->group(function () {
+    
+    // Profile routes
     Route::get('/donatur/profile', [ProfileController::class, 'getProfile']);
-<<<<<<< HEAD
     Route::post('/donatur/change-password', [ProfileController::class, 'updatePassword']);
-
+    Route::put('/donatur/profile', [ProfileController::class, 'update']);
+    
     // Route CRUD ProyekPembangunan
     Route::apiResource('ProyekPembangunan', ProyekPembangunanController::class);
-=======
-    Route::put('/donatur/profile', [ProfileController::class, 'update']); //
->>>>>>> ibra/change-name
 });
 
 // PENGELUARAN - SEMENTARA TANPA LOGIN AGAR BISA TESTING
@@ -61,28 +63,21 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::apiResource('Pengeluaran', PengeluaranController::class);
 
     // ========================
-// API CRUD Kategori Pengeluaran
-// ========================
-Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
-
-
+    // API CRUD Kategori Pengeluaran
+    // ========================
+    Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
 });
 
 use App\Http\Controllers\DonationHistoryController;
 
 Route::get('/donations', [DonationHistoryController::class, 'index']);
 
-
 // routes/api.php
 Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyReport']);
 
-<<<<<<< HEAD
 // Laporan Keuangan routes
 Route::get('/laporan-keuangan', [LaporanKeuanganController::class, 'index']);
 Route::post('/laporan-keuangan', [LaporanKeuanganController::class, 'store']);
-=======
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/reset-password-langsung', [AuthController::class, 'resetPasswordLangsung']);
 
 
->>>>>>> ibra/change-name
+

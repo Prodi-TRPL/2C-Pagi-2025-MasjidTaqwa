@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Midtrans\Snap;
-use App\Models\Donation; // pastikan modelnya sesuai dengan nama kamu
+use App\Models\Donasi;
+use Illuminate\Support\Facades\DB;
 
 class DonasiController extends Controller
 {
@@ -41,6 +42,51 @@ class DonasiController extends Controller
 
     }
 
+    /**
+     * Mendapatkan daftar donasi dari pengguna yang sedang login
+     */
+    public function userDonations(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $donations = Donasi::where('pengguna_id', $user->pengguna_id)
+            ->orderBy('tanggal_donasi', 'desc')
+            ->get();
+
+        return response()->json([
+            'donations' => $donations,
+        ]);
+    }
+
+    /**
+     * Mendapatkan statistik donasi dari pengguna yang sedang login
+     */
+    public function getDonationStats(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Hitung total jumlah donasi
+        $totalCount = Donasi::where('pengguna_id', $user->pengguna_id)
+            ->where('status', 'Diterima')
+            ->count();
+
+        // Hitung total nominal donasi
+        $totalAmount = Donasi::where('pengguna_id', $user->pengguna_id)
+            ->where('status', 'Diterima')
+            ->sum('jumlah');
+
+        return response()->json([
+            'total_count' => $totalCount,
+            'total_amount' => $totalAmount,
+        ]);
+    }
+
     public function handleCallback(Request $request)
     {
         $serverKey = config('midtrans.server_key');
@@ -57,7 +103,7 @@ class DonasiController extends Controller
         $amount = $request->gross_amount;
 
         // Update atau simpan data transaksi ke database
-        $donation = Donation::where('order_id', $orderId)->first();
+        $donation = Donasi::where('order_id', $orderId)->first();
         if ($donation) {
             $donation->status = $transactionStatus;
             $donation->payment_type = $paymentType;
