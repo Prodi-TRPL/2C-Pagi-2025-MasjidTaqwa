@@ -12,7 +12,8 @@ class Notifikasi extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['pengguna_id', 'donasi_id', 'tipe', 'pesan', 'status', 'created_at'];
+    protected $fillable = ['notifikasi_id', 'pengguna_id', 'donasi_id', 'tipe', 'pesan', 'status', 'created_at'];
+
 
     public function pengguna()
     {

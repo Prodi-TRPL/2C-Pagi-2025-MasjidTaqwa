@@ -13,7 +13,7 @@
 
     <!-- index.html dalam folder public -->
 <script src="https://app.sandbox.midtrans.com/snap/snap.js" 
-        data-client-key="ISI_DENGAN_CLIENT_KEY_MU"></script>
+        data-client-key="SB-Mid-client-_KSDH5perVn2ird4"></script>
 
 </body>
 </html>

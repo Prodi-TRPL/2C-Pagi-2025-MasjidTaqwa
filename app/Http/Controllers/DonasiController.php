@@ -22,17 +22,16 @@ class DonasiController extends Controller
         \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
 
         // Data transaksi
-            $params = [
-        'transaction_details' => [
-            'order_id' => uniqid(), // Simpan juga ke database nanti
-            'gross_amount' => (int) $request->amount,
-        ],
-        'customer_details' => [
-            'first_name' => $request->name,
-            'email' => $request->email,
-        ],
-        'enabled_payments' => ['bank_transfer', 'gopay'], // ⬅️ Tambahkan baris ini
-    ];
+           $params = [
+    'transaction_details' => [
+        'order_id' => uniqid(),
+        'gross_amount' => (int) $request->amount,
+    ],
+    'customer_details' => [
+        'first_name' => $request->name,
+        'email' => $request->email,
+    ],
+];
 
         $snapToken = Snap::getSnapToken($params);
 

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Notifikasi;
 use App\Models\User; // atau model user yang sesuai
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AdminNotifikasiController extends Controller
 {
@@ -24,11 +25,10 @@ class AdminNotifikasiController extends Controller
         // Ambil notifikasi yang dibuat manual (bukan dari sistem donasi)
         // Asumsi: notifikasi manual tidak punya donasi_id
         $notifications = Notifikasi::whereNull('donasi_id')
-            ->select('notifikasi_id', 'tipe', 'pesan as judul', 'created_at')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->unique(['tipe', 'pesan']) // Hapus duplikat berdasarkan tipe dan pesan
-            ->values(); // Reset array keys
+    ->select('notifikasi_id', 'tipe', 'pesan as judul', 'created_at')
+    ->orderBy('created_at', 'desc')
+    ->get(); // hapus ->unique()
+
 
         return response()->json($notifications);
     }
@@ -74,12 +74,14 @@ class AdminNotifikasiController extends Controller
             $notifications = [];
             foreach ($users as $targetUser) {
                 $notification = Notifikasi::create([
-                    'pengguna_id' => $targetUser->pengguna_id, // Sesuaikan dengan field ID user
-                    'donasi_id' => null, // Null karena ini notifikasi manual
-                    'tipe' => $tipe,
-                    'pesan' => $request->judul,
-                    'status' => 'terkirim',
-                ]);
+    'notifikasi_id' => (string) Str::uuid(),
+    'pengguna_id' => $targetUser->pengguna_id,
+    'donasi_id' => null,
+    'tipe' => $tipe,
+    'pesan' => $request->judul,
+    'status' => 'terkirim',
+    'created_at' => now(),
+]);
                 $notifications[] = $notification;
             }
 
@@ -91,9 +93,12 @@ class AdminNotifikasiController extends Controller
         } catch (\Exception $e) {
     return response()->json([
         'message' => 'Gagal mengirim notifikasi',
-        'error' => $e->getMessage(), // tambah baris ini
+        'error' => $e->getMessage(),       // Menampilkan pesan error asli
+        'line' => $e->getLine(),           // Menampilkan baris error terjadi
+        'file' => $e->getFile(),           // Menampilkan file sumber error
     ], 500);
 }
+
 
     }
 
