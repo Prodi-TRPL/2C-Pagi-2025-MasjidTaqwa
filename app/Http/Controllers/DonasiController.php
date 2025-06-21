@@ -4,7 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Midtrans\Snap;
-use App\Models\Donation; // pastikan modelnya sesuai dengan nama kamu
+use App\Models\Donation;
+use App\Models\Pengguna;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Midtrans\Config;
 
 class DonasiController extends Controller
 {
@@ -15,56 +21,386 @@ class DonasiController extends Controller
 
     public function prosesDonasi(Request $request)
     {
-        // Konfigurasi Midtrans
-        \Midtrans\Config::$serverKey = config('midtrans.server_key');
-        \Midtrans\Config::$isProduction = config('midtrans.is_production');
-        \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized');
-        \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'amount' => 'required|numeric|min:10000',
+                'user_id' => 'nullable|string'
+            ]);
+            
+            Log::info('Donation request received', [
+                'name' => $request->name,
+                'email' => $request->email,
+                'amount' => $request->amount,
+                'user_id' => $request->user_id
+            ]);
+            
+            // Generate order ID
+            $orderId = 'ORDER-' . Str::random(8) . '-' . time();
+            
+            // Configure Midtrans
+            Config::$serverKey = config('midtrans.server_key');
+            Config::$isProduction = config('midtrans.is_production');
+            Config::$isSanitized = config('midtrans.is_sanitized');
+            Config::$is3ds = config('midtrans.is_3ds');
 
-        // Data transaksi
+            // Set up transaction parameters
             $params = [
-        'transaction_details' => [
-            'order_id' => uniqid(), // Simpan juga ke database nanti
-            'gross_amount' => (int) $request->amount,
-        ],
-        'customer_details' => [
-            'first_name' => $request->name,
-            'email' => $request->email,
-        ],
-        'enabled_payments' => ['bank_transfer', 'gopay'], // ⬅️ Tambahkan baris ini
-    ];
+                'transaction_details' => [
+                    'order_id' => $orderId,
+                    'gross_amount' => (int)$request->amount,
+                ],
+                'customer_details' => [
+                    'first_name' => $request->name,
+                    'email' => $request->email
+                ]
+            ];
 
-        $snapToken = Snap::getSnapToken($params);
-
-        // Kirim token ke view yang auto trigger Snap
-        return response()->json(['snap_token' => $snapToken]);
-
+            // Get Snap Payment Page URL
+            $snapToken = Snap::getSnapToken($params);
+            Log::info('Midtrans snap token generated', ['token' => $snapToken]);
+            
+            // Create donation record
+            $donation = new Donation();
+            $donation->donasi_id = Str::uuid();
+            $donation->jumlah = $request->amount;
+            $donation->status = 'Kadaluarsa'; // Default status until payment is confirmed
+            $donation->order_id = $orderId;
+            $donation->snap_token = $snapToken;
+            $donation->payment_type = 'midtrans';
+            
+            // Always store name and email regardless of authentication status
+            $donation->name = $request->name;
+            $donation->email = $request->email;
+            
+            // Set user ID if authenticated or provided
+            if (Auth::check()) {
+                $donation->pengguna_id = Auth::id();
+                Log::info('Setting pengguna_id from Auth', ['id' => Auth::id()]);
+            } elseif ($request->user_id) {
+                $donation->pengguna_id = $request->user_id;
+                
+                // Try to get user data for this ID
+                $user = Pengguna::find($request->user_id);
+                if ($user) {
+                    $donation->name = $user->nama;
+                    $donation->email = $user->email;
+                }
+                
+                Log::info('Setting pengguna_id from request', [
+                    'id' => $request->user_id,
+                    'name' => $donation->name,
+                    'email' => $donation->email
+                ]);
+            } else {
+                Log::info('Setting anonymous donor info', ['name' => $request->name]);
+            }
+            
+            $donation->save();
+            
+            // Return token to frontend
+            return response()->json([
+                'snap_token' => $snapToken,
+                'order_id' => $orderId,
+                'status' => 'success'
+            ]);
+                
+        } catch (\Exception $e) {
+            Log::error('Error processing donation', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function handleCallback(Request $request)
     {
-        $serverKey = config('midtrans.server_key');
-        $hashed = hash('sha512', $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+        try {
+            Log::info('Payment callback received', ['request' => $request->all()]);
+            
+            // Handle callbacks from frontend (our JavaScript)
+            if ($request->has('order_id') && $request->has('payment_status')) {
+                $orderId = $request->order_id;
+                
+                // Manual handling for frontend callbacks
+                $donation = Donation::where('order_id', $orderId)->first();
+                
+                if (!$donation) {
+                    Log::error('Donation not found for frontend callback with order_id: ' . $orderId);
+                    return response()->json(['status' => 'error', 'message' => 'Donation not found'], 404);
+                }
+                
+                // If frontend reports success, mark as accepted
+                if ($request->payment_status === 'success') {
+                    $donation->status = 'Diterima';
+                    Log::info('Donation marked as accepted from frontend callback', [
+                        'donation_id' => $donation->donasi_id, 
+                        'order_id' => $orderId
+                    ]);
+                }
+                
+                $donation->save();
+                
+                return response()->json(['status' => 'success', 'message' => 'Donation status updated']);
+            }
+            
+            // Handle callbacks from Midtrans
+            $notificationBody = json_decode($request->getContent(), true) ?: [];
+            
+            if (!empty($notificationBody) && isset($notificationBody['order_id'])) {
+                $orderId = $notificationBody['order_id'];
+                $transactionStatus = $notificationBody['transaction_status'] ?? null;
+                $paymentType = $notificationBody['payment_type'] ?? 'midtrans';
+                
+                // Find the donation by order_id
+                $donation = Donation::where('order_id', $orderId)->first();
+                
+                if (!$donation) {
+                    Log::error('Donation not found for Midtrans callback with order_id: ' . $orderId);
+                    return response()->json(['status' => 'error', 'message' => 'Donation not found'], 404);
+                }
 
-        if ($hashed != $request->signature_key) {
-            return response(['message' => 'Invalid signature'], 403);
+                // Update donation status based on transaction_status
+                if ($transactionStatus) {
+                    switch ($transactionStatus) {
+                        case 'capture':
+                        case 'settlement':
+                        case 'success':
+                            $donation->status = 'Diterima';
+                            break;
+                        case 'pending':
+                            $donation->status = 'Kadaluarsa';
+                            break;
+                        case 'deny':
+                        case 'cancel':
+                        case 'expire':
+                            $donation->status = 'Kadaluarsa';
+                            break;
+                    }
+                }
+                
+                // Update payment_type if it wasn't set before
+                if (!$donation->payment_type) {
+                    $donation->payment_type = $paymentType;
+                }
+                
+                $donation->save();
+                
+                Log::info('Donation status updated from Midtrans callback', [
+                    'donation_id' => $donation->donasi_id, 
+                    'new_status' => $donation->status,
+                    'transaction_status' => $transactionStatus
+                ]);
+                
+                return response()->json(['status' => 'success']);
+            }
+            
+            return response()->json(['status' => 'error', 'message' => 'Invalid callback data'], 400);
+            
+        } catch (\Exception $e) {
+            Log::error('Error handling payment callback', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        // Ambil data dari callback
-        $orderId = $request->order_id;
-        $transactionStatus = $request->transaction_status;
-        $paymentType = $request->payment_type;
-        $amount = $request->gross_amount;
-
-        // Update atau simpan data transaksi ke database
-        $donation = Donation::where('order_id', $orderId)->first();
-        if ($donation) {
-            $donation->status = $transactionStatus;
-            $donation->payment_type = $paymentType;
-            $donation->amount = $amount;
+    }
+    
+    public function userDonations(Request $request)
+    {
+        try {
+            // Ambil donasi untuk user yang sedang login
+            $userId = Auth::id();
+            $donations = Donation::where('pengguna_id', $userId)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+            
+            Log::info('User donations retrieved', [
+                'user_id' => $userId,
+                'count' => $donations->count()
+            ]);
+                        
+            return response()->json($donations);
+        } catch (\Exception $e) {
+            Log::error('Error retrieving user donations', [
+                'message' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            return response()->json(['error' => 'Failed to retrieve donations'], 500);
+        }
+    }
+    
+    public function validateDonation(Request $request, $id)
+    {
+        try {
+            // Validasi input
+            $request->validate([
+                'status' => 'required|in:Diterima,Kadaluarsa',
+            ]);
+            
+            // Cari donasi berdasarkan ID
+            $donation = Donation::findOrFail($id);
+            
+            Log::info('Validating donation', [
+                'donation_id' => $id,
+                'old_status' => $donation->status,
+                'new_status' => $request->status
+            ]);
+            
+            // Update status
+            $donation->status = $request->status;
             $donation->save();
-        }
+            
+            // Jika donasi diterima, tambahkan ke laporan keuangan
+            if ($donation->status == 'Diterima') {
+                // Logic untuk update laporan keuangan bisa ditambahkan di sini
+                Log::info('Donation validated and accepted');
+            }
 
-        return response(['message' => 'Callback processed'], 200);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Status donasi berhasil diperbarui',
+                'data' => $donation
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error validating donation', [
+                'message' => $e->getMessage(),
+                'donation_id' => $id
+            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal memperbarui status donasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Fix all donations to have correct status and payment method
+     */
+    public function fixDonations()
+    {
+        try {
+            // Fix null payment types
+            $nullPaymentTypes = DB::table('donasi')
+                ->whereNull('payment_type')
+                ->update(['payment_type' => 'midtrans']);
+            Log::info('Fixed donations with null payment_type', ['count' => $nullPaymentTypes]);
+
+            // Fix donations with status Menunggu that are more than 24 hours old
+            $oneDayAgo = now()->subDay();
+            $expiredDonations = DB::table('donasi')
+                ->where('status', 'Menunggu')
+                ->where('created_at', '<', $oneDayAgo)
+                ->update(['status' => 'Kadaluarsa']);
+            Log::info('Marked old pending donations as expired', ['count' => $expiredDonations]);
+            
+            // Fix missing name/email for users with pengguna_id
+            $donations = DB::table('donasi')
+                ->whereNotNull('pengguna_id')
+                ->whereNull('name')
+                ->orWhereNull('email')
+                ->get();
+                
+            $nameFixes = 0;
+            
+            foreach ($donations as $donation) {
+                $user = DB::table('pengguna')->where('pengguna_id', $donation->pengguna_id)->first();
+                if ($user) {
+                    DB::table('donasi')
+                        ->where('donasi_id', $donation->donasi_id)
+                        ->update([
+                            'name' => $user->nama,
+                            'email' => $user->email
+                        ]);
+                    $nameFixes++;
+                }
+            }
+            
+            $total = DB::table('donasi')->count();
+            
+            Log::info('Fix donations complete', [
+                'total' => $total, 
+                'fixed_payment_types' => $nullPaymentTypes,
+                'fixed_statuses' => $expiredDonations,
+                'fixed_names' => $nameFixes
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Donations fixed successfully',
+                'data' => [
+                    'total' => $total,
+                    'fixed_payment_types' => $nullPaymentTypes,
+                    'fixed_statuses' => $expiredDonations,
+                    'fixed_names' => $nameFixes
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fixing donations', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fixing donations: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a donation when user closes the payment popup
+     */
+    public function cancelDonation(Request $request)
+    {
+        try {
+            $request->validate([
+                'order_id' => 'required|string'
+            ]);
+            
+            $orderId = $request->order_id;
+            
+            // Find the donation by order_id
+            $donation = Donation::where('order_id', $orderId)->first();
+            
+            if (!$donation) {
+                Log::error('Donation not found for order_id when trying to cancel: ' . $orderId);
+                return response()->json(['status' => 'error', 'message' => 'Donation not found'], 404);
+            }
+
+            // Update donation status to Kadaluarsa
+            $donation->status = 'Kadaluarsa';
+            $donation->save();
+            
+            Log::info('Donation cancelled by user', [
+                'donation_id' => $donation->donasi_id, 
+                'order_id' => $orderId
+            ]);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Donasi berhasil dibatalkan'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error cancelling donation', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal membatalkan donasi: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

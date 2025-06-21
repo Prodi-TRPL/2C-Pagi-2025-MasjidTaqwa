@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,3 +30,153 @@ Route::get('/{any}', function () {
 
 // Add logout route with web middleware
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Admin routes
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    // Add route to check pending donations (for testing)
+    Route::get('/check-pending-donations', function () {
+        Artisan::call('donations:check-pending');
+        return redirect()->back()->with('status', 'Pending donations checked.');
+    });
+    
+    // Add route to mark all pending donations as received (for testing)
+    Route::get('/mark-pending-donations', function () {
+        Artisan::call('donations:check-pending', ['--mark-as-received' => true]);
+        return redirect()->back()->with('status', 'All pending donations marked as received.');
+    });
+    
+    // Add route to update all donations to 'Diterima' status
+    Route::get('/update-all-donations', function () {
+        Artisan::call('donations:update-status', ['--status' => 'Diterima']);
+        return redirect()->back()->with('status', 'All donations updated to Diterima status.');
+    });
+    
+    // Add route to set up payment methods
+    Route::get('/setup-payment-methods', function () {
+        Artisan::call('setup:payment-methods');
+        return redirect()->back()->with('status', 'Payment methods have been set up.');
+    });
+    
+    // Add route to directly fix donations (without command)
+    Route::get('/fix-donations-directly', function () {
+        // Find a Midtrans payment method or create one
+        $midtransMethod = DB::table('metode_pembayaran')
+            ->where('nama_metode', 'Midtrans')
+            ->first();
+
+        if (!$midtransMethod) {
+            $midtransId = Str::uuid();
+            DB::table('metode_pembayaran')->insert([
+                'metode_pembayaran_id' => $midtransId,
+                'nama_metode' => 'Midtrans',
+                'deskripsi' => 'Pembayaran via Midtrans (online)'
+            ]);
+        } else {
+            $midtransId = $midtransMethod->metode_pembayaran_id;
+        }
+
+        // Fix null payment types
+        DB::table('donasi')
+            ->whereNull('payment_type')
+            ->update(['payment_type' => 'midtrans']);
+
+        // Fix null metode_pembayaran_id
+        DB::table('donasi')
+            ->whereNull('metode_pembayaran_id')
+            ->update(['metode_pembayaran_id' => $midtransId]);
+
+        // Fix non-Diterima statuses
+        DB::table('donasi')
+            ->where('status', '!=', 'Diterima')
+            ->update(['status' => 'Diterima']);
+            
+        return redirect()->back()->with('status', 'All donations have been fixed.');
+    });
+});
+
+// Route to provide CSRF token for testing
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+});
+
+// Test routes
+Route::get('/donation-test', function() {
+    return view('welcome', ['title' => 'Donation Test']);
+});
+
+Route::get('/simple-donation', function() {
+    return File::get(public_path('simple-donation.html'));
+});
+
+// Utility routes
+Route::get('/fix-donations', function() {
+    try {
+        // Update all donations to have status "Diterima"
+        DB::table('donasi')->update(['status' => 'Diterima']);
+        
+        // Get default payment method ID
+        $paymentMethod = DB::table('metode_pembayaran')
+            ->where('nama_metode', 'Direct Payment')
+            ->first();
+            
+        if (!$paymentMethod) {
+            // Create a new payment method
+            $paymentMethodId = \Illuminate\Support\Str::uuid();
+            DB::table('metode_pembayaran')->insert([
+                'metode_pembayaran_id' => $paymentMethodId,
+                'nama_metode' => 'Direct Payment'
+            ]);
+        } else {
+            $paymentMethodId = $paymentMethod->metode_pembayaran_id;
+        }
+        
+        // Update donations with NULL payment type
+        DB::table('donasi')
+            ->whereNull('payment_type')
+            ->update([
+                'payment_type' => 'direct',
+                'metode_pembayaran_id' => $paymentMethodId
+            ]);
+            
+        return "All donations have been fixed. <a href='/api/donations'>View donations</a>";
+    } catch (\Exception $e) {
+        return "Error fixing donations: " . $e->getMessage();
+    }
+});
+
+// Quick donation test without CSRF
+Route::get('/quick-donation', function() {
+    return File::get(public_path('quick-donation.html'));
+});
+
+// Direct test donation page
+Route::get('/test-donation', function() {
+    return File::get(public_path('test-donation.php'));
+});
+
+// Midtrans test page
+Route::get('/midtrans-test', function() {
+    return File::get(public_path('midtrans-test.html'));
+});
+
+// Check Midtrans configuration
+Route::get('/check-midtrans', function () {
+    $output = [
+        'server_key_set' => !empty(config('midtrans.server_key')),
+        'client_key_set' => !empty(config('midtrans.client_key')),
+        'environment' => config('midtrans.is_production') ? 'Production' : 'Sandbox',
+        'server_key_masked' => !empty(config('midtrans.server_key')) 
+            ? substr(config('midtrans.server_key'), 0, 4) . '...' . substr(config('midtrans.server_key'), -4) 
+            : 'Not set',
+        'client_key_masked' => !empty(config('midtrans.client_key')) 
+            ? substr(config('midtrans.client_key'), 0, 4) . '...' . substr(config('midtrans.client_key'), -4)
+            : 'Not set',
+    ];
+    
+    return response()->json($output);
+});
+
+// Midtrans setup guide
+Route::get('/midtrans-setup', function() {
+    return File::get(public_path('midtrans-setup.html'));
+});

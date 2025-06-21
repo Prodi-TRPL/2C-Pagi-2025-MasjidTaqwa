@@ -16,13 +16,16 @@ return new class extends Migration
             $table->uuid('pengguna_id')->nullable();
             $table->uuid('laporan_keuangan_id')->nullable();
             $table->decimal('jumlah', 15, 2)->nullable();
-            $table->uuid('metode_pembayaran_id')->nullable();
             $table->enum('status', ['Menunggu', 'Diterima', 'Kadaluarsa'])->default('Menunggu');
             $table->timestamp('tanggal_donasi')->nullable();
+            $table->string('order_id')->nullable()->unique();
+            $table->string('payment_type')->nullable();
+            $table->string('snap_token')->nullable();
+            $table->string('name')->nullable();
+            $table->string('email')->nullable();
             
             $table->foreign('pengguna_id')->references('pengguna_id')->on('pengguna');
             $table->foreign('laporan_keuangan_id')->references('laporan_keuangan_id')->on('laporan_keuangan');
-            $table->foreign('metode_pembayaran_id')->references('metode_pembayaran_id')->on('metode_pembayaran');
         });
     }
 

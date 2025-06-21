@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faMosque, faMoneyBillWave, faHandHoldingDollar, faBuilding, 
   faChartLine, faArrowUp, faArrowDown, faTrophy, faCalendarAlt,
-  faSync, faFilter
+  faSync, faFilter, faCheckCircle, faIdCard, faUser
 } from "@fortawesome/free-solid-svg-icons";
 import WelcomeCard from "../../../components/ecommerce/WelcomeCard";
 import MonthlyReportChart from "../../../components/ecommerce/MonthlyReportChart";
@@ -14,6 +14,7 @@ import { Spinner } from "@material-tailwind/react";
 export default function DashboardHome() {
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [donationsLoading, setDonationsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalDonations: 0,
     totalExpenses: 0,
@@ -28,21 +29,6 @@ export default function DashboardHome() {
   });
   const [recentDonations, setRecentDonations] = useState([]);
   const [recentExpenses, setRecentExpenses] = useState([]);
-  const [currentProject, setCurrentProject] = useState({
-    name: "Pembangunan Masjid Taqwa Muhammadiyah",
-    description: "Pembangunan utama struktur masjid fase 2",
-    target: 500000000,
-    current: 125000000,
-    endDate: "2026-06-30",
-    startDate: "2025-01-15",
-    phases: [
-      { name: "Pondasi", complete: 100 },
-      { name: "Struktur", complete: 45 },
-      { name: "Atap", complete: 10 },
-      { name: "Interior", complete: 0 },
-      { name: "Fasilitas", complete: 0 },
-    ]
-  });
   const [timeFilter, setTimeFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
   
@@ -55,34 +41,31 @@ export default function DashboardHome() {
     }).format(amount);
   };
 
-  // Format date to Indonesian format
+  // Format date to Indonesian format with Asia/Jakarta timezone
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
+    // Create date object from the UTC date string
+    const utcDate = new Date(dateString);
+    
+    // Format options for Indonesia locale with explicit timezone
+    const options = {
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
-    }).format(date);
-  };
-
-  // Calculate days remaining
-  const calculateDaysRemaining = (endDate) => {
-    const end = new Date(endDate);
-    const today = new Date();
-    const diffTime = Math.abs(end - today);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  // Calculate progress percentage
-  const calculateProgress = (current, target) => {
-    return Math.min(100, Math.round((current / target) * 100));
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Jakarta'
+    };
+    
+    // Format the date with the Indonesia locale and Asia/Jakarta timezone
+    return new Intl.DateTimeFormat('id-ID', options).format(utcDate);
   };
 
   // Handle refresh data
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchDashboardData();
+    await fetchDonations();
     setTimeout(() => setRefreshing(false), 1000);
   };
 
@@ -90,6 +73,41 @@ export default function DashboardHome() {
   const handleFilterChange = (filter) => {
     setTimeFilter(filter);
     // In a real application, this would trigger a new API call with the filter
+  };
+
+  // Fetch donation data from the API
+  const fetchDonations = async () => {
+    try {
+      setDonationsLoading(true);
+      
+      // Fetch real donation data from the API
+      const response = await axios.get('/api/donations');
+      console.log("Fetched donations for dashboard:", response.data);
+      
+      // Process the donation data
+      if (response.data && response.data.length > 0) {
+        // Calculate total donation amount
+        const totalAmount = response.data.reduce((sum, donation) => sum + parseFloat(donation.jumlah), 0);
+        
+        // Update stats with real donation data
+        setStats(prevStats => ({
+          ...prevStats,
+          totalDonations: totalAmount,
+          donorCount: response.data.length
+        }));
+        
+        // Set recent donations (latest 5)
+        const sortedDonations = [...response.data].sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        ).slice(0, 5);
+        
+        setRecentDonations(sortedDonations);
+      }
+    } catch (error) {
+      console.error("Error fetching donation data:", error);
+    } finally {
+      setDonationsLoading(false);
+    }
   };
 
   const fetchDashboardData = async () => {
@@ -102,33 +120,10 @@ export default function DashboardHome() {
       /* Uncomment when API is ready
       const response = await axios.get('/api/admin/dashboard-stats');
       setStats(response.data.stats);
-      setRecentDonations(response.data.recentDonations);
       setRecentExpenses(response.data.recentExpenses);
-      setCurrentProject(response.data.currentProject);
       */
       
-      // Dummy data for demonstration
-      setStats({
-        totalDonations: 125000000,
-        totalExpenses: 75000000,
-        balance: 50000000,
-        donorCount: 75,
-        trends: {
-          donations: 15.8,
-          expenses: 8.2,
-          balance: 20.5,
-          donors: 12.3
-        }
-      });
-      
-      setRecentDonations([
-        { id: 1, nama: "Ahmad Fadli", jumlah: 5000000, tanggal_donasi: "2025-06-15", metode: "Transfer Bank" },
-        { id: 2, nama: "Siti Nurhaliza", jumlah: 2500000, tanggal_donasi: "2025-06-14", metode: "QRIS" },
-        { id: 3, nama: "Budi Santoso", jumlah: 1000000, tanggal_donasi: "2025-06-12", metode: "E-Wallet" },
-        { id: 4, nama: "Dewi Fortuna", jumlah: 3000000, tanggal_donasi: "2025-06-10", metode: "Transfer Bank" },
-        { id: 5, nama: "Haji Mukhtar", jumlah: 10000000, tanggal_donasi: "2025-06-08", metode: "Transfer Bank" }
-      ]);
-      
+      // Dummy data for expenses
       setRecentExpenses([
         { id: 1, nama_pengeluaran: "Pembelian Semen", jumlah: 15000000, tanggal_pengeluaran: "2025-06-14", kategori: "Material Bangunan" },
         { id: 2, nama_pengeluaran: "Upah Tukang", jumlah: 10000000, tanggal_pengeluaran: "2025-06-13", kategori: "Jasa" },
@@ -136,6 +131,16 @@ export default function DashboardHome() {
         { id: 4, nama_pengeluaran: "Biaya Konsultasi Arsitek", jumlah: 5000000, tanggal_pengeluaran: "2025-06-08", kategori: "Jasa" },
         { id: 5, nama_pengeluaran: "Keramik Lantai", jumlah: 12000000, tanggal_pengeluaran: "2025-06-05", kategori: "Material Bangunan" }
       ]);
+      
+      // Calculate total expenses
+      const totalExpenses = recentExpenses.reduce((sum, expense) => sum + expense.jumlah, 0);
+      
+      // Update stats with expense data
+      setStats(prevStats => ({
+        ...prevStats,
+        totalExpenses: totalExpenses,
+        balance: prevStats.totalDonations - totalExpenses
+      }));
       
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -147,11 +152,12 @@ export default function DashboardHome() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setUserName(user.name || "Admin");
+    fetchDonations();
     fetchDashboardData();
   }, []);
 
   // Stat card component with trend indicator
-  const StatCard = ({ icon, title, value, trend = 0, color }) => (
+  const StatCard = ({ icon, title, value, trend = 0, color, isLoading = false }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -166,10 +172,14 @@ export default function DashboardHome() {
           </div>
           <div>
             <h3 className="text-gray-500 text-sm">{title}</h3>
-            <p className="font-bold text-gray-800 text-xl">{value}</p>
+            {isLoading ? (
+              <div className="h-6 bg-gray-200 rounded w-24 animate-pulse"></div>
+            ) : (
+              <p className="font-bold text-gray-800 text-xl">{value}</p>
+            )}
           </div>
         </div>
-        {trend !== 0 && (
+        {trend !== 0 && !isLoading && (
           <div className="mt-2 flex items-center">
             <div className={`text-xs font-medium ${trend > 0 ? 'text-green-500' : 'text-red-500'} flex items-center`}>
               <FontAwesomeIcon icon={trend > 0 ? faArrowUp : faArrowDown} className="mr-1" />
@@ -182,83 +192,85 @@ export default function DashboardHome() {
     </motion.div>
   );
 
-  // Project progress component
-  const ProjectProgress = ({ project }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-white rounded-xl shadow-md p-6"
-    >
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Progress Pembangunan</h3>
-        <span className="text-sm font-medium px-3 py-1 bg-blue-50 text-blue-600 rounded-full">
-          {calculateDaysRemaining(project.endDate)} hari tersisa
-        </span>
-      </div>
-      
-      <h4 className="font-medium text-gray-800">{project.name}</h4>
-      <p className="text-sm text-gray-600 mb-4">{project.description}</p>
-      
-      <div className="mb-4">
-        <div className="flex justify-between text-sm mb-1">
-          <span className="font-medium">Target Dana: {formatRupiah(project.target)}</span>
-          <span className="font-semibold">{calculateProgress(project.current, project.target)}%</span>
-        </div>
-        <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-            style={{ width: `${calculateProgress(project.current, project.target)}%` }}
-          ></div>
-        </div>
-        <p className="text-sm text-gray-500 mt-1">
-          Terkumpul: {formatRupiah(project.current)}
-        </p>
-      </div>
-      
-      <div className="space-y-3">
-        <h5 className="font-medium text-gray-700 text-sm">Tahapan Pembangunan:</h5>
-        {project.phases.map((phase, index) => (
-          <div key={index} className="flex flex-col">
-            <div className="flex justify-between text-sm mb-1">
-              <span>{phase.name}</span>
-              <span className="font-medium">{phase.complete}%</span>
-            </div>
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full ${phase.complete === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
-                style={{ width: `${phase.complete}%` }}
-              ></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
+  // Get donor name and email
+  const getDonorInfo = (donation) => {
+    if (donation.pengguna_id) {
+      return {
+        name: donation.pengguna?.nama || (donation.name || "Anonymous"),
+        email: donation.pengguna?.email || donation.email || "",
+        isRegistered: true
+      };
+    } else if (donation.pengguna && donation.pengguna.nama) {
+      return {
+        name: donation.pengguna.nama,
+        email: donation.pengguna.email || "",
+        isRegistered: true
+      };
+    } else if (donation.anonymous_donor && donation.anonymous_donor.nama) {
+      return {
+        name: donation.anonymous_donor.nama,
+        email: donation.anonymous_donor.email || "",
+        isRegistered: false
+      };
+    } else {
+        return {
+        name: donation.name || "Anonymous",
+        email: donation.email || "",
+        isRegistered: false
+        };
+    }
+  };
 
   // Recent transaction component
-  const TransactionItem = ({ name, amount, date, type, isExpense = false }) => (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg px-2 transition-colors">
-      <div className="flex items-center">
-        <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-3 ${isExpense ? 'bg-red-100' : 'bg-green-100'}`}>
-          <FontAwesomeIcon 
-            icon={isExpense ? faMoneyBillWave : faHandHoldingDollar} 
-            className={isExpense ? 'text-red-500' : 'text-green-500'} 
-          />
-        </div>
-        <div>
-          <p className="font-medium text-gray-800">{name}</p>
-          <div className="flex items-center text-xs text-gray-500">
-            <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
-            {date}
+  const TransactionItem = ({ donation, isExpense = false }) => {
+    if (isExpense) {
+      return (
+        <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg px-2 transition-colors">
+          <div className="flex items-center">
+            <div className="h-10 w-10 rounded-full flex items-center justify-center mr-3 bg-red-100">
+              <FontAwesomeIcon icon={faMoneyBillWave} className="text-red-500" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">{donation.nama_pengeluaran}</p>
+              <div className="flex items-center text-xs text-gray-500">
+                <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
+                {formatDate(donation.tanggal_pengeluaran)}
+              </div>
+            </div>
+          </div>
+          <div className="font-medium text-red-500">
+            -{formatRupiah(donation.jumlah)}
           </div>
         </div>
-      </div>
-      <div className={`font-medium ${isExpense ? 'text-red-500' : 'text-green-500'}`}>
-        {isExpense ? '-' : '+'}{formatRupiah(amount)}
-      </div>
-    </div>
-  );
+      );
+    } else {
+      // For donations
+      const donorInfo = getDonorInfo(donation);
+      
+      return (
+        <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg px-2 transition-colors">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+              <FontAwesomeIcon 
+                icon={donorInfo.isRegistered ? faUser : faIdCard} 
+                className={donorInfo.isRegistered ? "text-blue-500" : "text-gray-500"} 
+              />
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">{donorInfo.name}</p>
+              <div className="flex items-center text-xs text-gray-500">
+                <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
+                {formatDate(donation.created_at)}
+              </div>
+            </div>
+          </div>
+          <div className="font-medium text-green-500">
+            +{formatRupiah(donation.jumlah)}
+          </div>
+        </div>
+      );
+    }
+  };
 
   // Loading skeletons
   const StatCardSkeleton = () => (
@@ -336,48 +348,44 @@ export default function DashboardHome() {
         
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {loading ? (
-            [...Array(4)].map((_, i) => <StatCardSkeleton key={i} />)
-          ) : (
-            <>
-              <StatCard 
-                icon={faHandHoldingDollar} 
-                title="Total Donasi" 
-                value={formatRupiah(stats.totalDonations)} 
-                trend={stats.trends.donations}
-                color="border-l-4 border-green-500" 
-              />
-              <StatCard 
-                icon={faMoneyBillWave} 
-                title="Total Pengeluaran" 
-                value={formatRupiah(stats.totalExpenses)} 
-                trend={stats.trends.expenses}
-                color="border-l-4 border-red-500" 
-              />
-              <StatCard 
-                icon={faMosque} 
-                title="Saldo" 
-                value={formatRupiah(stats.balance)} 
-                trend={stats.trends.balance}
-                color="border-l-4 border-blue-500" 
-              />
-              <StatCard 
-                icon={faBuilding} 
-                title="Jumlah Donatur" 
-                value={stats.donorCount} 
-                trend={stats.trends.donors}
-                color="border-l-4 border-amber-500" 
-              />
-            </>
-          )}
+          <StatCard 
+            icon={faHandHoldingDollar} 
+            title="Total Donasi" 
+            value={formatRupiah(stats.totalDonations)} 
+            trend={stats.trends.donations}
+            color="border-l-4 border-green-500"
+            isLoading={donationsLoading}
+          />
+          <StatCard 
+            icon={faMoneyBillWave} 
+            title="Total Pengeluaran" 
+            value={formatRupiah(stats.totalExpenses)} 
+            trend={stats.trends.expenses}
+            color="border-l-4 border-red-500"
+            isLoading={loading}
+          />
+          <StatCard 
+            icon={faMosque} 
+            title="Saldo" 
+            value={formatRupiah(stats.balance)} 
+            trend={stats.trends.balance}
+            color="border-l-4 border-blue-500"
+            isLoading={loading || donationsLoading}
+          />
+          <StatCard 
+            icon={faBuilding} 
+            title="Jumlah Donatur" 
+            value={stats.donorCount} 
+            trend={stats.trends.donors}
+            color="border-l-4 border-amber-500"
+            isLoading={donationsLoading}
+          />
         </div>
 
-        {/* Project Progress & Monthly Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-4">
-            {loading ? <TransactionSkeleton /> : <ProjectProgress project={currentProject} />}
-          </div>
-          <div className="lg:col-span-8">
+        {/* Monthly Chart - Now full width */}
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Pemasukan dan Pengeluaran Masjid Taqwa Muhammadiyah</h3>
             <MonthlyReportChart />
           </div>
         </div>
@@ -385,67 +393,97 @@ export default function DashboardHome() {
         {/* Recent Transactions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Recent Donations */}
-          {loading ? (
-            <TransactionSkeleton />
-          ) : (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white rounded-xl shadow-md p-6"
-            >
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <FontAwesomeIcon icon={faHandHoldingDollar} className="mr-2 text-green-500" />
-                Donasi Terbaru
-              </h3>
-              <div className="space-y-2">
-                {recentDonations.map(donation => (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="bg-white rounded-xl shadow-md p-6"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <FontAwesomeIcon icon={faHandHoldingDollar} className="mr-2 text-green-500" />
+              Donasi Terbaru
+            </h3>
+            <div className="space-y-2">
+              {donationsLoading ? (
+                [...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 animate-pulse">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 mr-3"></div>
+                      <div>
+                        <div className="h-5 bg-gray-200 rounded w-32 mb-1"></div>
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      </div>
+                    </div>
+                    <div className="h-5 bg-gray-200 rounded w-24"></div>
+                  </div>
+                ))
+              ) : recentDonations.length > 0 ? (
+                recentDonations.map(donation => (
                   <TransactionItem 
-                    key={donation.id}
-                    name={donation.nama}
-                    amount={donation.jumlah}
-                    date={formatDate(donation.tanggal_donasi)}
-                    type={donation.metode}
+                    key={donation.donasi_id}
+                    donation={donation}
                   />
-                ))}
-              </div>
-              <button className="mt-6 w-full py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
-                Lihat Semua Donasi
-              </button>
-            </motion.div>
-          )}
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  Belum ada data donasi
+                </div>
+              )}
+            </div>
+            <button 
+              onClick={() => window.location.href = '/admin/data-donasi'}
+              className="mt-6 w-full py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+            >
+              Lihat Semua Donasi
+            </button>
+          </motion.div>
 
           {/* Recent Expenses */}
-          {loading ? (
-            <TransactionSkeleton />
-          ) : (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white rounded-xl shadow-md p-6"
-            >
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <FontAwesomeIcon icon={faMoneyBillWave} className="mr-2 text-red-500" />
-                Pengeluaran Terbaru
-              </h3>
-              <div className="space-y-2">
-                {recentExpenses.map(expense => (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white rounded-xl shadow-md p-6"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <FontAwesomeIcon icon={faMoneyBillWave} className="mr-2 text-red-500" />
+              Pengeluaran Terbaru
+            </h3>
+            <div className="space-y-2">
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 animate-pulse">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 mr-3"></div>
+                      <div>
+                        <div className="h-5 bg-gray-200 rounded w-32 mb-1"></div>
+                        <div className="h-3 bg-gray-200 rounded w-20"></div>
+                      </div>
+                    </div>
+                    <div className="h-5 bg-gray-200 rounded w-24"></div>
+                  </div>
+                ))
+              ) : recentExpenses.length > 0 ? (
+                recentExpenses.map(expense => (
                   <TransactionItem 
                     key={expense.id}
-                    name={expense.nama_pengeluaran}
-                    amount={expense.jumlah}
-                    date={formatDate(expense.tanggal_pengeluaran)}
-                    type={expense.kategori}
+                    donation={expense}
                     isExpense={true}
                   />
-                ))}
-              </div>
-              <button className="mt-6 w-full py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium">
-                Lihat Semua Pengeluaran
-              </button>
-            </motion.div>
-          )}
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  Belum ada data pengeluaran
+                </div>
+              )}
+            </div>
+            <button 
+              onClick={() => window.location.href = '/admin/pengeluaran'}
+              className="mt-6 w-full py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+            >
+              Lihat Semua Pengeluaran
+            </button>
+          </motion.div>
         </div>
       </div>
     </>

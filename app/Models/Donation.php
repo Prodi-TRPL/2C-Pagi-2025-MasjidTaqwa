@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Donasi extends Model
+class Donation extends Model
 {
     protected $table = 'donasi';
     protected $primaryKey = 'donasi_id';
@@ -13,13 +13,13 @@ class Donasi extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'pengguna_id', 
-        'laporan_keuangan_id', 
+        'donasi_id',
+        'pengguna_id',
         'jumlah',
-        'status', 
+        'status',
         'order_id',
-        'payment_type',
         'snap_token',
+        'payment_type',
         'name',
         'email',
         'created_at',
@@ -39,4 +39,4 @@ class Donasi extends Model
     {
         return $this->belongsTo(LaporanKeuangan::class, 'laporan_keuangan_id');
     }
-}
+} 

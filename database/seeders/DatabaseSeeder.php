@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             DonorsUserSeeder::class,
             ReportAmountSeeder::class,
+            // MetodePembayaranSeeder::class, // Removed as requested
         ]);
     }
 }

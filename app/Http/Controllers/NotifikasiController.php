@@ -27,7 +27,7 @@ class NotifikasiController extends Controller
 
         // Eager load donasi info if donasi_id present
         $notifications = $query->with(['donasi' => function ($q) {
-            $q->select('donasi_id', 'jumlah', 'status', 'tanggal_donasi');
+            $q->select('donasi_id', 'jumlah', 'status', 'created_at');
         }])->orderBy('created_at', 'desc')->get();
 
         // Map notifications to include short donasi info
@@ -37,7 +37,7 @@ class NotifikasiController extends Controller
                 $notifArray['donasi_info'] = [
                     'jumlah' => $notif->donasi->jumlah,
                     'status' => $notif->donasi->status,
-                    'tanggal_donasi' => $notif->donasi->tanggal_donasi,
+                    'tanggal_donasi' => $notif->donasi->created_at,
                 ];
             } else {
                 $notifArray['donasi_info'] = null;

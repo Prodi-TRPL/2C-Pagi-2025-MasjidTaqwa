@@ -21,7 +21,6 @@ import DonasiSekarang from './pages/DonasiSekarang';
 import KategoriPengeluaran from './pages/dashboard/DashboardAdmin/KategoriPengeluaran';
 import DataDonasi from './pages/dashboard/DashboardAdmin/DataDonasi';
 import Notifikasi from './pages/dashboard/DashboardAdmin/Notifikasi';
-import MetodePembayaran from './pages/dashboard/DashboardAdmin/MetodePembayaran';
 import LaporanKeuangan from './pages/dashboard/DashboardAdmin/LaporanKeuangan';
 import ProyekPembangunan from './pages/dashboard/DashboardAdmin/ProyekPembangunan';
 
@@ -100,7 +99,6 @@ const AppRoutes = () => {
               <Route path="pengeluaran" element={<Pengeluaran />} />
               <Route path="kategoripengaluaran" element={<KategoriPengeluaran />} />
               <Route path="notifikasi" element={<Notifikasi />} />
-              <Route path="metode-pembayaran" element={<MetodePembayaran />} />
               <Route path="laporan-keuangan" element={<LaporanKeuangan />} />
               <Route path="proyek-pembangunan" element={<ProyekPembangunan />} />
             </Route>

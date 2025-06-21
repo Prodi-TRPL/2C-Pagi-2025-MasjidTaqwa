@@ -3,25 +3,39 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\Donation;
+use App\Models\Pengeluaran;
+use Carbon\Carbon;
 
 class AdminGraphAmountController extends Controller
 {
-    public function getMonthlySales()
+    public function getMonthlyReport()
     {
-        $incomes = DB::table('laporan_keuangan')
-            ->selectRaw('MONTH(created_at) as month, SUM(amount) as total')
-            ->where('type', 'total_pemasukan')
-            ->groupBy(DB::raw('MONTH(created_at)'))
+        // Get current year
+        $year = Carbon::now()->year;
+        
+        // Get monthly donations (income)
+        $incomes = Donation::select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('SUM(jumlah) as total')
+            )
+            ->where('status', 'Diterima')
+                          ->whereYear('created_at', $year)
+              ->groupBy(DB::raw('MONTH(created_at)'))
             ->orderBy('month')
             ->get();
 
-        $expenses = DB::table('laporan_keuangan')
-            ->selectRaw('MONTH(created_at) as month, SUM(amount) as total')
-            ->where('type', 'total_pengeluaran')
-            ->groupBy(DB::raw('MONTH(created_at)'))
+        // Get monthly expenses
+        $expenses = Pengeluaran::select(
+                DB::raw('MONTH(tanggal) as month'),
+                DB::raw('SUM(jumlah) as total')
+            )
+            ->whereYear('tanggal', $year)
+            ->groupBy(DB::raw('MONTH(tanggal)'))
             ->orderBy('month')
             ->get();
 
+        // Initialize arrays with zeros for all 12 months
         $monthlyIncomes = array_fill(0, 12, 0);
         foreach ($incomes as $item) {
             $monthlyIncomes[$item->month - 1] = (int)$item->total;

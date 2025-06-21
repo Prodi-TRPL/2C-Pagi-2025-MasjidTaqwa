@@ -21,7 +21,7 @@ class DonorsUserSeeder extends Seeder
             $donor->email = $donorEmail;
             $donor->password = Hash::make('addin123'); // Known password
             $donor->role = 'donatur';
-            $donor->nomor_hp = '081234567890';
+            // nomor_hp is not set for donatur role users, will be NULL by default
             $donor->created_at = now();
             $donor->save();
         }

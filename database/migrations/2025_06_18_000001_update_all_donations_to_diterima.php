@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,10 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('metode_pembayaran', function (Blueprint $table) {
-            $table->uuid('metode_pembayaran_id')->primary();
-            $table->string('nama_metode', 50)->nullable();
-        });
+        // Update all donations to have status "Diterima"
+        DB::table('donasi')->update(['status' => 'Diterima']);
+        
+        // Log the action
+        error_log('Migration: Updated all donations to Diterima status');
     }
 
     /**
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('metode_pembayaran');
+        // We can't properly revert this change
     }
 }; 

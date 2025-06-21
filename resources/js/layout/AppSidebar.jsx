@@ -50,11 +50,6 @@ const navItems = [
         path: "/dashboardhome/kategoripengaluaran",
     },
     {
-        icon: <MdPayment className="w-5 h-5" />,
-        name: "Metode Pembayaran",
-        path: "/dashboardhome/metode-pembayaran",
-    },
-    {
         icon: <MdNotifications className="w-5 h-5" />,
         name: "Notifikasi",
         path: "/dashboardhome/notifikasi",

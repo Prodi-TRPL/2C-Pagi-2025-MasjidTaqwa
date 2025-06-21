@@ -1,9 +1,53 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import axios from 'axios';
 
 const HomeContentSignUp = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    
+    // Helper function to safely get item from localStorage
+    const safeGetItem = (key) => {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            console.error("localStorage error:", e);
+            return null;
+        }
+    };
+    
+    // Check authentication status
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const token = safeGetItem('token');
+                
+                // If no token, user is not logged in
+                if (!token) {
+                    console.log("User not authenticated - no token found");
+                    setIsAuthenticated(false);
+                    return;
+                }
+                
+                // If token exists, try to get user profile to validate
+                const response = await axios.get('/api/donatur/profile', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                
+                if (response.data) {
+                    console.log("User authenticated:", response.data);
+                    setIsAuthenticated(true);
+                }
+            } catch (error) {
+                console.log("User authentication error:", error);
+                setIsAuthenticated(false);
+            }
+        };
+        
+        checkAuth();
+    }, []);
+    
     useEffect(() => {
         AOS.init({
             duration: 500,
@@ -11,6 +55,11 @@ const HomeContentSignUp = () => {
         });
     }, []);
 
+    // Don't render anything if user is authenticated
+    if (isAuthenticated) {
+        return null;
+    }
+    
     return (
         <div className="relative">
             {/* Gambar absolute menimpa dua section */}

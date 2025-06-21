@@ -266,3 +266,86 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Troubleshooting Donation System
+
+If you're having issues with the donation system, follow these steps to diagnose and fix the problem:
+
+### Step 1: Fix Database Issues
+
+1. Run the fix-donations utility:
+```bash
+php artisan migrate
+```
+
+This will run migrations that:
+- Update all donations to have "Diterima" status
+- Set payment_type and metode_pembayaran_id for donations with NULL values
+- Add missing snap_tokens to donations
+
+Alternatively, visit `/fix-donations` in your browser to run a similar fix.
+
+### Step 2: Testing Without Midtrans
+
+To bypass Midtrans integration and test the donation flow directly:
+
+1. Visit `/simple-donation` in your browser to use the simplified donation form
+2. This form uses a direct POST to `/api/donasi/simple` which doesn't require Midtrans integration
+3. Donations made through this form will appear in the admin dashboard
+
+### Step 3: Common Issues and Fixes
+
+#### Database Schema Issues
+
+If you see errors like:
+
+```
+Terjadi kesalahan pada sistem database. Silakan hubungi administrator.
+```
+
+This could be because:
+- Missing columns in the `donasi` table
+- Incorrect relationship with `metode_pembayaran` table
+- NULL values in required fields
+
+#### Payment Gateway Issues
+
+If you see errors like:
+
+```
+Gagal terhubung ke layanan pembayaran. Mohon coba lagi nanti.
+```
+
+This could be because:
+- Midtrans configuration is missing or incorrect in your `.env` file
+- Network issues connecting to Midtrans servers
+- Midtrans JavaScript snap library isn't loaded
+
+#### 401 Unauthorized Errors
+
+If you see 401 errors when the donation form loads:
+
+```
+GET http://localhost:8000/api/user 401 (Unauthorized)
+```
+
+This is normal and doesn't affect functionality - it just means the user isn't logged in. The donation form will still work for anonymous donations.
+
+### Step 4: Component Relationships
+
+- `DonasiSekarang.jsx` loads `DonationFirstPage.jsx` which handles the donation form
+- When a donation is submitted, it goes to either:
+  - `/api/donasi` (Midtrans integration)
+  - `/api/donasi/simple` (Simple testing without Midtrans)
+- Successful donations should appear in the admin dashboard (`DataDonasi.jsx`)
+  - The dashboard fetches data from `/api/donations` endpoint
+  - This endpoint is handled by `DonationHistoryController.php`
+
+### Step 5: Verifying Donations
+
+To verify donations are working correctly:
+
+1. Submit a test donation through `/simple-donation`
+2. Check the admin dashboard at `/dashboard/admin/data-donasi`
+3. Donations should appear with "Diterima" status
+4. If donations don't appear, check the browser console for errors
