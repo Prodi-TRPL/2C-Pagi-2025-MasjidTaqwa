@@ -10,12 +10,17 @@ const DonationFirstPage = () => {
     amount: "",
   });
 
+  // Display value for the amount (formatted)
+  const [displayAmount, setDisplayAmount] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [activeAmount, setActiveAmount] = useState(null);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const [notificationSent, setNotificationSent] = useState(false);
 
   // Helper function to safely get item from localStorage
   const safeGetItem = (key) => {
@@ -72,22 +77,47 @@ const DonationFirstPage = () => {
     { value: 100000, label: "Rp100.000" },
   ];
 
+  // Helper function for formatting currency with Indonesian format
+  const formatCurrency = (value) => {
+    // Remove non-numeric characters
+    const numericValue = value.toString().replace(/[^0-9]/g, '');
+    // Format with thousand separators (dots)
+    return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  // Helper function to unformat the currency to get the numeric value
+  const unformatCurrency = (value) => {
+    // Remove all non-numeric characters
+    return value.toString().replace(/[^0-9]/g, '');
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // For amount field, ensure value is not negative
     if (name === "amount") {
-      // Convert to number, ensure it's not negative, then back to string
-      const numValue = Math.max(0, Number(value));
+      // For amount field, we need to format it
+      const unformattedValue = unformatCurrency(value);
+      
+      // Ensure it's not negative
+      const numValue = Math.max(0, Number(unformattedValue));
+      
+      // Update the actual form data with numeric value
       setFormData({...formData, [name]: numValue.toString()});
-      setActiveAmount(null); // Reset active button when manually changing
+      
+      // Update the display value with formatted currency
+      setDisplayAmount(formatCurrency(numValue.toString()));
+      
+      // Reset active button when manually changing
+      setActiveAmount(null);
     } else {
+      // For other fields, just update normally
       setFormData({...formData, [name]: value});
     }
   };
 
   const handleQuickAmountSelect = (amount) => {
     setFormData({...formData, amount: amount.toString()});
+    setDisplayAmount(formatCurrency(amount.toString()));
     setActiveAmount(amount);
   };
 
@@ -97,6 +127,7 @@ const DonationFirstPage = () => {
     // Add 10000 (increment by 10K)
     const newAmount = currentAmount + 10000;
     setFormData({...formData, amount: newAmount.toString()});
+    setDisplayAmount(formatCurrency(newAmount.toString()));
     setActiveAmount(null); // Reset active button when using increment
   };
 
@@ -106,6 +137,7 @@ const DonationFirstPage = () => {
     // Subtract 10000 (decrement by 10K), but don't go below 0
     const newAmount = Math.max(0, currentAmount - 10000);
     setFormData({...formData, amount: newAmount.toString()});
+    setDisplayAmount(formatCurrency(newAmount.toString()));
     setActiveAmount(null); // Reset active button when using decrement
   };
 
@@ -121,13 +153,42 @@ const DonationFirstPage = () => {
       return false;
     }
     
-    if (!formData.amount || parseInt(formData.amount) < 10000) {
+    const numericAmount = parseInt(formData.amount) || 0;
+    if (!formData.amount || numericAmount < 10000) {
       setError("Jumlah donasi minimal Rp10.000");
       return false;
     }
     
     setError(null);
     return true;
+  };
+
+  // Check for new notifications after successful payment
+  const checkForNotifications = async () => {
+    try {
+      // Only check for notifications if user is authenticated
+      if (!isAuthenticated || !user) return;
+      
+      const token = safeGetItem('token');
+      if (!token) return;
+      
+      // Wait a moment for the backend to create the notification
+      setTimeout(async () => {
+        try {
+          // Check if there are new notifications
+          await axios.get('/api/notifikasi/check-new', {
+            params: { since: Date.now() - 60000 }, // Check for notifications in the last minute
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          setNotificationSent(true);
+        } catch (error) {
+          console.error("Error checking for notifications:", error);
+        }
+      }, 2000); // Wait 2 seconds for backend processing
+    } catch (error) {
+      console.error("Error in checkForNotifications:", error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -194,6 +255,33 @@ const DonationFirstPage = () => {
           })
           .then(callbackResponse => {
             console.log("Success callback sent to backend:", callbackResponse.data);
+            
+            // Store payment info for display
+            setPaymentInfo({
+              amount: formData.amount,
+              method: result.payment_type || 'midtrans',
+              orderId: response.data.order_id
+            });
+            
+            // Set payment success state
+            setPaymentSuccess(true);
+            
+            // Check for notifications if user is authenticated
+            if (isAuthenticated) {
+              checkForNotifications();
+            }
+            
+            // Reset form after successful payment
+            setFormData({
+              name: isAuthenticated ? user?.nama || "" : "",
+              email: isAuthenticated ? user?.email || "" : "",
+              amount: ""
+            });
+            
+            // Also reset the display amount
+            setDisplayAmount("");
+            
+            setActiveAmount(null);
           })
           .catch(error => {
             console.error("Error sending success callback:", error);
@@ -202,19 +290,20 @@ const DonationFirstPage = () => {
               order_id: response.data.order_id,
               payment_status: 'success'
             }).catch(e => console.error("Retry callback also failed:", e));
+            
+            // Still show success even if callback had issues
+            setPaymentSuccess(true);
+            setPaymentInfo({
+              amount: formData.amount,
+              method: result.payment_type || 'midtrans',
+              orderId: response.data.order_id
+            });
+            
+            // Check for notifications even if callback had issues
+            if (isAuthenticated) {
+              checkForNotifications();
+            }
           });
-          
-          setPaymentSuccess(true);
-          
-          // Reset form after successful payment
-          setFormData({
-            name: isAuthenticated ? user?.nama || "" : "",
-            email: isAuthenticated ? user?.email || "" : "",
-            amount: ""
-          });
-          
-          setActiveAmount(null);
-          alert("Pembayaran berhasil! Terima kasih atas donasi Anda.");
         },
         onPending: function(result) {
           console.log("Payment pending:", result);
@@ -258,6 +347,22 @@ const DonationFirstPage = () => {
     }
   };
 
+  // Format currency to Indonesian Rupiah
+  const formatRupiah = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Format initial display value when component loads or when amount changes from outside
+  useEffect(() => {
+    if (formData.amount) {
+      setDisplayAmount(formatCurrency(formData.amount));
+    }
+  }, []);
+
   return (
     <div className="min-h-full flex items-center justify-center bg-gradient-to-b from-white to-gray-100 px-4 py-12">
       <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 transition-all">
@@ -266,12 +371,28 @@ const DonationFirstPage = () => {
         </h2>
 
         {paymentSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-            <p className="font-medium">Terima kasih atas donasi Anda!</p>
-            <p className="text-sm mt-1">Donasi Anda sedang diproses dan akan segera terlihat di sistem kami.</p>
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg animate__animated animate__fadeIn">
+            <div className="flex items-center mb-2">
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p className="font-bold text-lg">Donasi Berhasil!</p>
+            </div>
             
-            {/* Sign up prompt for non-authenticated users */}
-            {!isAuthenticated && (
+            <p className="mb-2">Terima kasih atas donasi Anda sebesar {paymentInfo ? formatRupiah(paymentInfo.amount) : ''}. Semoga kebaikan Anda dibalas berlipat ganda.</p>
+            
+            {isAuthenticated ? (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg">
+                <p className="font-medium">Notifikasi telah dikirim!</p>
+                <p className="text-sm mt-1">Anda dapat melihat detail donasi di halaman notifikasi.</p>
+                <a 
+                  href="/notifikasi" 
+                  className="mt-2 inline-block px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Lihat Notifikasi
+                </a>
+              </div>
+            ) : (
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg">
                 <p className="font-medium">Ingin melihat riwayat donasi Anda?</p>
                 <p className="text-sm mt-1">Daftar akun untuk melacak semua donasi dan mendapatkan akses ke fitur donatur.</p>
@@ -375,12 +496,11 @@ const DonationFirstPage = () => {
               </button>
               
               <input
-                type="number"
+                type="text"
                 name="amount"
-                value={formData.amount}
+                value={displayAmount}
                 onChange={handleChange}
                 required
-                min="0"
                 className="w-full px-4 py-2 border-y border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#59B997] transition text-center"
                 placeholder="Masukkan jumlah donasi"
               />

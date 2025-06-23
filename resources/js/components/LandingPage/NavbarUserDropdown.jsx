@@ -133,21 +133,45 @@ export default function NavbarUserDropdown() {
           {role === "donatur" && (
             <>
               <li>
-                <DropdownItem onItemClick={closeDropdown} tag="a" to="/profile" className="...">
-                  <FontAwesomeIcon icon={faUser} className="..." />
-                  Profile
+                <DropdownItem 
+                  onItemClick={closeDropdown} 
+                  tag="a" 
+                  to="/profile" 
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon 
+                    icon={faUser} 
+                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
+                  />
+                  <span>Profile</span>
                 </DropdownItem>
               </li>
               <li>
-                <DropdownItem onItemClick={closeDropdown} tag="a" to="/notifikasi" className="...">
-                  <FontAwesomeIcon icon={faBell} className="..." />
-                  Notifikasi
+                <DropdownItem 
+                  onItemClick={closeDropdown} 
+                  tag="a" 
+                  to="/notifikasi" 
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon 
+                    icon={faBell} 
+                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
+                  />
+                  <span>Notifikasi</span>
                 </DropdownItem>
               </li>
               <li>
-                <DropdownItem onItemClick={closeDropdown} tag="a" to="/riwayat-transaksi" className="...">
-                  <FontAwesomeIcon icon={faHistory} className="..." />
-                  Riwayat Transaksi
+                <DropdownItem 
+                  onItemClick={closeDropdown} 
+                  tag="a" 
+                  to="/riwayat-transaksi" 
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon 
+                    icon={faHistory} 
+                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
+                  />
+                  <span>Riwayat Transaksi</span>
                 </DropdownItem>
               </li>
               <li>
@@ -161,7 +185,7 @@ export default function NavbarUserDropdown() {
                     icon={faTachometerAlt}
                     className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
                   />
-                  Progress Pembangunan
+                  <span>Progress Pembangunan</span>
                 </DropdownItem>
               </li>
               <li>
@@ -171,10 +195,13 @@ export default function NavbarUserDropdown() {
                     closeDropdown();
                   }}
                   tag="button"
-                  className="..."
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                 >
-                  <FontAwesomeIcon icon={faRightFromBracket} className="..." />
-                  Keluar
+                  <FontAwesomeIcon 
+                    icon={faRightFromBracket} 
+                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
+                  />
+                  <span>Keluar</span>
                 </DropdownItem>
               </li>
             </>

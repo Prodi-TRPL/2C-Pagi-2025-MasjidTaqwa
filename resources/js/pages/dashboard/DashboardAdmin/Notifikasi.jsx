@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FiTrash2, FiRefreshCw, FiSend, FiUsers } from "react-icons/fi";
+import { FiTrash2, FiRefreshCw, FiSend, FiUsers, FiCheck, FiX, FiAlertCircle } from "react-icons/fi";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Notifikasi = () => {
   const [notifikasiList, setNotifikasiList] = useState([]);
@@ -12,12 +13,36 @@ const Notifikasi = () => {
     total_unread: 0,
     read_percentage: 0
   });
+  
+  // State for notification popup
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: "",
+    type: "success", // success, error, warning
+    duration: 3000,
+  });
 
   const [formData, setFormData] = useState({
     jenis: "Progress Pembangunan",
     judul: "",
+    pesan: "",
   });
 
+  // Show notification popup
+  const showNotification = (message, type = "success", duration = 3000) => {
+    setNotification({
+      visible: true,
+      message,
+      type,
+      duration,
+    });
+    
+    // Auto hide after duration
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, visible: false }));
+    }, duration);
+  };
+  
   // Fetch notifications from database
   const fetchNotifications = async () => {
     setLoading(true);
@@ -31,7 +56,7 @@ const Notifikasi = () => {
       setNotifikasiList(response.data);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
-      alert("Gagal memuat notifikasi");
+      showNotification("Gagal memuat notifikasi", "error");
     } finally {
       setLoading(false);
     }
@@ -60,7 +85,12 @@ const Notifikasi = () => {
   const handleTambah = async (e) => {
     e.preventDefault();
     if (!formData.judul.trim()) {
-      alert("Judul tidak boleh kosong");
+      showNotification("Judul tidak boleh kosong", "warning");
+      return;
+    }
+    
+    if (!formData.pesan.trim()) {
+      showNotification("Isi pesan tidak boleh kosong", "warning");
       return;
     }
 
@@ -74,37 +104,56 @@ const Notifikasi = () => {
         },
       });
 
-      alert(`Notifikasi berhasil dikirim ke ${response.data.count} donatur`);
-      setFormData({ jenis: "Progress Pembangunan", judul: "" });
+      showNotification(`Notifikasi berhasil dikirim ke ${response.data.count} donatur`, "success");
+      setFormData({ jenis: "Progress Pembangunan", judul: "", pesan: "" });
       fetchNotifications(); // Refresh list
       fetchStats(); // Refresh stats
     } catch (error) {
       console.error("Failed to send notification:", error);
-      alert("Gagal mengirim notifikasi");
+      showNotification("Gagal mengirim notifikasi", "error");
     } finally {
       setSending(false);
     }
   };
 
-  const handleHapus = async (id) => {
-    if (!confirm("Yakin ingin menghapus notifikasi ini untuk semua donatur?")) {
-      return;
-    }
-
+  const [confirmDelete, setConfirmDelete] = useState({
+    show: false,
+    id: null,
+  });
+  
+  const openDeleteConfirm = (id) => {
+    setConfirmDelete({
+      show: true,
+      id,
+    });
+  };
+  
+  const closeDeleteConfirm = () => {
+    setConfirmDelete({
+      show: false,
+      id: null,
+    });
+  };
+  
+  const handleHapus = async () => {
+    if (!confirmDelete.id) return;
+    
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`/api/admin/notifikasi/${id}`, {
+      await axios.delete(`/api/admin/notifikasi/${confirmDelete.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       
-      alert("Notifikasi berhasil dihapus");
+      showNotification("Notifikasi berhasil dihapus", "success");
       fetchNotifications(); // Refresh list
       fetchStats(); // Refresh stats
     } catch (error) {
       console.error("Failed to delete notification:", error);
-      alert("Gagal menghapus notifikasi");
+      showNotification("Gagal menghapus notifikasi", "error");
+    } finally {
+      closeDeleteConfirm();
     }
   };
 
@@ -187,7 +236,7 @@ const Notifikasi = () => {
           Buat Notifikasi Manual
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Jenis
@@ -208,12 +257,12 @@ const Notifikasi = () => {
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-600 mb-1">
-              Isi Pesan
+              Judul Notifikasi
             </label>
             <input
               type="text"
               required
-              placeholder="Contoh: Proyek Masjid telah selesai 100%"
+              placeholder="Contoh: Update Pembangunan Masjid"
               className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none"
               style={{ outlineColor: "#59B997" }}
               value={formData.judul}
@@ -223,6 +272,23 @@ const Notifikasi = () => {
               disabled={sending}
             />
           </div>
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Isi Pesan
+          </label>
+          <textarea
+            required
+            placeholder="Masukkan isi pesan notifikasi yang akan dikirim ke donatur..."
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none"
+            style={{ outlineColor: "#59B997", minHeight: "100px" }}
+            value={formData.pesan}
+            onChange={(e) =>
+              setFormData({ ...formData, pesan: e.target.value })
+            }
+            disabled={sending}
+          />
         </div>
 
         <button
@@ -248,10 +314,11 @@ const Notifikasi = () => {
       {/* Tabel */}
       <div className="overflow-x-auto">
         <table className="w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <thead style={{ backgroundColor: "#59B997" }} className="text-white">
+                      <thead style={{ backgroundColor: "#59B997" }} className="text-white">
             <tr>
               <th className="px-4 py-2 text-left">Jenis</th>
-              <th className="px-4 py-2 text-left">Pesan</th>
+              <th className="px-4 py-2 text-left">Judul</th>
+              <th className="px-4 py-2 text-left">Isi Pesan</th>
               <th className="px-4 py-2 text-left">Tanggal Kirim</th>
               <th className="px-4 py-2 text-center">Aksi</th>
             </tr>
@@ -259,14 +326,14 @@ const Notifikasi = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="4" className="text-center py-4 text-gray-400">
+                <td colSpan="5" className="text-center py-4 text-gray-400">
                   <FiRefreshCw className="animate-spin inline mr-2" />
                   Memuat data...
                 </td>
               </tr>
             ) : notifikasiList.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center py-4 text-gray-400">
+                <td colSpan="5" className="text-center py-4 text-gray-400">
                   Tidak ada notifikasi.
                 </td>
               </tr>
@@ -286,12 +353,15 @@ const Notifikasi = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3">{item.judul}</td>
+                  <td className="px-4 py-3">
+                    <div className="max-w-xs truncate">{item.pesan || item.judul}</div>
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {formatDate(item.created_at)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleHapus(item.notifikasi_id)}
+                                          <button
+                      onClick={() => openDeleteConfirm(item.notifikasi_id)}
                       className="text-red-500 hover:text-red-700 text-sm p-1 rounded hover:bg-red-50 transition-colors"
                       title="Hapus notifikasi untuk semua donatur"
                     >
@@ -304,6 +374,106 @@ const Notifikasi = () => {
           </tbody>
         </table>
       </div>
+      
+      {/* Confirmation Dialog for Delete */}
+      {confirmDelete.show && (
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
+            {/* Overlay/backdrop */}
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true" onClick={closeDeleteConfirm}>
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            
+            {/* Modal */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all max-w-lg w-full mx-auto relative z-[10000]"
+            >
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <FiAlertCircle className="h-6 w-6 text-red-600" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      Hapus Notifikasi
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        Yakin ingin menghapus notifikasi ini untuk semua donatur? Tindakan ini tidak dapat dibatalkan.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                  onClick={closeDeleteConfirm}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none"
+                  onClick={handleHapus}
+                >
+                  Hapus
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      )}
+      
+      {/* Notification Popup */}
+      <AnimatePresence>
+        {notification.visible && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-4 right-4 z-[9998]"
+          >
+            <div 
+              className={`rounded-lg shadow-xl px-6 py-4 flex items-center ${
+                notification.type === "success" ? "bg-green-50 border-l-4 border-green-500" :
+                notification.type === "error" ? "bg-red-50 border-l-4 border-red-500" :
+                "bg-yellow-50 border-l-4 border-yellow-500"
+              }`}
+              style={{ minWidth: '300px', maxWidth: '450px' }}
+            >
+              <div className="mr-3">
+                {notification.type === "success" ? (
+                  <FiCheck className="h-6 w-6 text-green-500" />
+                ) : notification.type === "error" ? (
+                  <FiX className="h-6 w-6 text-red-500" />
+                ) : (
+                  <FiAlertCircle className="h-6 w-6 text-yellow-500" />
+                )}
+              </div>
+              <div>
+                <p className={`text-sm font-medium ${
+                  notification.type === "success" ? "text-green-800" :
+                  notification.type === "error" ? "text-red-800" :
+                  "text-yellow-800"
+                }`}>
+                  {notification.message}
+                </p>
+              </div>
+              <button 
+                onClick={() => setNotification(prev => ({ ...prev, visible: false }))}
+                className="ml-6 text-gray-400 hover:text-gray-500"
+              >
+                <FiX className="h-5 w-5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

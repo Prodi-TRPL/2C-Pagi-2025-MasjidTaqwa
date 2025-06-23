@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
 use App\Models\Donasi;
+use App\Models\Notifikasi;
 
 
 class DonasiController extends Controller
@@ -172,6 +173,11 @@ class DonasiController extends Controller
                         'donation_id' => $donation->donasi_id, 
                         'order_id' => $orderId
                     ]);
+                    
+                    // Create notification for the user if they're authenticated
+                    if ($donation->pengguna_id) {
+                        $this->createDonationNotification($donation);
+                    }
                 }
                 
                 $donation->save();
@@ -194,6 +200,9 @@ class DonasiController extends Controller
                     Log::error('Donation not found for Midtrans callback with order_id: ' . $orderId);
                     return response()->json(['status' => 'error', 'message' => 'Donation not found'], 404);
                 }
+
+                // Store previous status to check if it changed
+                $previousStatus = $donation->status;
 
                 // Update donation status based on transaction_status
                 if ($transactionStatus) {
@@ -221,6 +230,11 @@ class DonasiController extends Controller
                 
                 $donation->save();
                 
+                // Create notification if status changed to Diterima
+                if ($previousStatus !== 'Diterima' && $donation->status === 'Diterima' && $donation->pengguna_id) {
+                    $this->createDonationNotification($donation);
+                }
+                
                 Log::info('Donation status updated from Midtrans callback', [
                     'donation_id' => $donation->donasi_id, 
                     'new_status' => $donation->status,
@@ -242,6 +256,42 @@ class DonasiController extends Controller
                 'status' => 'error',
                 'message' => $e->getMessage()
             ], 500);
+        }
+    }
+    
+    /**
+     * Create a notification for a successful donation
+     */
+    private function createDonationNotification($donation)
+    {
+        try {
+            // Format the donation amount
+            $formattedAmount = number_format($donation->jumlah, 0, ',', '.');
+            
+            // Create notification for the user
+            $notification = new Notifikasi();
+            $notification->notifikasi_id = Str::uuid();
+            $notification->pengguna_id = $donation->pengguna_id;
+            $notification->donasi_id = $donation->donasi_id;
+            $notification->tipe = 'donasi_diterima';
+            $notification->judul = 'Donasi Anda Berhasil';
+            $notification->pesan = "Terima kasih! Donasi Anda sebesar Rp {$formattedAmount} telah berhasil diterima. Semoga kebaikan Anda dibalas berlipat ganda.";
+            $notification->status = 'terkirim';
+            $notification->save();
+            
+            Log::info('Donation notification created', [
+                'donation_id' => $donation->donasi_id,
+                'notification_id' => $notification->notifikasi_id,
+                'user_id' => $donation->pengguna_id
+            ]);
+            
+            return $notification;
+        } catch (\Exception $e) {
+            Log::error('Failed to create donation notification', [
+                'donation_id' => $donation->donasi_id,
+                'error' => $e->getMessage()
+            ]);
+            return null;
         }
     }
     

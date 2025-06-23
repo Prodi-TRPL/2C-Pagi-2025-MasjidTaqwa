@@ -25,10 +25,9 @@ class AdminNotifikasiController extends Controller
         // Ambil notifikasi yang dibuat manual (bukan dari sistem donasi)
         // Asumsi: notifikasi manual tidak punya donasi_id
         $notifications = Notifikasi::whereNull('donasi_id')
-    ->select('notifikasi_id', 'tipe', 'pesan as judul', 'created_at')
-    ->orderBy('created_at', 'desc')
-    ->get(); // hapus ->unique()
-
+            ->select('notifikasi_id', 'tipe', 'judul', 'pesan', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json($notifications);
     }
@@ -46,6 +45,7 @@ class AdminNotifikasiController extends Controller
         $request->validate([
             'jenis' => 'required|string|in:Progress Pembangunan,Target Proyek Tercapai',
             'judul' => 'required|string|max:255',
+            'pesan' => 'required|string',
         ]);
 
         // Map frontend types to database types
@@ -58,8 +58,6 @@ class AdminNotifikasiController extends Controller
 
         try {
             // Cari semua user donatur - sesuaikan dengan struktur tabel user Anda
-            // Ganti 'users' dengan nama tabel user yang benar
-            // Ganti 'id' dengan primary key user yang benar (mungkin 'pengguna_id')
             $users = DB::table('pengguna')
                 ->where('role', 'donatur') // Sesuaikan dengan field role Anda
                 ->get();
@@ -74,14 +72,15 @@ class AdminNotifikasiController extends Controller
             $notifications = [];
             foreach ($users as $targetUser) {
                 $notification = Notifikasi::create([
-    'notifikasi_id' => (string) Str::uuid(),
-    'pengguna_id' => $targetUser->pengguna_id,
-    'donasi_id' => null,
-    'tipe' => $tipe,
-    'pesan' => $request->judul,
-    'status' => 'terkirim',
-    'created_at' => now(),
-]);
+                    'notifikasi_id' => (string) Str::uuid(),
+                    'pengguna_id' => $targetUser->pengguna_id,
+                    'donasi_id' => null,
+                    'tipe' => $tipe,
+                    'judul' => $request->judul,
+                    'pesan' => $request->pesan,
+                    'status' => 'terkirim',
+                    // created_at and updated_at will be automatically set by Laravel
+                ]);
                 $notifications[] = $notification;
             }
 
@@ -91,15 +90,13 @@ class AdminNotifikasiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-    return response()->json([
-        'message' => 'Gagal mengirim notifikasi',
-        'error' => $e->getMessage(),       // Menampilkan pesan error asli
-        'line' => $e->getLine(),           // Menampilkan baris error terjadi
-        'file' => $e->getFile(),           // Menampilkan file sumber error
-    ], 500);
-}
-
-
+            return response()->json([
+                'message' => 'Gagal mengirim notifikasi',
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ], 500);
+        }
     }
 
     /**
@@ -121,7 +118,7 @@ class AdminNotifikasiController extends Controller
             }
 
             // Hapus semua notifikasi dengan pesan dan tipe yang sama (untuk semua user)
-            $deletedCount = Notifikasi::where('pesan', $notification->pesan)
+            $deletedCount = Notifikasi::where('judul', $notification->judul)
                 ->where('tipe', $notification->tipe)
                 ->whereNull('donasi_id') // Hanya hapus yang notifikasi manual
                 ->delete();
