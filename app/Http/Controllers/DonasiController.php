@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Midtrans\Snap;
+
 use App\Models\Donation;
 use App\Models\Pengguna;
 use Illuminate\Support\Str;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
+use App\Models\Donasi;
+
 
 class DonasiController extends Controller
 {
@@ -119,6 +122,32 @@ class DonasiController extends Controller
         }
     }
 
+    /**
+     * Mendapatkan statistik donasi dari pengguna yang sedang login
+     */
+    public function getDonationStats(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Hitung total jumlah donasi
+        $totalCount = Donasi::where('pengguna_id', $user->pengguna_id)
+            ->where('status', 'Diterima')
+            ->count();
+
+        // Hitung total nominal donasi
+        $totalAmount = Donasi::where('pengguna_id', $user->pengguna_id)
+            ->where('status', 'Diterima')
+            ->sum('jumlah');
+
+        return response()->json([
+            'total_count' => $totalCount,
+            'total_amount' => $totalAmount,
+        ]);
+    }
+
     public function handleCallback(Request $request)
     {
         try {
@@ -220,21 +249,27 @@ class DonasiController extends Controller
     {
         try {
             // Ambil donasi untuk user yang sedang login
-            $userId = Auth::id();
-            $donations = Donation::where('pengguna_id', $userId)
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+            
+            $donations = Donation::where('pengguna_id', $user->pengguna_id)
                         ->orderBy('created_at', 'desc')
                         ->get();
             
             Log::info('User donations retrieved', [
-                'user_id' => $userId,
+                'user_id' => $user->pengguna_id,
                 'count' => $donations->count()
             ]);
-                        
-            return response()->json($donations);
+            
+            return response()->json([
+                'donations' => $donations
+            ]);
         } catch (\Exception $e) {
             Log::error('Error retrieving user donations', [
                 'message' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => $request->user() ? $request->user()->pengguna_id : null
             ]);
             return response()->json(['error' => 'Failed to retrieve donations'], 500);
         }
@@ -284,9 +319,6 @@ class DonasiController extends Controller
         }
     }
     
-    /**
-     * Fix all donations to have correct status and payment method
-     */
     public function fixDonations()
     {
         try {

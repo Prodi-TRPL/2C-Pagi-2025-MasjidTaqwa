@@ -12,6 +12,9 @@ use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\KategoriPengeluaranController;
 use App\Http\Controllers\DonationHistoryController;
 use App\Http\Controllers\DonasiSimpleController;
+use App\Http\Controllers\LaporanKeuanganController;
+use App\Http\Controllers\ProyekPembangunanController;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,21 +46,28 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
-
-// User donasi history
-Route::middleware('auth:sanctum')->get('/donasi/user', [DonasiController::class, 'userDonations']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/reset-password-langsung', [AuthController::class, 'resetPasswordLangsung']);
 
 // Notifikasi routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Donasi routes
+    Route::get('/donasi/user', [DonasiController::class, 'userDonations']);
+    Route::get('/donatur/donations/stats', [DonasiController::class, 'getDonationStats']);
+    
+    // Notifikasi routes
     Route::get('/notifikasi', [NotifikasiController::class, 'index']);
     Route::post('/notifikasi/mark-as-read/{id}', [NotifikasiController::class, 'markAsRead']);
     Route::post('/notifikasi/mark-all-as-read', [NotifikasiController::class, 'markAllAsRead']);
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy']);
-});
-
-// Profile routes
-Route::middleware('auth:sanctum')->group(function () {
+    
+    // Profile routes
     Route::get('/donatur/profile', [ProfileController::class, 'getProfile']);
+    Route::post('/donatur/change-password', [ProfileController::class, 'updatePassword']);
+    Route::put('/donatur/profile', [ProfileController::class, 'update']);
+    
+    // Route CRUD ProyekPembangunan
+    Route::apiResource('ProyekPembangunan', ProyekPembangunanController::class);
 });
 
 // PENGELUARAN - SEMENTARA TANPA LOGIN AGAR BISA TESTING
@@ -66,8 +76,10 @@ Route::post('/pengeluaran', [PengeluaranController::class, 'store']); // Simpan 
 // Admin routes - requires auth and admin role
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::apiResource('Pengeluaran', PengeluaranController::class);
-Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
-
+    
+    // API CRUD Kategori Pengeluaran
+    Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
+    
     // Donation validation route
     Route::post('/donations/{id}/validate', [DonasiController::class, 'validateDonation']);
 });
@@ -77,3 +89,10 @@ Route::get('/donations', [DonationHistoryController::class, 'index']);
 
 // Monthly report data for graphs
 Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyReport']);
+
+// Laporan Keuangan routes
+Route::get('/laporan-keuangan', [LaporanKeuanganController::class, 'index']);
+Route::post('/laporan-keuangan', [LaporanKeuanganController::class, 'store']);
+
+
+

@@ -21,6 +21,12 @@ import {
   useMediaQuery,
   useTheme,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CampaignIcon from '@mui/icons-material/Campaign';
@@ -130,132 +136,73 @@ const EmptyState = ({ filterType, onReset }) => (
   </Box>
 );
 
-const DonaturUserNotifikasi = () => {
+const DonaturUserPembangunan = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
-  const [notifications, setNotifications] = useState([]);
+  const [progressData, setProgressData] = useState([]);
   const [filterType, setFilterType] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortOrder, setSortOrder] = useState("desc");
   const [refreshKey, setRefreshKey] = useState(0); // Key to force re-fetch
 
-  // Function to fetch notifications from the API
-  const fetchNotifications = async (type = "") => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = {};
-      if (type) params.tipe = type;
-      const token = localStorage.getItem("token"); // Get authentication token
-      
-      if (!token) {
-        setError("Autentikasi diperlukan. Silakan login kembali.");
-        setNotifications([]);
-        setLoading(false);
-        return;
-      }
-
-      const response = await axios.get("/api/notifikasi", {
-        params,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setNotifications(response.data);
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-      if (error.response) {
-        if (error.response.status === 401) {
-          setError("Sesi Anda telah berakhir atau tidak valid. Silakan login kembali.");
-          // Consider redirecting to login page here if authentication fails
-        } else if (error.response.data && error.response.data.message) {
-          setError(`Gagal memuat notifikasi: ${error.response.data.message}`);
-        } else {
-          setError("Gagal memuat notifikasi. Terjadi masalah pada server.");
-        }
-      } else if (error.request) {
-        setError("Gagal memuat notifikasi. Tidak ada respon dari server.");
-      } else {
-        setError("Gagal memuat notifikasi. Silakan coba lagi.");
-      }
-      setNotifications([]);
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 600); // Simulate network latency for skeleton loader visibility
-    }
-  };
-
   // --- MOCK DATA FOR DEVELOPMENT (REMOVE IN PRODUCTION) ---
-  // This useEffect will run when the component mounts and set mock data.
-  // Comment out or remove this block when you are ready to use your actual API.
   useEffect(() => {
-    const mockNotifications = [
+    const mockProgressData = [
       {
-        notifikasi_id: "notif_001",
-        tipe: "donasi_diterima",
-        judul: "Donasi Anda Berhasil Diterima!",
-        pesan: "Terima kasih atas donasi sebesar Rp 500.000 untuk pembangunan Masjid Agung. Semoga menjadi amal jariyah.",
-        created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
+        id: "progress_001",
+        nama_item: "Masjid Agung",
+        deskripsi: "Pembangunan Masjid Agung sedang dalam tahap pemasangan atap. Mohon doa dan dukungan.",
+        target_dana: 1000000000,
+        dana_terkumpul: 650000000,
+        waktu: new Date(Date.now() - 3 * 3600 * 1000).toISOString(), // 3 hours ago
       },
       {
-        notifikasi_id: "notif_002",
-        tipe: "progres_pembangunan",
-        judul: "Update Progres Pembangunan Masjid",
-        pesan: "Pembangunan Masjid Baiturrahman telah mencapai 75%. Saat ini sedang dalam tahap pemasangan atap dan jendela. Terima kasih atas dukungan Anda!",
-        created_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2 hours ago
+        id: "progress_002",
+        nama_item: "Masjid Baiturrahman",
+        deskripsi: "Pembangunan Masjid Baiturrahman telah mencapai 80%. Saat ini sedang memasang jendela.",
+        target_dana: 800000000,
+        dana_terkumpul: 640000000,
+        waktu: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(), // 1 day ago
       },
       {
-        notifikasi_id: "notif_003",
-        tipe: "target_tercapai",
-        judul: "Selamat! Target Donasi Tercapai",
-        pesan: "Alhamdulillah, target donasi untuk Masjid Nurul Iman sebesar Rp 1.000.000.000 telah tercapai. Terima kasih kepada seluruh donatur!",
-        created_at: new Date(Date.now() - 26 * 3600 * 1000).toISOString(), // Yesterday
+        id: "progress_003",
+        nama_item: "Masjid Nurul Iman",
+        deskripsi: "Pembangunan Masjid Nurul Iman telah selesai. Terima kasih atas dukungan semua donatur!",
+        target_dana: 1200000000,
+        dana_terkumpul: 1200000000,
+        waktu: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(), // 5 days ago
       },
       {
-        notifikasi_id: "notif_004",
-        tipe: "donasi_diterima",
-        judul: "Donasi Anda Telah Terkonfirmasi",
-        pesan: "Donasi Anda sebesar Rp 100.000 untuk Masjid Al-Ikhlas sudah kami terima dan akan segera diproses. Jazakallah Khairan.",
-        created_at: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(), // 3 days ago
+        id: "progress_004",
+        nama_item: "Masjid Al-Ikhlas",
+        deskripsi: "Fondasi pembangunan Masjid Al-Ikhlas telah selesai. Tahap selanjutnya adalah pembangunan dinding.",
+        target_dana: 600000000,
+        dana_terkumpul: 240000000,
+        waktu: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(), // 7 days ago
       },
       {
-        notifikasi_id: "notif_005",
-        tipe: "progres_pembangunan",
-        judul: "Fondasi Masjid Sudah Selesai",
-        pesan: "Tahap fondasi pembangunan Masjid Raya telah rampung. Pengerjaan selanjutnya adalah pembangunan dinding. Mohon doa dan dukungannya.",
-        created_at: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(), // 7 days ago
-      },
-      {
-        notifikasi_id: "notif_006",
-        tipe: "donasi_diterima",
-        judul: "Penerimaan Donasi Cash",
-        pesan: "Kami telah menerima donasi tunai dari Anda sebesar Rp 75.000. Catatan donasi Anda telah diperbarui.",
-        created_at: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(), // 10 days ago
+        id: "progress_005",
+        nama_item: "Masjid Raya",
+        deskripsi: "Pembangunan Masjid Raya sedang dalam tahap pondasi. Mohon doa dan dukungan.",
+        target_dana: 500000000,
+        dana_terkumpul: 125000000,
+        waktu: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(), // 10 days ago
       },
     ];
 
-    // Simulate API call delay
     setLoading(true);
     setTimeout(() => {
-      // Apply filter to mock data
-      const filteredMock = filterType 
-        ? mockNotifications.filter(notif => notif.tipe === filterType)
-        : mockNotifications;
-      setNotifications(filteredMock);
+      const filteredProgress = filterType
+        ? mockProgressData.filter(item => item.status.toLowerCase().includes(filterType.toLowerCase()))
+        : mockProgressData;
+      setProgressData(filteredProgress);
       setLoading(false);
-      setError(null); // Clear any previous errors when mock data is loaded
-    }, 1000); // 1 second delay for mock data
-  }, [filterType, refreshKey]); // Re-run when filterType or refreshKey changes
+      setError(null);
+    }, 1000);
+  }, [filterType, refreshKey]);
   // --- END MOCK DATA BLOCK ---
-
-  // Actual API call useEffect (Uncomment and ensure token is handled properly)
-  // useEffect(() => {
-  //   fetchNotifications(filterType);
-  // }, [filterType, refreshKey]); 
-
 
   const handleFilterChange = (event) => {
     setFilterType(event.target.value);
@@ -282,7 +229,7 @@ const DonaturUserNotifikasi = () => {
       } else if (isYesterday(date)) {
         return `Kemarin, ${format(date, "HH:mm", { locale: id })}`;
       }
-      return format(date, "dd MMMM yyyy, HH:mm", { locale: id }); // Correct format for full date
+      return format(date, "dd MMMM yyyy, HH:mm", { locale: id });
     } catch (e) {
       console.error("Error formatting date:", e);
       return dateString;
@@ -316,14 +263,15 @@ const DonaturUserNotifikasi = () => {
   };
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: "100vh", 
-        display: "flex", 
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
         flexDirection: "column",
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
-        backgroundImage: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="%2359B997" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E")',
-        backgroundAttachment: 'fixed',
+        background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)",
+        backgroundImage:
+          'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="%2359B997" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E")',
+        backgroundAttachment: "fixed",
       }}
     >
       <Box sx={{ zIndex: 20 }}>
@@ -350,26 +298,26 @@ const DonaturUserNotifikasi = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <NotificationsIcon sx={{ color: '#59B997', fontSize: 28 }} />
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 'bold', 
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 'bold',
                 color: '#59B997',
                 transition: 'color 0.3s ease',
               }}
             >
-              Notifikasi Saya
+              Progress Pembangunan
             </Typography>
           </Box>
-          
-          <Tooltip title="Refresh Notifikasi">
-            <IconButton 
-              onClick={handleRefresh} 
-              sx={{ 
+
+          <Tooltip title="Refresh Progress">
+            <IconButton
+              onClick={handleRefresh}
+              sx={{
                 color: '#59B997',
                 '&:hover': {
                   backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                } 
+                },
               }}
             >
               <RefreshIcon />
@@ -416,7 +364,7 @@ const DonaturUserNotifikasi = () => {
           >
             <TextField
               select
-              label="Filter Notifikasi"
+              label="Filter Progress"
               value={filterType}
               onChange={handleFilterChange}
               size="small"
@@ -444,16 +392,13 @@ const DonaturUserNotifikasi = () => {
               }}
             >
               <MenuItem value="">
-                Semua Notifikasi
+                Semua Progress
               </MenuItem>
-              {Object.entries(notificationTypeConfig).map(([key, { label }]) => (
-                <MenuItem
-                  key={key} 
-                  value={key}
-                >
-                  {label}
-                </MenuItem>
-              ))}
+              <MenuItem value="pemasangan atap">Pemasangan Atap</MenuItem>
+              <MenuItem value="pemasangan jendela">Pemasangan Jendela</MenuItem>
+              <MenuItem value="selesai">Selesai</MenuItem>
+              <MenuItem value="pondasi selesai">Pondasi Selesai</MenuItem>
+              <MenuItem value="pondasi">Pondasi</MenuItem>
             </TextField>
 
             <TextField
@@ -497,78 +442,67 @@ const DonaturUserNotifikasi = () => {
 
         {loading ? (
           <NotificationSkeleton count={5} />
-        ) : notifications.length === 0 ? (
+        ) : progressData.length === 0 ? (
           <EmptyState filterType={filterType} onReset={handleResetFilter} />
         ) : (
-          <Grid container spacing={2}>
-            {notifications
+          <TableContainer component={Paper} sx={{ maxHeight: 600 }}>
+            <Table stickyHeader size={isMobile ? "small" : "medium"}>
+              <TableHead sx={{ backgroundColor: '#59B997' }}>
+                <TableRow>
+                  <TableCell sx={{ backgroundColor: '#59B997', color: 'white', fontWeight: 'bold' }}>Nama Item</TableCell>
+                  <TableCell sx={{ backgroundColor: '#59B997', color: 'white', fontWeight: 'bold' }}>Deskripsi</TableCell>
+                  <TableCell sx={{ backgroundColor: '#59B997', color: 'white', fontWeight: 'bold' }}>Target Dana</TableCell>
+                  <TableCell sx={{ backgroundColor: '#59B997', color: 'white', fontWeight: 'bold' }}>Dana Terkumpul</TableCell>
+                  <TableCell sx={{ backgroundColor: '#59B997', color: 'white', fontWeight: 'bold' }}>Waktu</TableCell>
+                </TableRow>
+              </TableHead>
+          <TableBody>
+            {progressData
               .slice()
               .sort((a, b) => {
-                const dateA = new Date(a.created_at);
-                const dateB = new Date(b.created_at);
+                const dateA = new Date(a.waktu);
+                const dateB = new Date(b.waktu);
                 return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
               })
-              .map((notif, index) => {
-                const config = notificationTypeConfig[notif.tipe] || notificationTypeConfig["donasi_diterima"];
-                return (
-                  <Grid item xs={12} key={notif.notifikasi_id || index}>
-                    <Zoom in={true} style={{ transitionDelay: `${index * 100}ms` }}>
-                      <Card
-                        variant="outlined"
-                        sx={{
-                          borderRadius: 3,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                          borderColor: config.borderColor,
-                          backgroundColor: config.bgColor,
-                          "&:hover": {
-                            transform: "translateY(-4px)",
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                          },
-                        }}
-                      >
-                        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-                          <Box display="flex" alignItems="center" gap={1} mb={1.5}>
-                            <Badge color={config.color} variant="solid" size="md" startIcon={config.icon}>
-                              {config.label}
-                            </Badge>
-                            <Box sx={{ flexGrow: 1 }} />
-                            <Tooltip title={formatDateTime(notif.created_at)}>
-                              <Chip 
-                                label={getRelativeTime(notif.created_at)} 
-                                size="small" 
-                                sx={{ 
-                                  fontSize: '0.75rem',
-                                  backgroundColor: 'rgba(0,0,0,0.05)',
-                                  '& .MuiChip-label': { px: 1 }
-                                }} 
-                              />
-                            </Tooltip>
-                          </Box>
-                          <Typography 
-                            variant="body1" 
-                            sx={{ 
-                              whiteSpace: "pre-line",
-                              fontWeight: 'medium',
-                              mb: 0.5,
-                            }}
-                          >
-                            {notif.judul || (notif.tipe === 'donasi_diterima' ? 'Donasi Berhasil' : 'Pemberitahuan')}
-                          </Typography>
-                          <Typography 
-                            variant="body2" 
-                            color="text.secondary" 
-                            sx={{ whiteSpace: "pre-line" }}
-                          >
-                            {notif.pesan}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Zoom>
-                  </Grid>
-                );
-              })}
-          </Grid>
+              .map((progress, index) => (
+                <TableRow key={progress.id} hover sx={{ cursor: 'pointer', backgroundColor: index % 2 === 0 ? 'rgba(89, 185, 151, 0.1)' : 'rgba(89, 185, 151, 0.05)' }}>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#59B997' }}>{progress.nama_item}</TableCell>
+                  <TableCell sx={{ maxWidth: 300, whiteSpace: 'normal', wordWrap: 'break-word' }}>{progress.deskripsi}</TableCell>
+                  <TableCell sx={{ color: '#59B997' }}>{progress.target_dana ? progress.target_dana.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) : '-'}</TableCell>
+                  <TableCell sx={{ width: 200 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <Box sx={{ width: '100%', height: 20, backgroundColor: '#ddd', borderRadius: 1, overflow: 'hidden', position: 'relative' }}>
+                        <Box
+                          sx={{
+                            width: progress.target_dana ? `${Math.min((progress.dana_terkumpul / progress.target_dana) * 100, 100)}%` : '0%',
+                            height: '100%',
+                            backgroundColor: '#457B9D',
+                            borderRadius: 1,
+                            transition: 'width 0.5s ease-in-out',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#020426',
+                            fontWeight: 'bold',
+                            fontSize: '0.75rem',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            whiteSpace: 'nowrap',
+                            px: 1,
+                          }}
+                        >
+                          {progress.dana_terkumpul ? progress.dana_terkumpul.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' }) : '-'}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{formatDateTime(progress.waktu)}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Container>
 
@@ -579,4 +513,4 @@ const DonaturUserNotifikasi = () => {
   );
 };
 
-export default DonaturUserNotifikasi;
+export default DonaturUserPembangunan;

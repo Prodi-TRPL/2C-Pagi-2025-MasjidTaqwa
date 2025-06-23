@@ -94,7 +94,7 @@ const ProfileInfo = ({
       sx={{ 
         borderRadius: 3,
         overflow: 'visible',
-        mb: { xs: 4, md: 0 },
+        mb: { xs: 4, lg: 0 },
         height: '100%',
         transition: 'all 0.3s ease-in-out',
         '&:hover': {
@@ -105,7 +105,7 @@ const ProfileInfo = ({
     >
       <Box 
         sx={{ 
-          height: 80, 
+          height: { xs: 60, sm: 80 }, 
           width: '100%', 
           position: 'absolute', 
           top: 0, 
@@ -116,7 +116,7 @@ const ProfileInfo = ({
         }} 
       />
 
-      <CardContent sx={{ p: 3, position: 'relative', pt: 8 }}>
+      <CardContent sx={{ p: { xs: 2, md: 3 }, position: 'relative', pt: { xs: 6, sm: 8 } }}>
         <Box className="flex flex-col items-center text-center mb-4">
           <Badge
             overlap="circular"
@@ -129,7 +129,7 @@ const ProfileInfo = ({
                     backgroundColor: 'white', 
                     borderRadius: '50%',
                     padding: '2px',
-                    fontSize: 24,
+                    fontSize: { xs: 20, sm: 24 },
                   }} 
                 />
               </Tooltip>
@@ -139,14 +139,14 @@ const ProfileInfo = ({
               src={profile.profile_image}
               alt={profile.nama}
               sx={{ 
-                width: 100, 
-                height: 100, 
+                width: { xs: 80, sm: 100 }, 
+                height: { xs: 80, sm: 100 }, 
                 mb: 2,
                 border: '4px solid white',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               }}
-            />
-          </Badge>
+              />
+            </Badge>
           
           <Zoom in={true} style={{ transitionDelay: '300ms' }}>
             <Box sx={{ width: '100%', mb: 2 }}>
@@ -531,7 +531,7 @@ const PasswordChange = ({
             boxShadow: '0 6px 20px rgba(89, 185, 151, 0.6)',
             transform: 'translateY(-2px)',
           },
-          alignSelf: isMobile ? 'stretch' : 'flex-start',
+          alignSelf: isMobile ? 'stretch' : 'flex-end',
         }}
       >
         Ubah Password
@@ -769,7 +769,7 @@ const DonaturUserProfile = () => {
     {
       label: 'Progress Pembangunan',
       icon: <TrendingUpIcon fontSize="medium" sx={{ color: '#59B997' }} />,
-      href: '/donatur/progress-pembangunan',
+      href: '/donatur/pembangunan',
     },
   ];
 
@@ -827,8 +827,9 @@ const DonaturUserProfile = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          mt: 12,
-          py: 4,
+          mt: { xs: 8, sm: 10, md: 12 },
+          py: { xs: 2, md: 4 },
+          px: { xs: 2, md: 3 },
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(10px)',
           borderRadius: 3,
@@ -836,14 +837,15 @@ const DonaturUserProfile = () => {
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          overflow: 'hidden',
+          overflow: 'visible',
           mb: 4,
+          maxWidth: { xs: '100%', lg: 'lg' },
         }}
       >
         <Fade in timeout={600}>
-          <div className="flex flex-col md:flex-row flex-grow w-full gap-x-6">
-            {/* Left profile section with fixed width */}
-            <div className="w-full md:w-1/3 flex flex-col flex-shrink-0">
+          <div className="flex flex-col lg:flex-row w-full gap-6">
+            {/* Left profile section - stacks vertically on mobile, side-by-side on larger screens */}
+            <div className="w-full lg:w-1/3 mb-6 lg:mb-0">
               <ProfileInfo
                 profile={profile}
                 namaInput={namaInput}
@@ -856,7 +858,7 @@ const DonaturUserProfile = () => {
               />
             </div>
 
-            {/* Right side with flex-1 to fill remaining space */}
+            {/* Right side */}
             <div className="flex flex-col flex-1 space-y-4">
               <DonationStats 
                 profile={profile} 
@@ -873,11 +875,11 @@ const DonaturUserProfile = () => {
                   },
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, md: 3 } }}>
                   <Tabs 
                     value={activeTab} 
                     onChange={handleTabChange} 
-                    variant="fullWidth"
+                    variant={isMobile ? "fullWidth" : "standard"}
                     sx={{
                       mb: 3,
                       '& .MuiTab-root': {
@@ -886,6 +888,9 @@ const DonaturUserProfile = () => {
                         borderRadius: '12px',
                         py: 1.5,
                         transition: 'all 0.3s',
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                        minHeight: { xs: '40px', sm: '48px' },
+                        px: { xs: 1, sm: 2 },
                       },
                       '& .Mui-selected': {
                         color: '#59B997',
@@ -899,13 +904,13 @@ const DonaturUserProfile = () => {
                     }}
                   >
                     <Tab 
-                      label="Informasi Profil" 
-                      icon={<PersonIcon />} 
+                      label={isMobile ? "Informasi" : "Informasi Profil"} 
+                      icon={<PersonIcon fontSize={isMobile ? "small" : "medium"} />} 
                       iconPosition="start"
                     />
                     <Tab 
-                      label="Ubah Password" 
-                      icon={<LockIcon />} 
+                      label={isMobile ? "Password" : "Ubah Password"} 
+                      icon={<LockIcon fontSize={isMobile ? "small" : "medium"} />} 
                       iconPosition="start"
                     />
                   </Tabs>
