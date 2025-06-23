@@ -83,8 +83,6 @@ const statusConfig = {
   },
 };
 
-const statusOptions = ['Semua', 'Menunggu', 'Diterima', 'Kadaluarsa'];
-
 // Table skeleton loader
 const TableSkeleton = () => (
   <Paper sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
@@ -96,7 +94,7 @@ const TableSkeleton = () => (
             <TableCell>Jumlah</TableCell>
             <TableCell>Metode Pembayaran</TableCell>
             <TableCell>Status</TableCell>
-            <TableCell>Periode</TableCell>
+            <TableCell>ID Transaksi</TableCell>
             <TableCell align="center">Aksi</TableCell>
           </TableRow>
         </TableHead>
@@ -107,7 +105,7 @@ const TableSkeleton = () => (
               <TableCell><Skeleton width={100} /></TableCell>
               <TableCell><Skeleton width={150} /></TableCell>
               <TableCell><Skeleton width={80} /></TableCell>
-              <TableCell><Skeleton width={100} /></TableCell>
+              <TableCell><Skeleton width={140} /></TableCell>
               <TableCell align="center"><Skeleton width={90} height={36} sx={{ mx: 'auto', borderRadius: 1 }} /></TableCell>
             </TableRow>
           ))}
@@ -120,8 +118,8 @@ const TableSkeleton = () => (
   </Paper>
 );
 
-// Empty state component
-const EmptyState = ({ statusFilter, onReset }) => (
+// Updated EmptyState component - removed statusFilter parameter since we only show accepted donations
+const EmptyState = () => (
   <Box 
     sx={{ 
       display: 'flex', 
@@ -142,33 +140,24 @@ const EmptyState = ({ statusFilter, onReset }) => (
       />
     </Zoom>
     <Typography variant="h6" color="text.secondary" gutterBottom>
-      {statusFilter !== 'Semua' 
-        ? `Belum ada donasi dengan status "${statusFilter}"` 
-        : "Belum ada riwayat donasi"}
+      Belum ada riwayat donasi yang diterima
     </Typography>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 400 }}>
-      {statusFilter !== 'Semua' 
-        ? "Coba pilih filter lain atau tampilkan semua donasi" 
-        : "Riwayat donasi Anda akan muncul di sini setelah Anda melakukan donasi"}
+      Riwayat donasi yang sudah diterima akan muncul di sini setelah Anda melakukan donasi.
     </Typography>
-    {statusFilter !== 'Semua' && (
-      <Button 
-        startIcon={<RefreshIcon />}
-        variant="outlined" 
-        onClick={onReset}
-        sx={{
-          borderRadius: 2,
-          borderColor: '#59B997',
-          color: '#59B997',
-          '&:hover': {
-            borderColor: '#59B997',
-            backgroundColor: 'rgba(89, 185, 151, 0.1)',
-          }
-        }}
-      >
-        Tampilkan Semua
-      </Button>
-    )}
+    <Button 
+      variant="contained" 
+      component="a"
+      href="/donasi"
+      startIcon={<AttachMoneyIcon />}
+      sx={{
+        borderRadius: 2,
+        bgcolor: '#59B997',
+        '&:hover': { bgcolor: '#4a9d80' },
+      }}
+    >
+      Donasi Sekarang
+    </Button>
   </Box>
 );
 
@@ -177,6 +166,12 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
   <Grid container spacing={2}>
     {donations.map((donation, index) => {
       const status = statusConfig[donation.status] || statusConfig.Menunggu;
+      
+      // Ensure jumlah is a number
+      const numericAmount = typeof donation.jumlah === 'number' 
+        ? donation.jumlah 
+        : parseInt(String(donation.jumlah).replace(/[^\d]/g, ''), 10) || 0;
+      
       return (
         <Grid item xs={12} key={donation.donasi_id || index}>
           <Zoom in={true} style={{ transitionDelay: `${index * 100}ms` }}>
@@ -197,7 +192,7 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <CalendarTodayIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      {format(new Date(donation.tanggal_donasi), "dd MMMM yyyy", { locale: id })}
+                      {format(new Date(donation.tanggal_donasi || donation.created_at), "dd MMMM yyyy", { locale: id })}
                     </Typography>
                   </Box>
                   <Chip 
@@ -215,7 +210,7 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
                 
                 <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                   <AttachMoneyIcon sx={{ mr: 1, color: '#59B997' }} />
-                  Rp {donation.jumlah.toLocaleString('id-ID')}
+                  Rp {numericAmount.toLocaleString('id-ID')}
                 </Typography>
                 
                 <Divider sx={{ my: 1 }} />
@@ -223,18 +218,27 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <PaymentIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
                   <Typography variant="body2">
-                    {donation.metode_pembayaran?.nama_metode || 'Tidak diketahui'}
+                    {donation.payment_method_name || 
+                     formatPaymentMethod(donation.payment_type) || 
+                     'Tidak diketahui'}
                   </Typography>
                 </Box>
                 
-                {donation.laporan_keuangan?.periode && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <EventIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
-                    <Typography variant="body2">
-                      {format(new Date(donation.laporan_keuangan.periode), "MMMM yyyy", { locale: id })}
-                    </Typography>
-                  </Box>
-                )}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <ReceiptIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
+                  <Typography 
+                    variant="body2" 
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    ID: {donation.order_id || donation.donasi_id || '-'}
+                  </Typography>
+                </Box>
                 
                 <Button 
                   variant="outlined" 
@@ -269,7 +273,6 @@ function DonaturUserRiwayatTransaksi() {
   
   const [donations, setDonations] = useState([]);
   const [filteredDonations, setFilteredDonations] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('Semua');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -285,19 +288,92 @@ function DonaturUserRiwayatTransaksi() {
       setError(null);
       try {
         const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Sesi login tidak ditemukan. Silakan login kembali.');
+          setLoading(false);
+          return;
+        }
+
         const response = await fetch('/api/donasi/user', {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
+        
         if (!response.ok) {
-          throw new Error('Gagal mengambil data donasi');
+          if (response.status === 401) {
+            setError('Sesi login telah berakhir. Silakan login kembali.');
+          } else {
+            throw new Error('Gagal mengambil data donasi');
+          }
+          return;
         }
+        
         const data = await response.json();
-        setDonations(data);
-        setFilteredDonations(data);
+        
+        // Check if data has the correct structure
+        const donationsArray = data.donations || data;
+        
+        if (Array.isArray(donationsArray)) {
+          // Transform donation data and filter to show ONLY "Diterima" status
+          const processedDonations = donationsArray
+            .filter(donation => donation.status === 'Diterima')
+            .map(donation => {
+              // Debug the raw amount value
+              console.log(`Raw donation amount for ${donation.donasi_id || 'unknown'}: ${donation.jumlah}, type: ${typeof donation.jumlah}`);
+              
+              // Process jumlah correctly based on data type
+              let amount = donation.jumlah;
+              
+              // Use toString() to ensure we're working with a string, then remove non-digits
+              if (amount !== undefined && amount !== null) {
+                // Convert to string first for consistent handling
+                const amountStr = String(amount);
+                
+                // Check if the string already contains digits only
+                const isCleanDigits = /^\d+$/.test(amountStr);
+                
+                if (isCleanDigits) {
+                  // If it's already clean digits, parse it directly
+                  amount = parseInt(amountStr, 10);
+                } else {
+                  // Otherwise, remove non-digits and then parse
+                  amount = parseInt(amountStr.replace(/[^\d]/g, ''), 10);
+                }
+                
+                console.log(`Processed amount (after parsing): ${amount}`);
+              } else {
+                // Default to 0 if undefined or null
+                amount = 0;
+              }
+              
+              // Critical debugging
+              console.log(`Final donation amount for ${donation.donasi_id || 'unknown'}: Original=${donation.jumlah}, Processed=${amount}`);
+              
+              return {
+                ...donation,
+                // If tanggal_donasi is missing, use created_at
+                tanggal_donasi: donation.tanggal_donasi || donation.created_at,
+                // Store the processed amount without any additional manipulation
+                jumlah: amount,
+                // Preserve raw amount for debugging
+                raw_jumlah: donation.jumlah,
+                // Handle payment method display
+                payment_method_name: donation.payment_method_name || 
+                  (donation.payment_type ? formatPaymentMethod(donation.payment_type) : 'Midtrans')
+              };
+            });
+          
+          console.log('Processed donations:', processedDonations);
+          setDonations(processedDonations);
+          setFilteredDonations(processedDonations);
+        } else {
+          console.error('Unexpected data format:', data);
+          setError('Format data tidak valid');
+        }
       } catch (err) {
+        console.error('Error fetching donations:', err);
         setError(err.message);
       } finally {
         // Add slight delay to show loading state
@@ -306,14 +382,13 @@ function DonaturUserRiwayatTransaksi() {
         }, 600);
       }
     };
+    
     fetchDonations();
   }, [refreshKey]);
 
   useEffect(() => {
+    // Only sort by date - no filtering since we only display "Diterima" status
     let filtered = [...donations];
-    if (statusFilter !== 'Semua') {
-      filtered = filtered.filter((d) => d.status === statusFilter);
-    }
     filtered.sort((a, b) => {
       const dateA = new Date(a.tanggal_donasi);
       const dateB = new Date(b.tanggal_donasi);
@@ -321,7 +396,7 @@ function DonaturUserRiwayatTransaksi() {
     });
     setFilteredDonations(filtered);
     setPage(0);
-  }, [statusFilter, sortOrder, donations]);
+  }, [sortOrder, donations]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -342,10 +417,6 @@ function DonaturUserRiwayatTransaksi() {
     setOpenDialog(false);
   };
 
-  const handleResetFilter = () => {
-    setStatusFilter('Semua');
-  };
-
   const handleRefresh = () => {
     setRefreshKey(prevKey => prevKey + 1);
   };
@@ -359,7 +430,53 @@ function DonaturUserRiwayatTransaksi() {
   };
 
   const formatCurrency = (amount) => {
-    return `Rp ${amount.toLocaleString('id-ID')}`;
+    // Debugging to track value before formatting
+    console.log(`Formatting currency: ${amount}, type: ${typeof amount}`);
+    
+    // Handle different types safely
+    let numericAmount;
+    
+    // First, ensure we're working with a number
+    if (typeof amount === 'string') {
+      // If string contains formatting characters, remove them
+      const cleanAmount = amount.replace(/[^\d.-]/g, '');
+      numericAmount = parseFloat(cleanAmount);
+    } else {
+      numericAmount = Number(amount);
+    }
+    
+    // Check for valid number
+    if (isNaN(numericAmount)) {
+      console.error('Invalid amount value:', amount);
+      return 'Rp 0';
+    }
+    
+    console.log(`After conversion to number: ${numericAmount}`);
+    
+    try {
+      return `Rp ${numericAmount.toLocaleString('id-ID')}`;
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `Rp ${amount}`;
+    }
+  };
+
+  // Function to format payment method names
+  const formatPaymentMethod = (paymentType) => {
+    if (!paymentType) return 'Tidak diketahui';
+    
+    const methodMap = {
+      'bank_transfer': 'Transfer Bank',
+      'echannel': 'Virtual Account',
+      'gopay': 'GoPay',
+      'shopeepay': 'ShopeePay',
+      'credit_card': 'Kartu Kredit',
+      'cstore': 'Convenience Store',
+      'midtrans': 'Midtrans',
+    };
+    
+    return methodMap[paymentType.toLowerCase()] || 
+      paymentType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   };
 
   return (
@@ -390,15 +507,20 @@ function DonaturUserRiwayatTransaksi() {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <HistoryIcon sx={{ color: '#59B997', fontSize: 28 }} />
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 'bold', 
-                color: '#59B997',
-              }}
-            >
-              Riwayat Transaksi Donasi
-            </Typography>
+            <div>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#59B997',
+                }}
+              >
+                Riwayat Donasi Diterima
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Daftar donasi yang telah berhasil diterima dan diproses
+              </Typography>
+            </div>
           </Box>
           
           <Tooltip title="Refresh Data">
@@ -448,47 +570,10 @@ function DonaturUserRiwayatTransaksi() {
             sx={{ 
               display: 'flex', 
               gap: 2, 
-              flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: isMobile ? 'center' : 'flex-start',
             }}
           >
-            <TextField
-              select
-              label="Filter Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              size="small"
-              sx={{
-                minWidth: 180,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover fieldset': {
-                    borderColor: '#59B997',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#59B997',
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#59B997',
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FilterListIcon sx={{ color: '#59B997' }} />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              {statusOptions.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </TextField>
-
             <TextField
               select
               label="Urutkan"
@@ -525,13 +610,31 @@ function DonaturUserRiwayatTransaksi() {
                 Terlama
               </MenuItem>
             </TextField>
+
+            {/* Add "Donasi Sekarang" button in the filter section for better visibility */}
+            {!isMobile && filteredDonations.length > 0 && (
+              <Button 
+                variant="contained" 
+                component="a"
+                href="/donasi"
+                startIcon={<AttachMoneyIcon />}
+                sx={{
+                  ml: 'auto',
+                  borderRadius: 2,
+                  bgcolor: '#59B997',
+                  '&:hover': { bgcolor: '#4a9d80' },
+                }}
+              >
+                Donasi Sekarang
+              </Button>
+            )}
           </Box>
         </Paper>
 
         {loading ? (
           <TableSkeleton />
         ) : filteredDonations.length === 0 ? (
-          <EmptyState statusFilter={statusFilter} onReset={handleResetFilter} />
+          <EmptyState />
         ) : isMobile ? (
           <MobileCardView 
             donations={filteredDonations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)} 
@@ -554,7 +657,7 @@ function DonaturUserRiwayatTransaksi() {
                       <TableCell>Jumlah</TableCell>
                       <TableCell>Metode Pembayaran</TableCell>
                       <TableCell>Status</TableCell>
-                      <TableCell>Periode</TableCell>
+                      <TableCell>ID Transaksi</TableCell>
                       <TableCell align="center">Aksi</TableCell>
                     </TableRow>
                   </TableHead>
@@ -562,7 +665,16 @@ function DonaturUserRiwayatTransaksi() {
                     {filteredDonations
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((donation, index) => {
-                        const status = statusConfig[donation.status] || statusConfig.Menunggu;
+                        const status = statusConfig[donation.status] || statusConfig.Diterima;
+                        
+                        // Debug donation amount
+                        console.log(`Rendering donation ${index}: id=${donation.donasi_id}, amount=${donation.jumlah}, raw=${donation.raw_jumlah}`);
+                        
+                        // Ensure jumlah is a number
+                        const numericAmount = typeof donation.jumlah === 'number' 
+                          ? donation.jumlah 
+                          : parseInt(String(donation.jumlah).replace(/[^\d]/g, ''), 10) || 0;
+                        
                         return (
                           <TableRow 
                             key={donation.donasi_id || index}
@@ -579,14 +691,16 @@ function DonaturUserRiwayatTransaksi() {
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <CalendarTodayIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                                {formatDate(donation.tanggal_donasi)}
+                                {formatDate(donation.tanggal_donasi || donation.created_at)}
                               </Box>
                             </TableCell>
                             <TableCell sx={{ fontWeight: 'medium' }}>
-                              {formatCurrency(donation.jumlah)}
+                              {`Rp ${numericAmount.toLocaleString('id-ID')}`}
                             </TableCell>
                             <TableCell>
-                              {donation.metode_pembayaran?.nama_metode || 'Tidak diketahui'}
+                              {donation.payment_method_name || 
+                              formatPaymentMethod(donation.payment_type) || 
+                              'Tidak diketahui'}
                             </TableCell>
                             <TableCell>
                               <Chip 
@@ -601,9 +715,20 @@ function DonaturUserRiwayatTransaksi() {
                               />
                             </TableCell>
                             <TableCell>
-                              {donation.laporan_keuangan?.periode
-                                ? formatDate(donation.laporan_keuangan.periode, "MMMM yyyy")
-                                : '-'}
+                              <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                  fontFamily: 'monospace',
+                                  fontSize: '0.75rem',
+                                  color: 'text.secondary' 
+                                }}
+                              >
+                                {donation.order_id ? 
+                                  donation.order_id.substring(0, 15) + '...' : 
+                                  donation.donasi_id ? 
+                                    donation.donasi_id.substring(0, 8) : 
+                                    '-'}
+                              </Typography>
                             </TableCell>
                             <TableCell align="center">
                               <Button 
@@ -650,6 +775,27 @@ function DonaturUserRiwayatTransaksi() {
           </Fade>
         )}
 
+        {/* Mobile "Donasi Sekarang" button (only visible if there are already donations) */}
+        {isMobile && filteredDonations.length > 0 && (
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+            <Button 
+              variant="contained" 
+              component="a"
+              href="/donasi"
+              startIcon={<AttachMoneyIcon />}
+              fullWidth
+              sx={{
+                borderRadius: 2,
+                py: 1.5,
+                bgcolor: '#59B997',
+                '&:hover': { bgcolor: '#4a9d80' },
+              }}
+            >
+              Donasi Sekarang
+            </Button>
+          </Box>
+        )}
+
         <Dialog 
           open={openDialog} 
           onClose={handleCloseDialog} 
@@ -673,7 +819,7 @@ function DonaturUserRiwayatTransaksi() {
                 gap: 1,
               }}>
                 <ReceiptIcon />
-                Detail Transaksi Donasi
+                Detail Transaksi Donasi Diterima
                 <IconButton
                   aria-label="close"
                   onClick={handleCloseDialog}
@@ -689,9 +835,20 @@ function DonaturUserRiwayatTransaksi() {
               </DialogTitle>
               <DialogContent dividers>
                 <Box sx={{ mb: 2, textAlign: 'center' }}>
-                  <Typography variant="h5" sx={{ mb: 1, color: '#59B997', fontWeight: 'bold' }}>
-                    {formatCurrency(selectedDonation.jumlah)}
-                  </Typography>
+                  {/* Get numeric amount directly */}
+                  {(() => {
+                    const numericAmount = typeof selectedDonation.jumlah === 'number' 
+                      ? selectedDonation.jumlah 
+                      : parseInt(String(selectedDonation.jumlah).replace(/[^\d]/g, ''), 10) || 0;
+                    
+                    console.log(`Dialog amount: original=${selectedDonation.jumlah}, processed=${numericAmount}, type=${typeof selectedDonation.jumlah}`);
+                    
+                    return (
+                      <Typography variant="h5" sx={{ mb: 1, color: '#59B997', fontWeight: 'bold' }}>
+                        Rp {numericAmount.toLocaleString('id-ID')}
+                      </Typography>
+                    );
+                  })()}
                   
                   <Chip 
                     icon={statusConfig[selectedDonation.status]?.icon} 
@@ -710,11 +867,28 @@ function DonaturUserRiwayatTransaksi() {
                 <List disablePadding>
                   <ListItem sx={{ px: 0, py: 1 }}>
                     <ListItemIcon sx={{ minWidth: 40 }}>
+                      <ReceiptIcon sx={{ color: '#59B997' }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary="ID Transaksi" 
+                      secondary={selectedDonation.order_id || selectedDonation.donasi_id || '(Tidak ada ID)'} 
+                      secondaryTypographyProps={{
+                        sx: { 
+                          fontFamily: 'monospace', 
+                          fontSize: '0.85rem',
+                          wordBreak: 'break-all'
+                        }
+                      }}
+                    />
+                  </ListItem>
+                  
+                  <ListItem sx={{ px: 0, py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 40 }}>
                       <CalendarTodayIcon sx={{ color: '#59B997' }} />
                     </ListItemIcon>
                     <ListItemText 
                       primary="Tanggal Donasi" 
-                      secondary={format(new Date(selectedDonation.tanggal_donasi), "dd MMMM yyyy, HH:mm", { locale: id })} 
+                      secondary={format(new Date(selectedDonation.tanggal_donasi || selectedDonation.created_at), "dd MMMM yyyy, HH:mm", { locale: id })} 
                     />
                   </ListItem>
                   
@@ -724,18 +898,39 @@ function DonaturUserRiwayatTransaksi() {
                     </ListItemIcon>
                     <ListItemText 
                       primary="Metode Pembayaran" 
-                      secondary={selectedDonation.metode_pembayaran?.nama_metode || 'Tidak diketahui'} 
+                      secondary={
+                        selectedDonation.payment_method_name || 
+                        formatPaymentMethod(selectedDonation.payment_type) || 
+                        'Tidak diketahui'
+                      } 
                     />
                   </ListItem>
-                  
-                  {selectedDonation.laporan_keuangan?.periode && (
+
+                  {selectedDonation.name && (
                     <ListItem sx={{ px: 0, py: 1 }}>
                       <ListItemIcon sx={{ minWidth: 40 }}>
-                        <EventIcon sx={{ color: '#59B997' }} />
+                        <Avatar sx={{ width: 24, height: 24, bgcolor: '#59B997', fontSize: '0.75rem' }}>
+                          {selectedDonation.name.charAt(0).toUpperCase()}
+                        </Avatar>
                       </ListItemIcon>
                       <ListItemText 
-                        primary="Periode Laporan" 
-                        secondary={format(new Date(selectedDonation.laporan_keuangan.periode), "MMMM yyyy", { locale: id })} 
+                        primary="Nama Donatur" 
+                        secondary={selectedDonation.name} 
+                      />
+                    </ListItem>
+                  )}
+
+                  {selectedDonation.email && (
+                    <ListItem sx={{ px: 0, py: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#59B997" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                          <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Email" 
+                        secondary={selectedDonation.email} 
                       />
                     </ListItem>
                   )}
@@ -752,6 +947,14 @@ function DonaturUserRiwayatTransaksi() {
                     </ListItem>
                   )}
                 </List>
+
+                {selectedDonation.status === 'Diterima' && (
+                  <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(89, 185, 151, 0.1)', borderRadius: 2, border: '1px dashed #59B997' }}>
+                    <Typography variant="body2" align="center" color="#59B997" sx={{ fontWeight: 'medium' }}>
+                      Terima kasih atas donasi Anda! Semoga kebaikan Anda dibalas berlipat ganda.
+                    </Typography>
+                  </Box>
+                )}
               </DialogContent>
               <DialogActions sx={{ px: 3, py: 2 }}>
                 <Button 

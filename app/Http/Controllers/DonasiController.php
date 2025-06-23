@@ -33,10 +33,26 @@ class DonasiController extends Controller
                 'user_id' => 'nullable|string'
             ]);
             
+            // Parse and validate amount to ensure it's an integer
+            $amount = (int)$request->amount;
+            
+            // Basic sanity check for unrealistically large amounts
+            if ($amount > 1000000000) { // More than 1 billion rupiah
+                Log::warning('Extremely large donation amount detected', [
+                    'amount' => $amount,
+                    'raw_amount' => $request->amount
+                ]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Jumlah donasi terlalu besar'
+                ], 400);
+            }
+            
             Log::info('Donation request received', [
                 'name' => $request->name,
                 'email' => $request->email,
-                'amount' => $request->amount,
+                'raw_amount' => $request->amount,
+                'processed_amount' => $amount,
                 'user_id' => $request->user_id
             ]);
             
@@ -53,7 +69,7 @@ class DonasiController extends Controller
             $params = [
                 'transaction_details' => [
                     'order_id' => $orderId,
-                    'gross_amount' => (int)$request->amount,
+                    'gross_amount' => $amount,
                 ],
                 'customer_details' => [
                     'first_name' => $request->name,
@@ -63,12 +79,15 @@ class DonasiController extends Controller
 
             // Get Snap Payment Page URL
             $snapToken = Snap::getSnapToken($params);
-            Log::info('Midtrans snap token generated', ['token' => $snapToken]);
+            Log::info('Midtrans snap token generated', [
+                'token' => $snapToken, 
+                'amount' => $amount
+            ]);
             
             // Create donation record
             $donation = new Donation();
             $donation->donasi_id = Str::uuid();
-            $donation->jumlah = $request->amount;
+            $donation->jumlah = $amount;
             $donation->status = 'Kadaluarsa'; // Default status until payment is confirmed
             $donation->order_id = $orderId;
             $donation->snap_token = $snapToken;
@@ -103,10 +122,17 @@ class DonasiController extends Controller
             
             $donation->save();
             
+            Log::info('Donation record created successfully', [
+                'donasi_id' => $donation->donasi_id,
+                'amount' => $donation->jumlah,
+                'order_id' => $orderId
+            ]);
+            
             // Return token to frontend
             return response()->json([
                 'snap_token' => $snapToken,
                 'order_id' => $orderId,
+                'amount' => $amount, // Return the processed amount for verification
                 'status' => 'success'
             ]);
                 
@@ -308,13 +334,31 @@ class DonasiController extends Controller
                         ->orderBy('created_at', 'desc')
                         ->get();
             
+            // Process donations to ensure amounts are correct integers
+            $processedDonations = $donations->map(function ($donation) {
+                // Make sure jumlah is a correct integer without modifications
+                if (is_numeric($donation->jumlah)) {
+                    // Explicitly convert to integer to ensure no string formatting issues
+                    $donation->jumlah = (int) $donation->jumlah;
+                }
+                
+                // Log donation amount for debugging
+                Log::info('User donation amount', [
+                    'donation_id' => $donation->donasi_id,
+                    'original_amount' => $donation->getOriginal('jumlah'),
+                    'processed_amount' => $donation->jumlah
+                ]);
+                
+                return $donation;
+            });
+            
             Log::info('User donations retrieved', [
                 'user_id' => $user->pengguna_id,
-                'count' => $donations->count()
+                'count' => $processedDonations->count()
             ]);
             
             return response()->json([
-                'donations' => $donations
+                'donations' => $processedDonations
             ]);
         } catch (\Exception $e) {
             Log::error('Error retrieving user donations', [
