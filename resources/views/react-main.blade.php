@@ -17,12 +17,11 @@
 </head>
 <body>
     <div id="app"></div>
-
     <!-- Debug info in development only -->
     @if(config('app.env') === 'local')
     <script>
-        console.log('Midtrans Client Key: {{ config('midtrans.client_key') }}');
-        console.log('Midtrans Environment: {{ config('midtrans.is_production') ? 'Production' : 'Sandbox' }}');
+        console.log('Midtrans Client Key: {{ config("midtrans.client_key") }}');
+        console.log('Midtrans Environment: {{ config("midtrans.is_production") ? "Production" : "Sandbox" }}');
         
         // Verify Midtrans is loaded
         window.addEventListener('load', function() {

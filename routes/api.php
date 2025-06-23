@@ -7,6 +7,7 @@ use App\Http\Controllers\DonationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DonasiController;
 use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\AdminNotifikasiController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PengeluaranController;
 use App\Http\Controllers\KategoriPengeluaranController;
@@ -69,6 +70,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route CRUD ProyekPembangunan
     Route::apiResource('ProyekPembangunan', ProyekPembangunanController::class);
 });
+
+Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+    Route::get('/notifikasi', [AdminNotifikasiController::class, 'index']);
+    Route::post('/notifikasi', [AdminNotifikasiController::class, 'store']);
+    Route::delete('/notifikasi/{id}', [AdminNotifikasiController::class, 'destroy']);
+    Route::get('/notifikasi/stats', [AdminNotifikasiController::class, 'getStats']);
+});
+
 
 // PENGELUARAN - SEMENTARA TANPA LOGIN AGAR BISA TESTING
 Route::post('/pengeluaran', [PengeluaranController::class, 'store']); // Simpan pengeluaran
