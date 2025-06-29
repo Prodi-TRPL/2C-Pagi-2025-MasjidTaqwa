@@ -10,9 +10,11 @@ class ProyekPembangunan extends Model
     protected $primaryKey = 'proyek_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    public $timestamps = false;
+    public $timestamps = true;
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = null;
 
-    protected $fillable = ['admin_id', 'nama_item', 'deskripsi', 'target_dana', 'dana_terkumpul', 'created_at'];
+    protected $fillable = ['admin_id', 'nama_item', 'deskripsi', 'target_dana', 'dana_terkumpul', 'created_at', 'gambar'];
 
     public function admin()
     {

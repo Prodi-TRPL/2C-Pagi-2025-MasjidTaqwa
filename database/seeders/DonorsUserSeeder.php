@@ -11,19 +11,60 @@ class DonorsUserSeeder extends Seeder
 {
     public function run()
     {
-        $donorEmail = 'addin@gmail.com';
-        $existingDonor = Pengguna::where('email', $donorEmail)->first();
+        // Sample donor accounts
+        $donors = [
+            [
+                'nama' => 'Muhammad Addin',
+                'email' => 'addin@gmail.com',
+                'password' => 'addin123',
+                'can_donate' => true,
+                'can_view_history' => true,
+                'can_view_notification' => true,
+            ],
+            [
+                'nama' => 'Ahmad Doni',
+                'email' => 'doni@gmail.com',
+                'password' => 'password123',
+                'can_donate' => true,
+                'can_view_history' => true,
+                'can_view_notification' => true,
+            ],
+            [
+                'nama' => 'Siti Fatimah',
+                'email' => 'siti@gmail.com',
+                'password' => 'password123',
+                'can_donate' => true,
+                'can_view_history' => true,
+                'can_view_notification' => true,
+            ],
+            [
+                'nama' => 'Budi Santoso',
+                'email' => 'budi@gmail.com',
+                'password' => 'password123',
+                'can_donate' => true,
+                'can_view_history' => true,
+                'can_view_notification' => true,
+            ],
+        ];
 
-        if (!$existingDonor) {
-            $donor = new Pengguna();
-            $donor->pengguna_id = (string) Str::uuid();
-            $donor->nama = 'Muhammad Addin';
-            $donor->email = $donorEmail;
-            $donor->password = Hash::make('addin123'); // Known password
-            $donor->role = 'donatur';
-            // nomor_hp is not set for donatur role users, will be NULL by default
-            $donor->created_at = now();
-            $donor->save();
+        foreach ($donors as $donorData) {
+            $existingDonor = Pengguna::where('email', $donorData['email'])->first();
+
+            if (!$existingDonor) {
+                $donor = new Pengguna();
+                $donor->pengguna_id = (string) Str::uuid();
+                $donor->nama = $donorData['nama'];
+                $donor->email = $donorData['email'];
+                $donor->password = Hash::make($donorData['password']);
+                $donor->role = 'donatur';
+                $donor->can_donate = $donorData['can_donate'];
+                $donor->can_view_history = $donorData['can_view_history'];
+                $donor->can_view_notification = $donorData['can_view_notification'];
+                $donor->created_at = now();
+                $donor->save();
+                
+                $this->command->info('Created donor: ' . $donorData['nama']);
+            }
         }
     }
 }

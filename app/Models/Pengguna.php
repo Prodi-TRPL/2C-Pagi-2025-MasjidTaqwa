@@ -15,7 +15,23 @@ class Pengguna extends Authenticatable
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['nama', 'email', 'password', 'role', 'nomor_hp', 'created_at'];
+    protected $fillable = [
+        'nama', 
+        'email', 
+        'password', 
+        'role', 
+        'nomor_hp', 
+        'created_at',
+        'can_donate',
+        'can_view_history',
+        'can_view_notification'
+    ];
+
+    protected $casts = [
+        'can_donate' => 'boolean',
+        'can_view_history' => 'boolean',
+        'can_view_notification' => 'boolean',
+    ];
 
     public function getAuthIdentifierName()
     {

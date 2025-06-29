@@ -44,6 +44,9 @@ import Badge from "../components/ui/badge/Badge"; // Assuming this is your custo
 import axios from "axios";
 import { format, isToday, isYesterday } from "date-fns";
 import { id } from "date-fns/locale";
+import { getUserPermissions, hasPermission, getPermissionDeniedMessage } from "../utils/permissions";
+import AccessDeniedModal from "../components/ui/AccessDeniedModal";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 
 // Configuration for different notification types
 const notificationTypeConfig = {
@@ -146,14 +149,36 @@ const DonaturUserNotifikasi = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const [notifications, setNotifications] = useState([]);
-  const [filterType, setFilterType] = useState("");
+  const [filteredNotifications, setFilteredNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    type: "",
+    action: null,
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [permissions, setPermissions] = useState(null);
+  const [permissionChecked, setPermissionChecked] = useState(false);
+  const [accessDeniedModal, setAccessDeniedModal] = useState({
+    show: false,
+    title: "",
+    message: ""
+  });
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [refreshKey, setRefreshKey] = useState(0); // Key to force re-fetch
   
   // State for notification detail popup
-  const [selectedNotification, setSelectedNotification] = useState(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   
   // State for confirmation dialogs
@@ -161,16 +186,60 @@ const DonaturUserNotifikasi = () => {
   const [confirmDialogAction, setConfirmDialogAction] = useState(null);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
   
-  // State for snackbar feedback
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" // success, error, warning, info
-  });
-
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [lastCheckedTime, setLastCheckedTime] = useState(Date.now());
   const [notificationCount, setNotificationCount] = useState(0);
+
+  // Effect to check permissions
+  useEffect(() => {
+    const checkPermission = async () => {
+      try {
+        const userPermissions = await getUserPermissions();
+        setPermissions(userPermissions);
+        
+        // Check if user has the required permission
+        if (!hasPermission(userPermissions, 'canViewNotification')) {
+          // Show access denied modal
+          const { title, message } = getPermissionDeniedMessage('canViewNotification');
+          setAccessDeniedModal({
+            show: true,
+            title,
+            message
+          });
+        }
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+      } finally {
+        setPermissionChecked(true);
+      }
+    };
+    
+    checkPermission();
+  }, []);
+
+  // Don't render the main component content if user doesn't have permission
+  if (permissionChecked && permissions && !permissions.canViewNotification) {
+    return (
+      <div className="pt-16 relative">
+        {/* Navbar */}
+        <div className="relative z-20">
+          <NavbarBaru />
+        </div>
+        
+        <AccessDeniedModal
+          isOpen={accessDeniedModal.show}
+          onClose={() => {
+            setAccessDeniedModal({ ...accessDeniedModal, show: false });
+            navigate('/');
+          }}
+          title={accessDeniedModal.title}
+          message={accessDeniedModal.message}
+        />
+        
+        <Navigate to="/" replace state={{ from: location }} />
+      </div>
+    );
+  }
 
   // Function to fetch notifications from the API
   const fetchNotifications = useCallback(async (type = "", checkForNew = false) => {
@@ -538,309 +607,310 @@ const DonaturUserNotifikasi = () => {
   };
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: "100vh", 
-        display: "flex", 
-        flexDirection: "column",
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
-        backgroundImage: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="%2359B997" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E")',
-        backgroundAttachment: 'fixed',
-      }}
-    >
-      <Box sx={{ zIndex: 20 }}>
-        <NavbarBaru />
-      </Box>
-
-      <Container 
-        component="main" 
+    <div className="pt-16 relative min-h-screen flex flex-col">
+      <Box 
         sx={{ 
-          flexGrow: 1, 
-          mt: 12,
-          py: 4, 
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: 3,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          overflow: 'hidden',
-          mb: 4,
+          minHeight: "100vh", 
+          display: "flex", 
+          flexDirection: "column",
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="%2359B997" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E")',
+          backgroundAttachment: 'fixed',
         }}
       >
-        {/* New Notification Banner */}
-        {hasNewNotifications && (
-          <Fade in={true}>
-            <Paper
-              elevation={0}
-              sx={{
-                mb: 3,
-                p: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: 'rgba(89, 185, 151, 0.15)',
-                border: '1px solid rgba(89, 185, 151, 0.3)',
-                borderRadius: 3,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <NotificationsIcon sx={{ color: '#59B997', mr: 2 }} />
-                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                  Ada notifikasi baru! Donasi Anda telah berhasil diproses.
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleRefresh}
-                sx={{
-                  backgroundColor: '#59B997',
-                  '&:hover': {
-                    backgroundColor: '#47a07f',
-                  },
-                  borderRadius: 2,
-                }}
-              >
-                Lihat Sekarang
-              </Button>
-            </Paper>
-          </Fade>
-        )}
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <NotificationsIcon sx={{ color: '#59B997', fontSize: 28 }} />
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 'bold', 
-                color: '#59B997',
-                transition: 'color 0.3s ease',
-              }}
-            >
-              Notifikasi Saya
-            </Typography>
-          </Box>
-          
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {notifications.length > 0 && (
-              <Tooltip title="Tandai Semua Sudah Dibaca">
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  onClick={confirmMarkAllAsRead}
-                  startIcon={<DoneAllIcon />}
-                  sx={{ 
-                    borderColor: '#59B997',
-                    color: '#59B997',
-                    '&:hover': {
-                      borderColor: '#59B997',
-                      backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                    }
-                  }}
-                >
-                  Tandai Semua Dibaca
-                </Button>
-              </Tooltip>
-            )}
-            <Tooltip title="Refresh Notifikasi">
-              <IconButton 
-                onClick={handleRefresh} 
-                sx={{ 
-                  color: '#59B997',
-                  '&:hover': {
-                    backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                  } 
-                }}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
+        <Box sx={{ zIndex: 20 }}>
+          <NavbarBaru />
         </Box>
 
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ mb: 3, borderRadius: 2 }}
-            action={
-              <Button 
-                color="inherit" 
-                size="small" 
-                onClick={handleRefresh}
-              >
-                Coba Lagi
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
-        )}
-
-        <Paper 
-          elevation={0} 
+        <Container 
+          component="main" 
           sx={{ 
-            p: 2, 
-            mb: 3, 
-            borderRadius: 3, 
-            backgroundColor: 'rgba(89, 185, 151, 0.05)',
-            border: '1px solid rgba(89, 185, 151, 0.1)',
+            flexGrow: 1, 
+            mt: 12,
+            py: 4, 
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 3,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            overflow: 'hidden',
+            mb: 4,
           }}
         >
-          <Box 
+          {/* New Notification Banner */}
+          {hasNewNotifications && (
+            <Fade in={true}>
+              <Paper
+                elevation={0}
+                sx={{
+                  mb: 3,
+                  p: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: 'rgba(89, 185, 151, 0.15)',
+                  border: '1px solid rgba(89, 185, 151, 0.3)',
+                  borderRadius: 3,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <NotificationsIcon sx={{ color: '#59B997', mr: 2 }} />
+                  <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                    Ada notifikasi baru! Donasi Anda telah berhasil diproses.
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleRefresh}
+                  sx={{
+                    backgroundColor: '#59B997',
+                    '&:hover': {
+                      backgroundColor: '#47a07f',
+                    },
+                    borderRadius: 2,
+                  }}
+                >
+                  Lihat Sekarang
+                </Button>
+              </Paper>
+            </Fade>
+          )}
+
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <NotificationsIcon sx={{ color: '#59B997', fontSize: 28 }} />
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 'bold', 
+                  color: '#59B997',
+                  transition: 'color 0.3s ease',
+                }}
+              >
+                Notifikasi Saya
+              </Typography>
+            </Box>
+            
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {notifications.length > 0 && (
+                <Tooltip title="Tandai Semua Sudah Dibaca">
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={confirmMarkAllAsRead}
+                    startIcon={<DoneAllIcon />}
+                    sx={{ 
+                      borderColor: '#59B997',
+                      color: '#59B997',
+                      '&:hover': {
+                        borderColor: '#59B997',
+                        backgroundColor: 'rgba(89, 185, 151, 0.1)',
+                      }
+                    }}
+                  >
+                    Tandai Semua Dibaca
+                  </Button>
+                </Tooltip>
+              )}
+              <Tooltip title="Refresh Notifikasi">
+                <IconButton 
+                  onClick={handleRefresh} 
+                  sx={{ 
+                    color: '#59B997',
+                    '&:hover': {
+                      backgroundColor: 'rgba(89, 185, 151, 0.1)',
+                    } 
+                  }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          {error && (
+            <Alert 
+              severity="error" 
+              sx={{ mb: 3, borderRadius: 2 }}
+              action={
+                <Button 
+                  color="inherit" 
+                  size="small" 
+                  onClick={handleRefresh}
+                >
+                  Coba Lagi
+                </Button>
+              }
+            >
+              {error}
+            </Alert>
+          )}
+
+          <Paper 
+            elevation={0} 
             sx={{ 
-              display: 'flex', 
-              gap: 3, 
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: isMobile ? 'center' : 'flex-start',
+              p: 2, 
+              mb: 3, 
+              borderRadius: 3, 
+              backgroundColor: 'rgba(89, 185, 151, 0.05)',
+              border: '1px solid rgba(89, 185, 151, 0.1)',
             }}
           >
-            <TextField
-              select
-              label="Filter Notifikasi"
-              value={filterType}
-              onChange={handleFilterChange}
-              size="small"
-              sx={{
-                minWidth: 180,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover fieldset': {
-                    borderColor: '#59B997',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#59B997',
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#59B997',
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FilterListIcon sx={{ color: '#59B997' }} />
-                  </InputAdornment>
-                ),
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                gap: 3, 
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: isMobile ? 'center' : 'flex-start',
               }}
             >
-              <MenuItem value="">
-                Semua Notifikasi
-              </MenuItem>
-              {Object.entries(notificationTypeConfig).map(([key, { label }]) => (
-                <MenuItem
-                  key={key} 
-                  value={key}
-                >
-                  {label}
+              <TextField
+                select
+                label="Filter Notifikasi"
+                value={filterType}
+                onChange={handleFilterChange}
+                size="small"
+                sx={{
+                  minWidth: 180,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': {
+                      borderColor: '#59B997',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#59B997',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#59B997',
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FilterListIcon sx={{ color: '#59B997' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              >
+                <MenuItem value="">
+                  Semua Notifikasi
                 </MenuItem>
-              ))}
-            </TextField>
+                {Object.entries(notificationTypeConfig).map(([key, { label }]) => (
+                  <MenuItem
+                    key={key} 
+                    value={key}
+                  >
+                    {label}
+                  </MenuItem>
+                ))}
+              </TextField>
 
-            <TextField
-              select
-              label="Urutkan"
-              value={sortOrder}
-              onChange={handleSortOrderChange}
-              size="small"
-              sx={{
-                minWidth: 150,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover fieldset': {
-                    borderColor: '#59B997',
+              <TextField
+                select
+                label="Urutkan"
+                value={sortOrder}
+                onChange={handleSortOrderChange}
+                size="small"
+                sx={{
+                  minWidth: 150,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': {
+                      borderColor: '#59B997',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#59B997',
+                    },
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#59B997',
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#59B997',
                   },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#59B997',
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SortIcon sx={{ color: '#59B997' }} />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              <MenuItem value="desc">
-                Terbaru
-              </MenuItem>
-              <MenuItem value="asc">
-                Terlama
-              </MenuItem>
-            </TextField>
-          </Box>
-        </Paper>
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SortIcon sx={{ color: '#59B997' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              >
+                <MenuItem value="desc">
+                  Terbaru
+                </MenuItem>
+                <MenuItem value="asc">
+                  Terlama
+                </MenuItem>
+              </TextField>
+            </Box>
+          </Paper>
 
-        {loading ? (
-          <NotificationSkeleton count={5} />
-        ) : notifications.length === 0 ? (
-          <EmptyState filterType={filterType} onReset={handleResetFilter} />
-        ) : (
-          <Grid container spacing={2}>
-            {notifications
-              .slice()
-              .sort((a, b) => {
-                const dateA = new Date(a.created_at);
-                const dateB = new Date(b.created_at);
-                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-              })
-              .map((notif, index) => {
-                const config = notificationTypeConfig[notif.tipe] || notificationTypeConfig["donasi_diterima"];
-                return (
-                  <Grid item xs={12} key={notif.notifikasi_id || index}>
-                    <Zoom in={true} style={{ transitionDelay: `${index * 100}ms` }}>
-                      <Card
-                        variant="outlined"
-                        sx={{
-                          cursor: 'pointer',
-                          borderRadius: 3,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                          borderColor: notif.is_read ? 'rgba(0,0,0,0.12)' : config.borderColor,
-                          backgroundColor: notif.is_read ? 'white' : config.bgColor,
-                          "&:hover": {
-                            transform: "translateY(-4px)",
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                          },
-                          position: 'relative',
-                          overflow: 'hidden',
-                          animation: notif.justMarkedAsRead ? 'pulse 1s' : 'none',
-                          '@keyframes pulse': {
-                            '0%': {
-                              boxShadow: '0 0 0 0 rgba(89, 185, 151, 0.7)',
+          {loading ? (
+            <NotificationSkeleton count={5} />
+          ) : notifications.length === 0 ? (
+            <EmptyState filterType={filterType} onReset={handleResetFilter} />
+          ) : (
+            <Grid container spacing={2}>
+              {notifications
+                .slice()
+                .sort((a, b) => {
+                  const dateA = new Date(a.created_at);
+                  const dateB = new Date(b.created_at);
+                  return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+                })
+                .map((notif, index) => {
+                  const config = notificationTypeConfig[notif.tipe] || notificationTypeConfig["donasi_diterima"];
+                  return (
+                    <Grid item xs={12} key={notif.notifikasi_id || index}>
+                      <Zoom in={true} style={{ transitionDelay: `${index * 100}ms` }}>
+                        <Card
+                          variant="outlined"
+                          sx={{
+                            cursor: 'pointer',
+                            borderRadius: 3,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                            borderColor: notif.is_read ? 'rgba(0,0,0,0.12)' : config.borderColor,
+                            backgroundColor: notif.is_read ? 'white' : config.bgColor,
+                            "&:hover": {
+                              transform: "translateY(-4px)",
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
                             },
-                            '70%': {
-                              boxShadow: '0 0 0 10px rgba(89, 185, 151, 0)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            animation: notif.justMarkedAsRead ? 'pulse 1s' : 'none',
+                            '@keyframes pulse': {
+                              '0%': {
+                                boxShadow: '0 0 0 0 rgba(89, 185, 151, 0.7)',
+                              },
+                              '70%': {
+                                boxShadow: '0 0 0 10px rgba(89, 185, 151, 0)',
+                              },
+                              '100%': {
+                                boxShadow: '0 0 0 0 rgba(89, 185, 151, 0)',
+                              },
                             },
-                            '100%': {
-                              boxShadow: '0 0 0 0 rgba(89, 185, 151, 0)',
-                            },
-                          },
-                        }}
-                        onClick={() => openNotificationDetail(notif)}
-                      >
-                        {!notif.is_read && (
-                          <Box 
-                            sx={{ 
-                              position: 'absolute', 
-                              top: 8, 
-                              right: 8, 
-                              width: 8, 
-                              height: 8, 
-                              borderRadius: '50%', 
-                              backgroundColor: '#59B997',
-                            }} 
-                          />
-                        )}
-                                                  <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                          }}
+                          onClick={() => openNotificationDetail(notif)}
+                        >
+                          {!notif.is_read && (
+                            <Box 
+                              sx={{ 
+                                position: 'absolute', 
+                                top: 8, 
+                                right: 8, 
+                                width: 8, 
+                                height: 8, 
+                                borderRadius: '50%', 
+                                backgroundColor: '#59B997',
+                              }} 
+                            />
+                          )}
+                          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                             <Box display="flex" alignItems="center" gap={1} mb={1.5}>
                               <Badge color={config.color} variant="solid" size="md" startIcon={config.icon}>
                                 {config.label}
@@ -877,263 +947,264 @@ const DonaturUserNotifikasi = () => {
                                 </IconButton>
                               </Tooltip>
                             </Box>
-                          <Typography 
-                            variant="body1" 
-                            sx={{ 
-                              whiteSpace: "pre-line",
-                              fontWeight: notif.is_read ? 'normal' : 'medium',
-                              mb: 0.5,
-                              transition: 'all 0.3s ease',
-                            }}
-                          >
-                            {notif.judul || (notif.tipe === 'donasi_diterima' ? 'Donasi Berhasil' : 'Pemberitahuan')}
-                          </Typography>
-                          <Typography 
-                            variant="body2" 
-                            color="text.secondary" 
-                            sx={{ whiteSpace: "pre-line" }}
-                          >
-                            {notif.pesan}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Zoom>
-                  </Grid>
-                );
-              })}
-          </Grid>
-        )}
-      </Container>
+                            <Typography 
+                              variant="body1" 
+                              sx={{ 
+                                whiteSpace: "pre-line",
+                                fontWeight: notif.is_read ? 'normal' : 'medium',
+                                mb: 0.5,
+                                transition: 'all 0.3s ease',
+                              }}
+                            >
+                              {notif.judul || (notif.tipe === 'donasi_diterima' ? 'Donasi Berhasil' : 'Pemberitahuan')}
+                            </Typography>
+                            <Typography 
+                              variant="body2" 
+                              color="text.secondary" 
+                              sx={{ whiteSpace: "pre-line" }}
+                            >
+                              {notif.pesan}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Zoom>
+                    </Grid>
+                  );
+                })}
+            </Grid>
+          )}
+        </Container>
 
-      <Box sx={{ zIndex: 10 }}>
-        <SimpleFooter />
-      </Box>
-      
-      {/* Confirmation Dialog */}
-      <Dialog
-        open={confirmDialogOpen}
-        onClose={handleConfirmDialogClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-          }
-        }}
-      >
-        <DialogTitle id="alert-dialog-title" sx={{ pb: 1 }}>
-          {confirmDialogAction === "markAllAsRead" 
-            ? "Tandai Semua Notifikasi Dibaca?" 
-            : "Hapus Notifikasi?"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description" sx={{ mb: 1 }}>
-            {confirmDialogAction === "markAllAsRead" 
-              ? "Apakah Anda yakin ingin menandai semua notifikasi sebagai sudah dibaca?" 
-              : "Apakah Anda yakin ingin menghapus notifikasi ini? Tindakan ini tidak dapat dibatalkan."}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleConfirmDialogClose}
-            variant="outlined"
-            sx={{
-              borderColor: 'rgba(0,0,0,0.23)',
-              color: 'rgba(0,0,0,0.87)',
-              '&:hover': {
-                borderColor: 'rgba(0,0,0,0.5)',
-                backgroundColor: 'rgba(0,0,0,0.04)',
-              },
-              borderRadius: 2,
-            }}
-          >
-            Batal
-          </Button>
-          <Button 
-            onClick={handleConfirmAction}
-            variant="contained"
-            autoFocus
-            sx={{
-              bgcolor: confirmDialogAction === "deleteNotification" ? '#ef4444' : '#59B997',
-              '&:hover': {
-                bgcolor: confirmDialogAction === "deleteNotification" ? '#dc2626' : '#47a07f',
-              },
-              borderRadius: 2,
-            }}
-          >
-            {confirmDialogAction === "markAllAsRead" ? "Tandai Semua" : "Hapus"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      
-      {/* Snackbar for feedback */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        TransitionComponent={Slide}
-      >
-        <Alert 
-          onClose={handleSnackbarClose} 
-          severity={snackbar.severity} 
-          variant="filled"
-          sx={{ 
-            width: '100%',
-            borderRadius: 2,
-            alignItems: 'center'
+        <Box sx={{ zIndex: 10 }}>
+          <SimpleFooter />
+        </Box>
+        
+        {/* Confirmation Dialog */}
+        <Dialog
+          open={confirmDialogOpen}
+          onClose={handleConfirmDialogClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+            }
           }}
-          action={
-            <IconButton
-              size="small"
-              aria-label="close"
-              color="inherit"
-              onClick={handleSnackbarClose}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          }
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          <DialogTitle id="alert-dialog-title" sx={{ pb: 1 }}>
+            {confirmDialogAction === "markAllAsRead" 
+              ? "Tandai Semua Notifikasi Dibaca?" 
+              : "Hapus Notifikasi?"}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description" sx={{ mb: 1 }}>
+              {confirmDialogAction === "markAllAsRead" 
+                ? "Apakah Anda yakin ingin menandai semua notifikasi sebagai sudah dibaca?" 
+                : "Apakah Anda yakin ingin menghapus notifikasi ini? Tindakan ini tidak dapat dibatalkan."}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button 
+              onClick={handleConfirmDialogClose}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(0,0,0,0.23)',
+                color: 'rgba(0,0,0,0.87)',
+                '&:hover': {
+                  borderColor: 'rgba(0,0,0,0.5)',
+                  backgroundColor: 'rgba(0,0,0,0.04)',
+                },
+                borderRadius: 2,
+              }}
+            >
+              Batal
+            </Button>
+            <Button 
+              onClick={handleConfirmAction}
+              variant="contained"
+              autoFocus
+              sx={{
+                bgcolor: confirmDialogAction === "deleteNotification" ? '#ef4444' : '#59B997',
+                '&:hover': {
+                  bgcolor: confirmDialogAction === "deleteNotification" ? '#dc2626' : '#47a07f',
+                },
+                borderRadius: 2,
+              }}
+            >
+              {confirmDialogAction === "markAllAsRead" ? "Tandai Semua" : "Hapus"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+        
+        {/* Snackbar for feedback */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          TransitionComponent={Slide}
+        >
+          <Alert 
+            onClose={handleSnackbarClose} 
+            severity={snackbar.severity} 
+            variant="filled"
+            sx={{ 
+              width: '100%',
+              borderRadius: 2,
+              alignItems: 'center'
+            }}
+            action={
+              <IconButton
+                size="small"
+                aria-label="close"
+                color="inherit"
+                onClick={handleSnackbarClose}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            }
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
 
-      {/* Notification Detail Dialog */}
-      <Dialog 
-        open={detailDialogOpen} 
-        onClose={handleCloseDetailDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-          }
-        }}
-      >
-        {selectedNotification && (
-          <>
-            <DialogTitle sx={{ 
-              borderBottom: '1px solid rgba(0,0,0,0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
-              {selectedNotification.judul || (
-                selectedNotification.tipe === 'donasi_diterima' 
-                  ? 'Donasi Berhasil' 
-                  : 'Pemberitahuan'
-              )}
+        {/* Notification Detail Dialog */}
+        <Dialog 
+          open={detailDialogOpen} 
+          onClose={handleCloseDetailDialog}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+            }
+          }}
+        >
+          {selectedNotification && (
+            <>
+              <DialogTitle sx={{ 
+                borderBottom: '1px solid rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                {selectedNotification.judul || (
+                  selectedNotification.tipe === 'donasi_diterima' 
+                    ? 'Donasi Berhasil' 
+                    : 'Pemberitahuan'
+                )}
+                
+                {(() => {
+                  const config = notificationTypeConfig[selectedNotification.tipe] || 
+                    notificationTypeConfig["donasi_diterima"];
+                  return (
+                    <Chip 
+                      icon={config.icon} 
+                      label={config.label}
+                      size="small"
+                      sx={{ 
+                        ml: 'auto',
+                        backgroundColor: config.bgColor,
+                        color: config.color === 'success' ? '#2e7d32' : 
+                               config.color === 'info' ? '#0288d1' : 
+                               config.color === 'warning' ? '#ed6c02' : '#59B997',
+                      }}
+                    />
+                  );
+                })()}
+              </DialogTitle>
               
-              {(() => {
-                const config = notificationTypeConfig[selectedNotification.tipe] || 
-                  notificationTypeConfig["donasi_diterima"];
-                return (
-                  <Chip 
-                    icon={config.icon} 
-                    label={config.label}
-                    size="small"
+              <DialogContent sx={{ pt: 2, pb: 1 }}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedNotification.pesan}
+                  </Typography>
+                </Box>
+                
+                {selectedNotification.donasi_info && (
+                  <Paper 
+                    variant="outlined" 
                     sx={{ 
-                      ml: 'auto',
-                      backgroundColor: config.bgColor,
-                      color: config.color === 'success' ? '#2e7d32' : 
-                             config.color === 'info' ? '#0288d1' : 
-                             config.color === 'warning' ? '#ed6c02' : '#59B997',
+                      p: 2, 
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(89, 185, 151, 0.05)',
+                      borderColor: 'rgba(89, 185, 151, 0.2)',
                     }}
-                  />
-                );
-              })()}
-            </DialogTitle>
-            
-            <DialogContent sx={{ pt: 2, pb: 1 }}>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-wrap' }}>
-                  {selectedNotification.pesan}
-                </Typography>
-              </Box>
+                  >
+                    <Typography variant="subtitle2" gutterBottom>
+                      Detail Donasi
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">Jumlah</Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {new Intl.NumberFormat('id-ID', {
+                          style: 'currency',
+                          currency: 'IDR',
+                          minimumFractionDigits: 0,
+                        }).format(selectedNotification.donasi_info.jumlah)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary">Status</Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {selectedNotification.donasi_info.status}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">Tanggal</Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {formatDateTime(selectedNotification.donasi_info.tanggal_donasi)}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                )}
+                
+                <Box sx={{ mt: 2, textAlign: 'right' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Diterima pada {formatDateTime(selectedNotification.created_at)}
+                  </Typography>
+                </Box>
+              </DialogContent>
               
-              {selectedNotification.donasi_info && (
-                <Paper 
-                  variant="outlined" 
-                  sx={{ 
-                    p: 2, 
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button 
+                  onClick={() => confirmDeleteNotification(selectedNotification)}
+                  variant="outlined"
+                  startIcon={<DeleteIcon />}
+                  sx={{
+                    borderColor: '#ef4444',
+                    color: '#ef4444',
+                    '&:hover': {
+                      borderColor: '#dc2626',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    },
                     borderRadius: 2,
-                    backgroundColor: 'rgba(89, 185, 151, 0.05)',
-                    borderColor: 'rgba(89, 185, 151, 0.2)',
+                    mr: 1,
                   }}
                 >
-                  <Typography variant="subtitle2" gutterBottom>
-                    Detail Donasi
-                  </Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">Jumlah</Typography>
-                    <Typography variant="body2" fontWeight="medium">
-                      {new Intl.NumberFormat('id-ID', {
-                        style: 'currency',
-                        currency: 'IDR',
-                        minimumFractionDigits: 0,
-                      }).format(selectedNotification.donasi_info.jumlah)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">Status</Typography>
-                    <Typography variant="body2" fontWeight="medium">
-                      {selectedNotification.donasi_info.status}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Tanggal</Typography>
-                    <Typography variant="body2" fontWeight="medium">
-                      {formatDateTime(selectedNotification.donasi_info.tanggal_donasi)}
-                    </Typography>
-                  </Box>
-                </Paper>
-              )}
-              
-              <Box sx={{ mt: 2, textAlign: 'right' }}>
-                <Typography variant="caption" color="text.secondary">
-                  Diterima pada {formatDateTime(selectedNotification.created_at)}
-                </Typography>
-              </Box>
-            </DialogContent>
-            
-            <DialogActions sx={{ px: 3, py: 2 }}>
-              <Button 
-                onClick={() => confirmDeleteNotification(selectedNotification)}
-                variant="outlined"
-                startIcon={<DeleteIcon />}
-                sx={{
-                  borderColor: '#ef4444',
-                  color: '#ef4444',
-                  '&:hover': {
-                    borderColor: '#dc2626',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  },
-                  borderRadius: 2,
-                  mr: 1,
-                }}
-              >
-                Hapus
-              </Button>
-              <Button 
-                onClick={handleCloseDetailDialog}
-                variant="contained"
-                sx={{
-                  bgcolor: '#59B997',
-                  '&:hover': {
-                    bgcolor: '#47a07f',
-                  },
-                  borderRadius: 2,
-                }}
-              >
-                Tutup
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
-    </Box>
+                  Hapus
+                </Button>
+                <Button 
+                  onClick={handleCloseDetailDialog}
+                  variant="contained"
+                  sx={{
+                    bgcolor: '#59B997',
+                    '&:hover': {
+                      bgcolor: '#47a07f',
+                    },
+                    borderRadius: 2,
+                  }}
+                >
+                  Tutup
+                </Button>
+              </DialogActions>
+            </>
+          )}
+        </Dialog>
+      </Box>
+    </div>
   );
 };
 

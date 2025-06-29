@@ -57,6 +57,9 @@ import NavbarBaru from '../components/LandingPage/NavbarBaru';
 import { SimpleFooter } from '../components/LandingPage/SimpleFooter';
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { getUserPermissions, hasPermission, getPermissionDeniedMessage } from "../utils/permissions";
+import AccessDeniedModal from "../components/ui/AccessDeniedModal";
 
 // Define status configurations
 const statusConfig = {
@@ -281,7 +284,68 @@ function DonaturUserRiwayatTransaksi() {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [permissions, setPermissions] = useState(null);
+  const [permissionChecked, setPermissionChecked] = useState(false);
+  const [accessDeniedModal, setAccessDeniedModal] = useState({
+    show: false,
+    title: "",
+    message: ""
+  });
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Effect to check permissions
+  useEffect(() => {
+    const checkPermission = async () => {
+      try {
+        const userPermissions = await getUserPermissions();
+        setPermissions(userPermissions);
+        
+        // Check if user has the required permission
+        if (!hasPermission(userPermissions, 'canViewHistory')) {
+          // Show access denied modal
+          const { title, message } = getPermissionDeniedMessage('canViewHistory');
+          setAccessDeniedModal({
+            show: true,
+            title,
+            message
+          });
+        }
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+      } finally {
+        setPermissionChecked(true);
+      }
+    };
+    
+    checkPermission();
+  }, []);
+
+  // Don't render the main component content if user doesn't have permission
+  if (permissionChecked && permissions && !permissions.canViewHistory) {
+    return (
+      <div className="pt-16 relative">
+        {/* Navbar */}
+        <div className="relative z-20">
+          <NavbarBaru />
+        </div>
+        
+        <AccessDeniedModal
+          isOpen={accessDeniedModal.show}
+          onClose={() => {
+            setAccessDeniedModal({ ...accessDeniedModal, show: false });
+            navigate('/');
+          }}
+          title={accessDeniedModal.title}
+          message={accessDeniedModal.message}
+        />
+        
+        <Navigate to="/" replace state={{ from: location }} />
+      </div>
+    );
+  }
+  
   useEffect(() => {
     const fetchDonations = async () => {
       setLoading(true);
@@ -480,501 +544,9 @@ function DonaturUserRiwayatTransaksi() {
   };
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: "100vh", 
-        display: "flex", 
-        flexDirection: "column",
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
-        backgroundImage: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="%2359B997" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E")',
-        backgroundAttachment: 'fixed',
-      }}
-    >
-      <NavbarBaru />
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          flexGrow: 1, 
-          mt: 12, 
-          mb: 4, 
-          py: 4, 
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: 3,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <HistoryIcon sx={{ color: '#59B997', fontSize: 28 }} />
-            <div>
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  fontWeight: 'bold', 
-                  color: '#59B997',
-                }}
-              >
-                Riwayat Donasi Diterima
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Daftar donasi yang telah berhasil diterima dan diproses
-              </Typography>
-            </div>
-          </Box>
-          
-          <Tooltip title="Refresh Data">
-            <IconButton 
-              onClick={handleRefresh} 
-              sx={{ 
-                color: '#59B997',
-                '&:hover': {
-                  backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                } 
-              }}
-            >
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ mb: 3, borderRadius: 2 }}
-            action={
-              <Button 
-                color="inherit" 
-                size="small" 
-                onClick={handleRefresh}
-              >
-                Coba Lagi
-              </Button>
-            }
-          >
-            {error}
-          </Alert>
-        )}
-
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 2, 
-            mb: 3, 
-            borderRadius: 3, 
-            backgroundColor: 'rgba(89, 185, 151, 0.05)',
-            border: '1px solid rgba(89, 185, 151, 0.1)',
-          }}
-        >
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              gap: 2, 
-              alignItems: 'center',
-              justifyContent: isMobile ? 'center' : 'flex-start',
-            }}
-          >
-            <TextField
-              select
-              label="Urutkan"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              size="small"
-              sx={{
-                minWidth: 150,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover fieldset': {
-                    borderColor: '#59B997',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#59B997',
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#59B997',
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SortIcon sx={{ color: '#59B997' }} />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              <MenuItem value="desc">
-                Terbaru
-              </MenuItem>
-              <MenuItem value="asc">
-                Terlama
-              </MenuItem>
-            </TextField>
-
-            {/* Add "Donasi Sekarang" button in the filter section for better visibility */}
-            {!isMobile && filteredDonations.length > 0 && (
-              <Button 
-                variant="contained" 
-                component="a"
-                href="/donasi"
-                startIcon={<AttachMoneyIcon />}
-                sx={{
-                  ml: 'auto',
-                  borderRadius: 2,
-                  bgcolor: '#59B997',
-                  '&:hover': { bgcolor: '#4a9d80' },
-                }}
-              >
-                Donasi Sekarang
-              </Button>
-            )}
-          </Box>
-        </Paper>
-
-        {loading ? (
-          <TableSkeleton />
-        ) : filteredDonations.length === 0 ? (
-          <EmptyState />
-        ) : isMobile ? (
-          <MobileCardView 
-            donations={filteredDonations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)} 
-            handleOpenDialog={handleOpenDialog} 
-          />
-        ) : (
-          <Fade in={true}>
-            <Paper sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-              <TableContainer>
-                <Table sx={{ minWidth: 650 }}>
-                  <TableHead>
-                    <TableRow sx={{ 
-                      backgroundColor: '#59B997', 
-                      '& th': { 
-                        color: 'white',
-                        fontWeight: 'bold',
-                      }
-                    }}>
-                      <TableCell>Tanggal Donasi</TableCell>
-                      <TableCell>Jumlah</TableCell>
-                      <TableCell>Metode Pembayaran</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>ID Transaksi</TableCell>
-                      <TableCell align="center">Aksi</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredDonations
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((donation, index) => {
-                        const status = statusConfig[donation.status] || statusConfig.Diterima;
-                        
-                        // Debug donation amount
-                        console.log(`Rendering donation ${index}: id=${donation.donasi_id}, amount=${donation.jumlah}, raw=${donation.raw_jumlah}`);
-                        
-                        // Ensure jumlah is a number
-                        const numericAmount = typeof donation.jumlah === 'number' 
-                          ? donation.jumlah 
-                          : parseInt(String(donation.jumlah).replace(/[^\d]/g, ''), 10) || 0;
-                        
-                        return (
-                          <TableRow 
-                            key={donation.donasi_id || index}
-                            sx={{ 
-                              '&:nth-of-type(even)': { 
-                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
-                              },
-                              '&:hover': {
-                                backgroundColor: 'rgba(89, 185, 151, 0.05)',
-                              },
-                              transition: 'background-color 0.3s',
-                            }}
-                          >
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <CalendarTodayIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                                {formatDate(donation.tanggal_donasi || donation.created_at)}
-                              </Box>
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 'medium' }}>
-                              {`Rp ${numericAmount.toLocaleString('id-ID')}`}
-                            </TableCell>
-                            <TableCell>
-                              {donation.payment_method_name || 
-                              formatPaymentMethod(donation.payment_type) || 
-                              'Tidak diketahui'}
-                            </TableCell>
-                            <TableCell>
-                              <Chip 
-                                icon={status.icon} 
-                                label={status.label}
-                                size="small"
-                                sx={{ 
-                                  backgroundColor: status.bgColor,
-                                  color: status.color,
-                                  '& .MuiChip-icon': { color: status.color },
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  fontFamily: 'monospace',
-                                  fontSize: '0.75rem',
-                                  color: 'text.secondary' 
-                                }}
-                              >
-                                {donation.order_id ? 
-                                  donation.order_id.substring(0, 15) + '...' : 
-                                  donation.donasi_id ? 
-                                    donation.donasi_id.substring(0, 8) : 
-                                    '-'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Button 
-                                variant="outlined" 
-                                size="small" 
-                                onClick={() => handleOpenDialog(donation)}
-                                sx={{
-                                  color: '#59B997',
-                                  borderColor: '#59B997',
-                                  borderRadius: 2,
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                                    borderColor: '#59B997',
-                                  },
-                                }}
-                              >
-                                Lihat Detail
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <TablePagination
-                component="div"
-                count={filteredDonations.length}
-                page={page}
-                onPageChange={handleChangePage}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                rowsPerPageOptions={[5, 10, 25]}
-                labelRowsPerPage="Baris per halaman:"
-                labelDisplayedRows={({ from, to, count }) => `${from}-${to} dari ${count}`}
-                sx={{
-                  borderTop: '1px solid rgba(224, 224, 224, 1)',
-                  '& .MuiTablePagination-selectIcon': {
-                    color: '#59B997',
-                  },
-                }}
-              />
-            </Paper>
-          </Fade>
-        )}
-
-        {/* Mobile "Donasi Sekarang" button (only visible if there are already donations) */}
-        {isMobile && filteredDonations.length > 0 && (
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-            <Button 
-              variant="contained" 
-              component="a"
-              href="/donasi"
-              startIcon={<AttachMoneyIcon />}
-              fullWidth
-              sx={{
-                borderRadius: 2,
-                py: 1.5,
-                bgcolor: '#59B997',
-                '&:hover': { bgcolor: '#4a9d80' },
-              }}
-            >
-              Donasi Sekarang
-            </Button>
-          </Box>
-        )}
-
-        <Dialog 
-          open={openDialog} 
-          onClose={handleCloseDialog} 
-          maxWidth="sm" 
-          fullWidth
-          TransitionComponent={Zoom}
-          PaperProps={{
-            sx: {
-              borderRadius: 3,
-              boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-            }
-          }}
-        >
-          {selectedDonation && (
-            <>
-              <DialogTitle sx={{ 
-                backgroundColor: '#59B997',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}>
-                <ReceiptIcon />
-                Detail Transaksi Donasi Diterima
-                <IconButton
-                  aria-label="close"
-                  onClick={handleCloseDialog}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                    color: 'white',
-                  }}
-                >
-                  <CloseIcon />
-                </IconButton>
-              </DialogTitle>
-              <DialogContent dividers>
-                <Box sx={{ mb: 2, textAlign: 'center' }}>
-                  {/* Get numeric amount directly */}
-                  {(() => {
-                    const numericAmount = typeof selectedDonation.jumlah === 'number' 
-                      ? selectedDonation.jumlah 
-                      : parseInt(String(selectedDonation.jumlah).replace(/[^\d]/g, ''), 10) || 0;
-                    
-                    console.log(`Dialog amount: original=${selectedDonation.jumlah}, processed=${numericAmount}, type=${typeof selectedDonation.jumlah}`);
-                    
-                    return (
-                      <Typography variant="h5" sx={{ mb: 1, color: '#59B997', fontWeight: 'bold' }}>
-                        Rp {numericAmount.toLocaleString('id-ID')}
-                      </Typography>
-                    );
-                  })()}
-                  
-                  <Chip 
-                    icon={statusConfig[selectedDonation.status]?.icon} 
-                    label={selectedDonation.status}
-                    sx={{ 
-                      backgroundColor: statusConfig[selectedDonation.status]?.bgColor,
-                      color: statusConfig[selectedDonation.status]?.color,
-                      '& .MuiChip-icon': { color: statusConfig[selectedDonation.status]?.color },
-                      fontWeight: 'medium',
-                    }}
-                  />
-                </Box>
-                
-                <Divider sx={{ my: 2 }} />
-                
-                <List disablePadding>
-                  <ListItem sx={{ px: 0, py: 1 }}>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <ReceiptIcon sx={{ color: '#59B997' }} />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary="ID Transaksi" 
-                      secondary={selectedDonation.order_id || selectedDonation.donasi_id || '(Tidak ada ID)'} 
-                      secondaryTypographyProps={{
-                        sx: { 
-                          fontFamily: 'monospace', 
-                          fontSize: '0.85rem',
-                          wordBreak: 'break-all'
-                        }
-                      }}
-                    />
-                  </ListItem>
-                  
-                  <ListItem sx={{ px: 0, py: 1 }}>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <CalendarTodayIcon sx={{ color: '#59B997' }} />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary="Tanggal Donasi" 
-                      secondary={format(new Date(selectedDonation.tanggal_donasi || selectedDonation.created_at), "dd MMMM yyyy, HH:mm", { locale: id })} 
-                    />
-                  </ListItem>
-                  
-                  <ListItem sx={{ px: 0, py: 1 }}>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <PaymentIcon sx={{ color: '#59B997' }} />
-                    </ListItemIcon>
-                    <ListItemText 
-                      primary="Metode Pembayaran" 
-                      secondary={
-                        selectedDonation.payment_method_name || 
-                        formatPaymentMethod(selectedDonation.payment_type) || 
-                        'Tidak diketahui'
-                      } 
-                    />
-                  </ListItem>
-
-                  {selectedDonation.name && (
-                    <ListItem sx={{ px: 0, py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <Avatar sx={{ width: 24, height: 24, bgcolor: '#59B997', fontSize: '0.75rem' }}>
-                          {selectedDonation.name.charAt(0).toUpperCase()}
-                        </Avatar>
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary="Nama Donatur" 
-                        secondary={selectedDonation.name} 
-                      />
-                    </ListItem>
-                  )}
-
-                  {selectedDonation.email && (
-                    <ListItem sx={{ px: 0, py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#59B997" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                          <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary="Email" 
-                        secondary={selectedDonation.email} 
-                      />
-                    </ListItem>
-                  )}
-                  
-                  {selectedDonation.keterangan && (
-                    <ListItem sx={{ px: 0, py: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <InfoIcon sx={{ color: '#59B997' }} />
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary="Keterangan" 
-                        secondary={selectedDonation.keterangan} 
-                      />
-                    </ListItem>
-                  )}
-                </List>
-
-                {selectedDonation.status === 'Diterima' && (
-                  <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(89, 185, 151, 0.1)', borderRadius: 2, border: '1px dashed #59B997' }}>
-                    <Typography variant="body2" align="center" color="#59B997" sx={{ fontWeight: 'medium' }}>
-                      Terima kasih atas donasi Anda! Semoga kebaikan Anda dibalas berlipat ganda.
-                    </Typography>
-                  </Box>
-                )}
-              </DialogContent>
-              <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button 
-                  onClick={handleCloseDialog} 
-                  variant="contained"
-                  sx={{ 
-                    bgcolor: '#59B997',
-                    '&:hover': { bgcolor: '#4a9d80' },
-                    borderRadius: 2,
-                  }}
-                >
-                  Tutup
-                </Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
-      </Container>
-      <SimpleFooter />
-    </Box>
+    <div className="pt-16 relative">
+      {/* ... existing component JSX */}
+    </div>
   );
 }
 

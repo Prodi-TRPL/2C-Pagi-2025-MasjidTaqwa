@@ -24,9 +24,12 @@ import DataDonasi from './pages/dashboard/DashboardAdmin/DataDonasi';
 import Notifikasi from './pages/dashboard/DashboardAdmin/Notifikasi';
 import LaporanKeuangan from './pages/dashboard/DashboardAdmin/LaporanKeuangan';
 import ProyekPembangunan from './pages/dashboard/DashboardAdmin/ProyekPembangunan';
+import DetailProyek from './pages/dashboard/DashboardAdmin/DetailProyek';
+import KelolaAksesDonatur from './pages/dashboard/DashboardAdmin/KelolaAksesDonatur';
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
 import AppLayout from './layout/AppLayout'; // Dashboard layout component
+import PermissionRoute from './components/ui/PermissionRoute'; // Import our permission route component
 
 // PrivateRoute component to protect dashboard routes
 const PrivateRoute = ({ children }) => {
@@ -70,11 +73,39 @@ const AppRoutes = () => {
             <Route path="/" element={<Beranda />} />
             <Route path="/hubungi" element={<Hubungi />} />
             <Route path="/Donasi" element={<DonasiSekarang />} />
+            <Route path="/donasi-sekarang" element={<DonasiSekarang />} />
             <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
+            
+            {/* User routes with permission checks */}
             <Route path="/profile" element={<DonaturUserProfile />} />
-            <Route path="/riwayat-transaksi" element={<DonaturUserRiwayatTransaksi />} />
+            <Route 
+              path="/notifikasi" 
+              element={
+                <PrivateRoute>
+                  <PermissionRoute 
+                    permissionKey="canViewNotification" 
+                    component={DonaturUserNotifikasi} 
+                    redirectTo="/" 
+                  />
+                </PrivateRoute>
+              }
+            />
+            <Route 
+              path="/riwayat-transaksi" 
+              element={
+                <PrivateRoute>
+                  <PermissionRoute 
+                    permissionKey="canViewHistory" 
+                    component={DonaturUserRiwayatTransaksi} 
+                    redirectTo="/" 
+                  />
+                </PrivateRoute>
+              }
+            />
             <Route path="/pembangunan" element={<DonaturUserPembangunan />} />
+            
+            {/* Authentication routes */}
             <Route
               path="/loginbaru"
               element={
@@ -103,8 +134,18 @@ const AppRoutes = () => {
               <Route path="notifikasi" element={<Notifikasi />} />
               <Route path="laporan-keuangan" element={<LaporanKeuangan />} />
               <Route path="proyek-pembangunan" element={<ProyekPembangunan />} />
+              <Route path="kelola-akses-donatur" element={<KelolaAksesDonatur />} />
             </Route>
-            <Route path="/notifikasi" element={<DonaturUserNotifikasi />} />
+            
+            {/* Detail Proyek route */}
+            <Route
+              path="/dashboard/proyek-pembangunan/detail/:id"
+              element={
+                <PrivateRoute>
+                  <DetailProyek />
+                </PrivateRoute>
+              }
+            />
           </Routes>
            
         </CSSTransition>

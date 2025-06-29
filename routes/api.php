@@ -15,6 +15,8 @@ use App\Http\Controllers\DonationHistoryController;
 use App\Http\Controllers\DonasiSimpleController;
 use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\ProyekPembangunanController;
+use App\Http\Controllers\DonorPermissionsController;
+use App\Http\Controllers\DonationSettingsController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -70,26 +72,56 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Route CRUD ProyekPembangunan
     Route::apiResource('ProyekPembangunan', ProyekPembangunanController::class);
+    
+    // API CRUD Kategori Pengeluaran
+    Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
+    
+    // API CRUD Pengeluaran
+    Route::apiResource('Pengeluaran', PengeluaranController::class);
+    
+    // New route for Pengeluaran statistics (inside auth middleware)
+    Route::get('/Pengeluaran/stats', [PengeluaranController::class, 'getStats']);
+    
+    // Public donation history for dashboard display
+    Route::get('/donations', [DonationHistoryController::class, 'index']);
 });
+
+// Donor permissions management routes - these match the frontend endpoints
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/donor-permissions', [DonorPermissionsController::class, 'index']);
+    Route::put('/donor-permissions/{id}', [DonorPermissionsController::class, 'updatePermissions']);
+    Route::get('/donor-permissions/stats', [DonorPermissionsController::class, 'getStats']);
+});
+
+// Donation settings management routes - moved outside auth for public access
+Route::get('/donation-settings', [DonationSettingsController::class, 'getSettings']);
+Route::put('/donation-settings', [DonationSettingsController::class, 'updateSettings']);
+
+// Public route to check donation status
+Route::get('/donation-status', [DonationSettingsController::class, 'checkDonationStatus']);
 
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/notifikasi', [AdminNotifikasiController::class, 'index']);
     Route::post('/notifikasi', [AdminNotifikasiController::class, 'store']);
     Route::delete('/notifikasi/{id}', [AdminNotifikasiController::class, 'destroy']);
     Route::get('/notifikasi/stats', [AdminNotifikasiController::class, 'getStats']);
+    
+    // Donor permissions management routes (kept for backward compatibility)
+    Route::get('/donors', [DonorPermissionsController::class, 'index']);
+    Route::put('/donors/{id}/permissions', [DonorPermissionsController::class, 'updatePermissions']);       
+    Route::get('/donors/stats', [DonorPermissionsController::class, 'getStats']);
 });
 
 
 // PENGELUARAN - SEMENTARA TANPA LOGIN AGAR BISA TESTING
 Route::post('/pengeluaran', [PengeluaranController::class, 'store']); // Simpan pengeluaran
+Route::get('/Pengeluaran', [PengeluaranController::class, 'index']); // Get pengeluaran list without auth
+Route::get('/Pengeluaran/stats', [PengeluaranController::class, 'getStats']); // Get pengeluaran stats without auth
+Route::get('/KategoriPengeluaran', [KategoriPengeluaranController::class, 'index']); // Get kategori pengeluaran without auth
+Route::get('/ProyekPembangunan', [ProyekPembangunanController::class, 'index']); // Get proyek pembangunan without auth
 
 // Admin routes - requires auth and admin role
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::apiResource('Pengeluaran', PengeluaranController::class);
-    
-    // API CRUD Kategori Pengeluaran
-    Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
-    
     // Donation validation route
     Route::post('/donations/{id}/validate', [DonasiController::class, 'validateDonation']);
 });

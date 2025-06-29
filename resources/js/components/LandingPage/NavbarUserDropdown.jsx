@@ -5,16 +5,25 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTachometerAlt, faUser, faHistory, faRightFromBracket, faBell } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
+import { getUserPermissions, hasPermission, getPermissionDeniedMessage } from "../../utils/permissions";
+import AccessDeniedModal from "../ui/AccessDeniedModal";
 
 export default function NavbarUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [role, setRole] = useState("donatur");
   const [user, setUser] = useState({ name: "User", email: "user@example.com" });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userPermissions, setUserPermissions] = useState(null);
+  const [accessDeniedModal, setAccessDeniedModal] = useState({
+    show: false,
+    title: "",
+    message: "",
+    permissionKey: ""
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndPermissions = async () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
@@ -36,12 +45,19 @@ export default function NavbarUserDropdown() {
         });
 
         setRole("donatur");
+        
+        // Set user permissions
+        setUserPermissions({
+          canDonate: data.can_donate === true || data.can_donate === 1,
+          canViewHistory: data.can_view_history === true || data.can_view_history === 1,
+          canViewNotification: data.can_view_notification === true || data.can_view_notification === 1
+        });
       } catch (err) {
         console.error("Gagal ambil user:", err);
       }
     };
 
-    fetchUser();
+    fetchUserAndPermissions();
   }, []);
 
   useEffect(() => {
@@ -57,6 +73,41 @@ export default function NavbarUserDropdown() {
 
   function closeDropdown() {
     setIsOpen(false);
+  }
+
+  // Function to handle permission-based navigation
+  function handleNavigate(path, permissionKey) {
+    closeDropdown();
+    
+    // If not logged in or permissions not loaded, redirect to login
+    if (!userPermissions) {
+      navigate('/login');
+      return;
+    }
+    
+    // Check if user has the required permission
+    if (hasPermission(userPermissions, permissionKey)) {
+      navigate(path);
+    } else {
+      // Get denial message based on the permission
+      const { title, message } = getPermissionDeniedMessage(permissionKey);
+      
+      // Show access denied modal
+      setAccessDeniedModal({
+        show: true,
+        title,
+        message,
+        permissionKey
+      });
+    }
+  }
+
+  // Function to close the access denial modal
+  function closeAccessDeniedModal() {
+    setAccessDeniedModal({
+      ...accessDeniedModal,
+      show: false
+    });
   }
 
   async function handleLogout() {
@@ -147,32 +198,28 @@ export default function NavbarUserDropdown() {
                 </DropdownItem>
               </li>
               <li>
-                <DropdownItem 
-                  onItemClick={closeDropdown} 
-                  tag="a" 
-                  to="/notifikasi" 
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                <div 
+                  onClick={() => handleNavigate("/notifikasi", "canViewNotification")}
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 cursor-pointer"
                 >
                   <FontAwesomeIcon 
                     icon={faBell} 
                     className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
                   />
                   <span>Notifikasi</span>
-                </DropdownItem>
+                </div>
               </li>
               <li>
-                <DropdownItem 
-                  onItemClick={closeDropdown} 
-                  tag="a" 
-                  to="/riwayat-transaksi" 
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                <div 
+                  onClick={() => handleNavigate("/riwayat-transaksi", "canViewHistory")}
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 cursor-pointer"
                 >
                   <FontAwesomeIcon 
                     icon={faHistory} 
                     className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
                   />
                   <span>Riwayat Transaksi</span>
-                </DropdownItem>
+                </div>
               </li>
               <li>
                 <DropdownItem
@@ -189,25 +236,32 @@ export default function NavbarUserDropdown() {
                 </DropdownItem>
               </li>
               <li>
-                <DropdownItem
-                  onItemClick={() => {
+                <div
+                  onClick={() => {
                     setIsLoggingOut(true);
                     closeDropdown();
                   }}
-                  tag="button"
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 cursor-pointer"
                 >
                   <FontAwesomeIcon 
                     icon={faRightFromBracket} 
                     className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
                   />
                   <span>Keluar</span>
-                </DropdownItem>
+                </div>
               </li>
             </>
           )}
         </ul>
       </Dropdown>
+
+      {/* Access Denied Modal */}
+      <AccessDeniedModal
+        isOpen={accessDeniedModal.show}
+        onClose={closeAccessDeniedModal}
+        title={accessDeniedModal.title}
+        message={accessDeniedModal.message}
+      />
     </div>
   );
 }

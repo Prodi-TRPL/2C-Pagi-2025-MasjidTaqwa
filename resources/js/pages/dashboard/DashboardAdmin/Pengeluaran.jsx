@@ -2,236 +2,538 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { motion } from 'framer-motion';
 
 const Pengeluaran = () => {
   const [pengeluarans, setPengeluarans] = useState([]);
   const [proyeks, setProyeks] = useState([]);
   const [kategoris, setKategoris] = useState([]);
-  const [form, setForm] = useState({
-    pengeluaran_id: null,
-    nama_pengeluaran: '',
-    jumlah: '',
-    keterangan: '',
-    proyek_id: '',
-    kategori_pengeluaran_id: '',
-    tanggal_pengeluaran: null, // ubah ke null untuk Date object
-    laporan_keuangan_id: ''
-  });
   const [filter, setFilter] = useState({
     proyek_id: '',
     kategori_pengeluaran_id: '',
-    tanggal_pengeluaran: ''
+    tanggal_start: null,
+    tanggal_end: null
   });
+  const [stats, setStats] = useState({
+    totalPengeluaran: 0,
+    totalProyek: 0,
+    totalDana: 0,
+    sisaDana: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [authError, setAuthError] = useState(null);
+
+  // Helper function to get auth token
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setAuthError('Sesi login tidak ditemukan. Silakan login kembali.');
+      return null;
+    }
+    return {
+      Authorization: `Bearer ${token}`
+    };
+  };
 
   const fetchData = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const params = { ...filter };
-      // Jika tanggal filter ada, ubah ke string yyyy-mm-dd
-      if (filter.tanggal_pengeluaran instanceof Date) {
-        params.tanggal_pengeluaran = filter.tanggal_pengeluaran.toISOString().split('T')[0];
+      // Format dates for API
+      if (filter.tanggal_start instanceof Date) {
+        params.tanggal_start = filter.tanggal_start.toISOString().split('T')[0];
       }
+      if (filter.tanggal_end instanceof Date) {
+        params.tanggal_end = filter.tanggal_end.toISOString().split('T')[0];
+      }
+      
+      // Use public endpoint without authentication
       const res = await axios.get('/api/Pengeluaran', { params });
+      
       setPengeluarans(res.data.data || res.data);
-    } catch {
-      alert('Gagal mengambil data pengeluaran');
+      setAuthError(null);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      setPengeluarans([]);
+      if (error.response && error.response.status === 401) {
+        setAuthError('Sesi login telah berakhir. Silakan login kembali.');
+      } else {
+        setError('Gagal mengambil data pengeluaran');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchOptions = async () => {
     try {
-      const [resProyek, resKategori] = await Promise.all([
-        axios.get('/api/ProyekPembangunan'),
-        axios.get('/api/KategoriPengeluaran')
-      ]);
-      setProyeks(resProyek.data.data || resProyek.data);
-      setKategoris(resKategori.data.data || resKategori.data);
-    } catch {
-      alert('Gagal mengambil data proyek/kategori');
+      try {
+        // Use public endpoint without authentication
+        const resProyek = await axios.get('/api/ProyekPembangunan');
+        setProyeks(resProyek.data.data || resProyek.data || []);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        setProyeks([]);
+      }
+      
+      try {
+        // Use public endpoint without authentication
+        const resKategori = await axios.get('/api/KategoriPengeluaran');
+        setKategoris(resKategori.data.data || resKategori.data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setKategoris([]);
+      }
+      
+      setAuthError(null);
+    } catch (error) {
+      console.error('Error in fetchOptions:', error);
+      setProyeks([]);
+      setKategoris([]);
+      if (error.response && error.response.status === 401) {
+        setAuthError('Sesi login telah berakhir. Silakan login kembali.');
+      }
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      // Use the public endpoint that doesn't require authentication
+      const res = await axios.get('/public-api/pengeluaran-stats');
+      setStats(res.data || {
+        totalPengeluaran: 0,
+        totalProyek: 0,
+        totalDana: 0,
+        sisaDana: 0
+      });
+      setAuthError(null);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      // Don't set error for stats - just log it
     }
   };
 
   useEffect(() => {
     fetchOptions();
+    fetchStats();
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [filter]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleDateChange = (date) => {
-    setForm(prev => ({ ...prev, tanggal_pengeluaran: date }));
-  };
-
   const handleFilter = (e) => {
     const { name, value } = e.target;
     setFilter(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFilterDateChange = (date) => {
-    setFilter(prev => ({ ...prev, tanggal_pengeluaran: date }));
+  const handleStartDateChange = (date) => {
+    setFilter(prev => ({ ...prev, tanggal_start: date }));
   };
 
-  const clearForm = () => {
-    setForm({
-      pengeluaran_id: null,
-      nama_pengeluaran: '',
-      jumlah: '',
-      keterangan: '',
+  const handleEndDateChange = (date) => {
+    setFilter(prev => ({ ...prev, tanggal_end: date }));
+  };
+
+  const clearFilters = () => {
+    setFilter({
       proyek_id: '',
       kategori_pengeluaran_id: '',
-      tanggal_pengeluaran: null,
-      laporan_keuangan_id: ''
+      tanggal_start: null,
+      tanggal_end: null
     });
   };
 
-  const handleSubmit = async () => {
-    const { nama_pengeluaran, jumlah, proyek_id, kategori_pengeluaran_id, tanggal_pengeluaran } = form;
-    if (!nama_pengeluaran || !jumlah || !proyek_id || !kategori_pengeluaran_id || !tanggal_pengeluaran) {
-      alert('Harap isi semua kolom yang wajib');
-      return;
+  const handleRefresh = () => {
+    fetchData();
+    fetchStats();
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  // Format date to Indonesian format with Asia/Jakarta timezone
+  const formatDate = (dateString) => {
+    // Check if dateString is null, undefined, or empty
+    if (!dateString) {
+      return '-';
     }
+    
     try {
-      // Ubah tanggal_pengeluaran ke string yyyy-mm-dd sebelum submit
-      const submitForm = {
-        ...form,
-        tanggal_pengeluaran: form.tanggal_pengeluaran.toISOString().split('T')[0]
+      // Create date object from the UTC date string
+      const utcDate = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(utcDate.getTime())) {
+        console.warn(`Invalid date value: ${dateString}`);
+        return '-';
+      }
+      
+      // Format options for Indonesia locale with explicit timezone
+      const options = {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Jakarta'
       };
-      if (form.pengeluaran_id) {
-        await axios.put(`/api/Pengeluaran/${form.pengeluaran_id}`, submitForm);
-      } else {
-        await axios.post('/api/Pengeluaran', submitForm);
-      }
-      clearForm();
-      fetchData();
-    } catch {
-      alert('Gagal menyimpan data');
+      
+      // Format the date with the Indonesia locale and Asia/Jakarta timezone
+      return new Intl.DateTimeFormat('id-ID', options).format(utcDate);
+    } catch (error) {
+      console.error(`Error formatting date: ${dateString}`, error);
+      return '-';
     }
   };
 
-  const handleEdit = (p) => {
-    setForm({
-      ...p,
-      tanggal_pengeluaran: p.tanggal_pengeluaran ? new Date(p.tanggal_pengeluaran) : null
-    });
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Hapus pengeluaran ini?')) {
-      try {
-        await axios.delete(`/api/Pengeluaran/${id}`);
-        fetchData();
-      } catch {
-        alert('Gagal menghapus');
-      }
-    }
+  const handleLogin = () => {
+    window.location.href = '/login';
   };
 
   return (
-    <div className="p-6 bg-gray -50 min-h-screen">
-      {/* Judul */}
-      <div className="bg-white shadow rounded-xl p-8 mb-6">
-        <h1 className="text-2xl font-bold mb-1">Pengeluaran</h1>
-        <p className="text-gray-600">Kelola pengeluaran proyek Anda</p>
-      </div>
-
-      {/* Form Tambah/Edit */}
-      <div className="bg-white shadow rounded-xl p-10 mb-6">
-        <h2 className="text-xl font-semibold mb-4">{form.pengeluaran_id ? 'Edit' : 'Tambah'} Pengeluaran</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input name="nama_pengeluaran" placeholder="Nama Pengeluaran *" className="border p-2 rounded" value={form.nama_pengeluaran} onChange={handleChange} />
-          <input name="jumlah" type="number" placeholder="Jumlah *" className="border p-2 rounded" value={form.jumlah} onChange={handleChange} />
-          <input name="keterangan" placeholder="Keterangan" className="border p-2 rounded" value={form.keterangan} onChange={handleChange} />
-          <select name="proyek_id" className="border p-2 rounded" value={form.proyek_id} onChange={handleChange}>
-            <option value="">Pilih Proyek *</option>
-            {proyeks.map(p => <option key={p.id} value={p.id}>{p.nama_proyek || p.nama}</option>)}
-          </select>
-          <select name="kategori_pengeluaran_id" className="border p-2 rounded" value={form.kategori_pengeluaran_id} onChange={handleChange}>
-            <option value="">Pilih Kategori *</option>
-            {kategoris.map(k => <option key={k.id} value={k.id}>{k.nama_kategori || k.nama}</option>)}
-          </select>
-          <DatePicker
-            selected={form.tanggal_pengeluaran}
-            onChange={handleDateChange}
-            className="border p-2 rounded w-full"
-            placeholderText="Pilih Tanggal *"
-            dateFormat="yyyy-MM-dd"
-          />
-        </div>
-        <div className="mt-4 flex gap-3">
-          <button className="bg-[#59B997] hover:bg-[#4ca584] text-white px-4 py-2 rounded" onClick={handleSubmit}>
-            {form.pengeluaran_id ? 'Update' : 'Tambah'}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Auth Error Alert */}
+      {authError && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 01-1-1v-4a1 1 0 112 0v4a1 1 0 01-1 1z" clipRule="evenodd" />
+            </svg>
+            <span>{authError}</span>
+          </div>
+          <button 
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+            onClick={handleLogin}
+          >
+            Login
           </button>
-          <button className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded" onClick={clearForm}>Batal</button>
         </div>
-      </div>
+      )}
 
-      {/* Filter */}
+      {/* Header */}
       <div className="bg-white shadow rounded-xl p-8 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Filter Pengeluaran</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <select name="proyek_id" className="border p-2 rounded" value={filter.proyek_id} onChange={handleFilter}>
-            <option value="">Semua Proyek</option>
-            {proyeks.map(p => <option key={p.id} value={p.id}>{p.nama_proyek || p.nama}</option>)}
-          </select>
-          <select name="kategori_pengeluaran_id" className="border p-2 rounded" value={filter.kategori_pengeluaran_id} onChange={handleFilter}>
-            <option value="">Semua Kategori</option>
-            {kategoris.map(k => <option key={k.id} value={k.id}>{k.nama_kategori || k.nama}</option>)}
-          </select>
-          <DatePicker
-            selected={filter.tanggal_pengeluaran}
-            onChange={handleFilterDateChange}
-            className="border p-2 rounded w-full"
-            placeholderText="Pilih Tanggal"
-            dateFormat="yyyy-MM-dd"
-            isClearable
-          />
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold mb-1 text-gray-800">Monitoring Pengeluaran</h1>
+            <p className="text-gray-600">Pusat rekapitulasi dan monitoring pengeluaran proyek</p>
+          </div>
+          <button 
+            onClick={handleRefresh}
+            className="bg-[#59B997] hover:bg-[#4ca584] text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh Data
+          </button>
         </div>
       </div>
 
-      {/* Tabel */}
-      <div className="bg-white shadow rounded-xl p-8">
-        <h2 className="text-xl font-semibold mb-4">Daftar Pengeluaran</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full border border-gray-200">
-            <thead style={{ backgroundColor: '#59B997' }} className="text-white">
-              <tr>
-                <th className="px-4 py-2 text-left">Nama</th>
-                <th className="px-4 py-2 text-left">Jumlah</th>
-                <th className="px-4 py-2 text-left">Keterangan</th>
-                <th className="px-4 py-2 text-left">Proyek</th>
-                <th className="px-4 py-2 text-left">Kategori</th>
-                <th className="px-4 py-2 text-left">Tanggal</th>
-                <th className="px-4 py-2 text-left">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pengeluarans.length === 0 ? (
-                <tr><td colSpan="7" className="text-center py-4 text-gray-600">Tidak ada pengeluaran</td></tr>
-              ) : (
-                pengeluarans.map(p => (
-                  <tr key={p.pengeluaran_id} className="border-t">
-                    <td className="px-4 py-2">{p.nama_pengeluaran}</td>
-                    <td className="px-4 py-2">{p.jumlah}</td>
-                    <td className="px-4 py-2">{p.keterangan}</td>
-                    <td className="px-4 py-2">{p.proyek?.nama_proyek || p.proyek?.nama}</td>
-                    <td className="px-4 py-2">{p.kategori?.nama_kategori || p.kategori?.nama}</td>
-                    <td className="px-4 py-2">{p.tanggal_pengeluaran}</td>
-                    <td className="px-4 py-2 space-x-2">
-                      <button onClick={() => handleEdit(p)} className="bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded">Edit</button>
-                      <button onClick={() => handleDelete(p.pengeluaran_id)} className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">Hapus</button>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+        >
+          <div className="flex items-center mb-3">
+            <div className="p-3 bg-blue-100 rounded-full mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Total Pengeluaran</p>
+              <h3 className="text-xl font-bold text-gray-800">{formatCurrency(stats.totalPengeluaran || 0)}</h3>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            Dari {pengeluarans.length} transaksi pengeluaran
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+        >
+          <div className="flex items-center mb-3">
+            <div className="p-3 bg-green-100 rounded-full mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Total Dana Proyek</p>
+              <h3 className="text-xl font-bold text-gray-800">{formatCurrency(stats.totalDana || 0)}</h3>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            Dari {stats.totalProyek || 0} proyek aktif
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+        >
+          <div className="flex items-center mb-3">
+            <div className="p-3 bg-yellow-100 rounded-full mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Sisa Dana</p>
+              <h3 className="text-xl font-bold text-gray-800">{formatCurrency(stats.sisaDana || 0)}</h3>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            {stats.sisaDana > 0 ? 'Masih tersedia untuk digunakan' : 'Tidak ada sisa dana'}
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+        >
+          <div className="flex items-center mb-3">
+            <div className="p-3 bg-purple-100 rounded-full mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Persentase Penggunaan</p>
+              <h3 className="text-xl font-bold text-gray-800">
+                {stats.totalDana ? Math.round((stats.totalPengeluaran / stats.totalDana) * 100) : 0}%
+              </h3>
+            </div>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div 
+              className="bg-purple-600 h-2.5 rounded-full" 
+              style={{ width: `${stats.totalDana ? Math.min(100, Math.round((stats.totalPengeluaran / stats.totalDana) * 100)) : 0}%` }}
+            ></div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 01-1-1v-4a1 1 0 112 0v4a1 1 0 01-1 1z" clipRule="evenodd" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="bg-white shadow rounded-xl p-6 mb-6"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+            <span className="w-1 h-6 bg-[#59B997] rounded-full mr-3"></span>
+            Filter Pengeluaran
+          </h2>
+          <button 
+            onClick={clearFilters}
+            className="text-gray-600 hover:text-gray-800 text-sm flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Reset Filter
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Proyek</label>
+            <select 
+              name="proyek_id" 
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997]" 
+              value={filter.proyek_id} 
+              onChange={handleFilter}
+            >
+              <option value="">Semua Proyek</option>
+              {proyeks.map(p => (
+                <option key={p.proyek_id} value={p.proyek_id}>
+                  {p.nama_item}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+            <select 
+              name="kategori_pengeluaran_id" 
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997]" 
+              value={filter.kategori_pengeluaran_id} 
+              onChange={handleFilter}
+            >
+              <option value="">Semua Kategori</option>
+              {kategoris.map(k => (
+                <option key={k.kategori_pengeluaran_id} value={k.kategori_pengeluaran_id}>
+                  {k.nama_kategori}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+            <DatePicker
+              selected={filter.tanggal_start}
+              onChange={handleStartDateChange}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997]"
+              placeholderText="Pilih tanggal mulai"
+              dateFormat="yyyy-MM-dd"
+              isClearable
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
+            <DatePicker
+              selected={filter.tanggal_end}
+              onChange={handleEndDateChange}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997]"
+              placeholderText="Pilih tanggal akhir"
+              dateFormat="yyyy-MM-dd"
+              isClearable
+              minDate={filter.tanggal_start}
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Tabel Pengeluaran */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="bg-white shadow rounded-xl overflow-hidden"
+      >
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+              <span className="w-1 h-6 bg-[#59B997] rounded-full mr-3"></span>
+              Daftar Pengeluaran
+            </h2>
+            <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+              {pengeluarans.length} transaksi
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="p-6 flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#59B997]"></div>
+          </div>
+        ) : pengeluarans.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="mx-auto h-24 w-24 text-gray-300 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-700">Tidak ada data pengeluaran</h3>
+            <p className="mt-1 text-gray-500">Tidak ada pengeluaran yang sesuai dengan filter</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proyek</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keterangan</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {pengeluarans.map((p, index) => (
+                  <tr 
+                    key={p.pengeluaran_id} 
+                    className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{p.nama_pengeluaran}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-gray-900">{formatCurrency(p.jumlah)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {p.proyek?.nama_item || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        {p.kategori?.nama_kategori || '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{formatDate(p.tanggal_pengeluaran || p.created_at)}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-500 max-w-xs truncate">{p.keterangan || '-'}</div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </motion.div>
+      
+      {/* Info Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-6"
+      >
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">Informasi</h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <p>
+                Halaman ini hanya menampilkan data pengeluaran untuk monitoring. Untuk menambah pengeluaran baru, silakan buka halaman Detail Proyek dan tambahkan pengeluaran dari sana.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

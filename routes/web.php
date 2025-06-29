@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use App\Http\Controllers\PengeluaranController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,10 +19,18 @@ use Illuminate\Support\Facades\File;
 |
 */
 
+// Public route for Pengeluaran stats - no authentication required
+Route::get('/public-api/pengeluaran-stats', [PengeluaranController::class, 'getStats']);
+
 // Named login route to fix "Route [login] not defined" error
 Route::get('/login', function () {
     return view('react-main');
 })->name('login');
+
+// Specific route for DetailProyek to ensure React Router works
+Route::get('/dashboard/proyek-pembangunan/detail/{id}', function () {
+    return view('react-main');
+});
 
 // Route untuk menangani semua URL lainnya
 Route::get('/{any}', function () {
