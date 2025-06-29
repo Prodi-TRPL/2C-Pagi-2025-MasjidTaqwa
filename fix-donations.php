@@ -81,4 +81,3 @@ echo "\nSummary: {$fixed} of {$total} donations are now properly configured.\n";
 
 echo "\n=== FIX COMPLETE ===\n";
 echo "Now refresh your browser to see updated donations.\n"; 
- 

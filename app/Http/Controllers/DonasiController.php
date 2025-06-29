@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Midtrans\Config;
 use App\Models\Donasi;
 use App\Models\Notifikasi;
+use Illuminate\Support\Facades\Validator;
 
 
 class DonasiController extends Controller
@@ -527,6 +528,46 @@ class DonasiController extends Controller
                 'status' => 'error',
                 'message' => 'Gagal membatalkan donasi: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Validate a donation using stored procedure
+     *
+     * @param  string  $id
+     * @param  Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function validateDonationUsingProcedure($id, Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:Diterima,Pending,Kadaluarsa,Dibatalkan'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['message' => 'Validation error', 'errors' => $validator->errors()], 422);
+            }
+
+            $new_status = $request->status;
+            
+            // Call the stored procedure
+            DB::select('CALL validate_donation(?, ?)', [$id, $new_status]);
+            
+            // Get the updated donation
+            $donation = Donasi::find($id);
+            
+            if (!$donation) {
+                return response()->json(['message' => 'Donation not found'], 404);
+            }
+            
+            return response()->json([
+                'message' => 'Donation validated successfully',
+                'donation' => $donation
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error validating donation: ' . $e->getMessage());
+            return response()->json(['message' => 'Error validating donation: ' . $e->getMessage()], 500);
         }
     }
 }

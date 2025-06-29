@@ -17,6 +17,7 @@ use App\Http\Controllers\LaporanKeuanganController;
 use App\Http\Controllers\ProyekPembangunanController;
 use App\Http\Controllers\DonorPermissionsController;
 use App\Http\Controllers\DonationSettingsController;
+use App\Http\Controllers\DonationSummaryController;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -100,6 +101,10 @@ Route::put('/donation-settings', [DonationSettingsController::class, 'updateSett
 // Public route to check donation status
 Route::get('/donation-status', [DonationSettingsController::class, 'checkDonationStatus']);
 
+// Donation Summary routes using database view
+Route::get('/donation-summary/monthly', [DonationSummaryController::class, 'getMonthlyDonationSummary']);
+Route::get('/donation-summary/chart', [DonationSummaryController::class, 'getDonationChartData']);
+
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/notifikasi', [AdminNotifikasiController::class, 'index']);
     Route::post('/notifikasi', [AdminNotifikasiController::class, 'store']);
@@ -110,6 +115,9 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::get('/donors', [DonorPermissionsController::class, 'index']);
     Route::put('/donors/{id}/permissions', [DonorPermissionsController::class, 'updatePermissions']);       
     Route::get('/donors/stats', [DonorPermissionsController::class, 'getStats']);
+    
+    // Validate donation using stored procedure
+    Route::post('/donations/{id}/validate-procedure', [DonasiController::class, 'validateDonationUsingProcedure']);
 });
 
 

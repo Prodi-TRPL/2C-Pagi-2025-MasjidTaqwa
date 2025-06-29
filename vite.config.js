@@ -15,12 +15,11 @@ export default defineConfig({
         }),
         react(),
         svgr({
-        svgrOptions: {
-            icon: true,
-            // This will transform your SVG to a React component
-            exportType: "named",
-            namedExport: "ReactComponent",
-        },
+            svgrOptions: {
+                icon: true,
+                exportType: "named",
+                namedExport: "ReactComponent",
+            },
         }),
         tailwindcss(),
     ],
