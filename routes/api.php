@@ -136,5 +136,33 @@ Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyRep
 Route::get('/laporan-keuangan', [LaporanKeuanganController::class, 'index']);
 Route::post('/laporan-keuangan', [LaporanKeuanganController::class, 'store']);
 
+// Test route for simulating database access revocation
+Route::get('/test-db-revocation', function() {
+    // This will simulate a database error by throwing an exception
+    throw new \PDOException('Access denied for user (simulated database access revocation)');
+});
+
+// Test route to simulate permission revocation
+Route::get('/test/revoke-permission', function () {
+    // Return permissions with some revoked
+    return response()->json([
+        'canDonate' => false,
+        'canViewHistory' => false,
+        'canViewNotification' => false,
+        'message' => 'This route simulates permissions being revoked'
+    ], 200);
+});
+
+// Add a route to get user permissions
+Route::middleware('auth:sanctum')->get('/user/permissions', function (Request $request) {
+    $user = $request->user();
+    
+    return response()->json([
+        'canDonate' => $user->can_donate === 1 || $user->can_donate === true,
+        'canViewHistory' => $user->can_view_history === 1 || $user->can_view_history === true,
+        'canViewNotification' => $user->can_view_notification === 1 || $user->can_view_notification === true
+    ]);
+});
+
 
 

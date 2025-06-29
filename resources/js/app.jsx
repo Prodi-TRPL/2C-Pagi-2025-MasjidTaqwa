@@ -1,7 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
+import { SidebarProvider } from './context/SidebarContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { setupPermissionChecker } from './utils/permissionChecker';
 
 import '../css/app.css'; // Tailwind
 import Beranda from './pages/Beranda';
@@ -29,7 +32,9 @@ import KelolaAksesDonatur from './pages/dashboard/DashboardAdmin/KelolaAksesDona
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
 import AppLayout from './layout/AppLayout'; // Dashboard layout component
+import AppSidebar from './layout/AppSidebar';
 import PermissionRoute from './components/ui/PermissionRoute'; // Import our permission route component
+import PermissionRevokedModal from './components/ui/PermissionRevokedModal'; // Import our permission revoked modal
 
 // PrivateRoute component to protect dashboard routes
 const PrivateRoute = ({ children }) => {
@@ -54,6 +59,42 @@ const PublicRoute = ({ children }) => {
 // Komponen wrapper untuk routing dengan animasi transisi
 const AppRoutes = () => {
   const location = useLocation();
+  const [permissionRevoked, setPermissionRevoked] = useState(false);
+  const [revokedPermissions, setRevokedPermissions] = useState(null);
+
+  useEffect(() => {
+    // Set up permission checker if user is logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Create permission checker with custom handler
+      const permissionChecker = setupPermissionChecker((changedPermissions) => {
+        // This will be called when permissions are revoked
+        setRevokedPermissions(changedPermissions);
+        setPermissionRevoked(true);
+        
+        // Force logout after a short delay to show modal
+        setTimeout(() => {
+          // Store the message in sessionStorage
+          sessionStorage.setItem('logout_message', 'Hak akses Anda telah diubah oleh administrator.');
+          
+          // Clear user data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          
+          // Redirect to login
+          window.location.href = '/loginbaru';
+        }, 3000);
+      }, 10000); // Check every 10 seconds
+      
+      // Start the permission checker
+      const controller = permissionChecker.start();
+      
+      // Clean up on unmount
+      return () => {
+        controller.stop();
+      };
+    }
+  }, []);
 
   useEffect(() => {
     // No loader logic needed anymore
@@ -62,6 +103,13 @@ const AppRoutes = () => {
   return (
     <>
       <ScrollToTop />
+      {/* Permission Revoked Modal */}
+      <PermissionRevokedModal 
+        isOpen={permissionRevoked}
+        changedPermissions={revokedPermissions}
+        message="Hak akses Anda telah diubah oleh administrator. Anda akan keluar dari sistem."
+      />
+      
       <TransitionGroup>
         <CSSTransition
           key={location.key}
@@ -135,6 +183,7 @@ const AppRoutes = () => {
               <Route path="laporan-keuangan" element={<LaporanKeuangan />} />
               <Route path="proyek-pembangunan" element={<ProyekPembangunan />} />
               <Route path="kelola-akses-donatur" element={<KelolaAksesDonatur />} />
+              <Route path="kelola-notifikasi" element={<Notifikasi />} />
             </Route>
             
             {/* Detail Proyek route */}
@@ -154,22 +203,22 @@ const AppRoutes = () => {
   );
 };
 
-// Komponen utama yang di-render
-import { ThemeProvider } from './context/ThemeContext';
-
-const App = () => (
-  <AppWrapper>
-    <ThemeProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </ThemeProvider>
-  </AppWrapper>
-);
+// Main App component
+const App = () => {
+  return (
+    <React.StrictMode>
+      <AppWrapper>
+        <ThemeProvider>
+          <SidebarProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </SidebarProvider>
+        </ThemeProvider>
+      </AppWrapper>
+    </React.StrictMode>
+  );
+};
 
 const root = ReactDOM.createRoot(document.getElementById('app'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+root.render(<App />);

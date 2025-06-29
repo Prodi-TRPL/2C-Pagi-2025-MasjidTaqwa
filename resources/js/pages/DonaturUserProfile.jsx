@@ -773,6 +773,16 @@ const DonaturUserProfile = () => {
     },
   ];
 
+  const simulatePermissionRevocation = async () => {
+    try {
+      const response = await axios.get('/api/test/revoke-permission');
+      console.log('Permission revocation simulated:', response.data);
+      // The permission checker should detect this on its next check
+    } catch (error) {
+      console.error('Error simulating permission revocation:', error);
+    }
+  };
+
   if (error) {
     return (
       <Box
@@ -961,6 +971,15 @@ const DonaturUserProfile = () => {
       <Box sx={{ zIndex: 10 }}>
         <SimpleFooter />
       </Box>
+      {process.env.NODE_ENV === 'development' && (
+        <button 
+          onClick={simulatePermissionRevocation}
+          className="fixed bottom-2 right-2 bg-red-500 text-white text-xs p-1 rounded opacity-30 hover:opacity-100"
+          style={{ fontSize: '8px' }}
+        >
+          Test Permission Revocation
+        </button>
+      )}
     </Box>
   );
 };

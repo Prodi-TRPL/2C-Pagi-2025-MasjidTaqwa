@@ -177,6 +177,27 @@ export default function KelolaAksesDonatur() {
   const handlePermissionChange = (permission) => {
     if (!selectedDonor) return;
     
+    // Check if this is revoking a permission
+    const isRevoking = selectedDonor.permissions[permission] === true;
+    
+    // If revoking, show confirmation dialog
+    if (isRevoking) {
+      const confirmMessage = `Anda akan mencabut hak akses "${
+        permission === 'can_donate' ? 'Donasi' : 
+        permission === 'can_view_history' ? 'Riwayat Transaksi' : 'Notifikasi'
+      }" dari donatur ini.
+      
+Jika donatur sedang online, mereka akan otomatis keluar dari sistem.
+
+Apakah Anda yakin ingin melanjutkan?`;
+      
+      // Show confirmation dialog
+      if (!window.confirm(confirmMessage)) {
+        return; // Cancel if user clicks "Cancel"
+      }
+    }
+    
+    // Update permission if confirmed or if granting permission
     setSelectedDonor({
       ...selectedDonor,
       permissions: {
@@ -205,6 +226,12 @@ export default function KelolaAksesDonatur() {
     try {
       const headers = getAuthHeaders();
       if (!headers) return;
+      
+      // Check if any permissions are being revoked
+      const isRevokingPermissions = 
+        (selectedDonor.can_donate && !selectedDonor.permissions.can_donate) ||
+        (selectedDonor.can_view_history && !selectedDonor.permissions.can_view_history) ||
+        (selectedDonor.can_view_notification && !selectedDonor.permissions.can_view_notification);
       
       // Send updated permissions to API
       await axios.put(`/api/donor-permissions/${selectedDonor.pengguna_id}`, {
@@ -243,8 +270,15 @@ export default function KelolaAksesDonatur() {
         permissionChanges: prev.permissionChanges + 1
       }));
       
-      // Show success toast
-      showToast("Hak akses donatur berhasil diperbarui", "success");
+      // Show appropriate success toast
+      if (isRevokingPermissions) {
+        showToast(
+          `Hak akses donatur berhasil diperbarui. Jika donatur sedang online, mereka akan otomatis keluar dari sistem.`, 
+          "warning"
+        );
+      } else {
+        showToast("Hak akses donatur berhasil diperbarui", "success");
+      }
       
       // Close modal
       closeEditModal();
