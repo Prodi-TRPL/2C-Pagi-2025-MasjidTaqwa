@@ -67,6 +67,16 @@ export default function KelolaAksesDonatur() {
     type: "success" // success, error, warning
   });
 
+  // State for confirmation dialog
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    title: "",
+    message: "",
+    permission: "",
+    onConfirm: null,
+    onCancel: null
+  });
+
   // State for donor stats
   const [stats, setStats] = useState({
     totalDonors: 0,
@@ -182,29 +192,47 @@ export default function KelolaAksesDonatur() {
     
     // If revoking, show confirmation dialog
     if (isRevoking) {
-      const confirmMessage = `Anda akan mencabut hak akses "${
+      const permissionName = 
         permission === 'can_donate' ? 'Donasi' : 
-        permission === 'can_view_history' ? 'Riwayat Transaksi' : 'Notifikasi'
-      }" dari donatur ini.
+        permission === 'can_view_history' ? 'Riwayat Transaksi' : 'Notifikasi';
       
+      setConfirmDialog({
+        show: true,
+        title: `Konfirmasi Pencabutan Hak Akses`,
+        message: `Anda akan mencabut hak akses "${permissionName}" dari donatur ini.
+        
 Jika donatur sedang online, mereka akan otomatis keluar dari sistem.
 
-Apakah Anda yakin ingin melanjutkan?`;
-      
-      // Show confirmation dialog
-      if (!window.confirm(confirmMessage)) {
-        return; // Cancel if user clicks "Cancel"
-      }
+Apakah Anda yakin ingin melanjutkan?`,
+        permission: permission,
+        onConfirm: () => {
+          // Update permission after confirmation
+          setSelectedDonor({
+            ...selectedDonor,
+            permissions: {
+              ...selectedDonor.permissions,
+              [permission]: false
+            }
+          });
+          
+          // Hide dialog
+          setConfirmDialog({ ...confirmDialog, show: false });
+        },
+        onCancel: () => {
+          // Just hide dialog without changing permission
+          setConfirmDialog({ ...confirmDialog, show: false });
+        }
+      });
+    } else {
+      // If granting permission, no confirmation needed
+      setSelectedDonor({
+        ...selectedDonor,
+        permissions: {
+          ...selectedDonor.permissions,
+          [permission]: true
+        }
+      });
     }
-    
-    // Update permission if confirmed or if granting permission
-    setSelectedDonor({
-      ...selectedDonor,
-      permissions: {
-        ...selectedDonor.permissions,
-        [permission]: !selectedDonor.permissions[permission]
-      }
-    });
   };
 
   // Show toast message
@@ -1341,6 +1369,50 @@ Apakah Anda yakin ingin melanjutkan?`;
                   className="px-4 py-2 bg-[#59B997] text-white rounded-md hover:bg-[#4ca584] focus:outline-none"
                 >
                   Simpan Perubahan
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+        
+        {/* Confirmation Dialog */}
+        {confirmDialog.show && (
+          <div className="fixed inset-0 overflow-y-auto z-50 flex items-center justify-center">
+            <div className="fixed inset-0 bg-black opacity-50"></div>
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4"
+            >
+              {/* Dialog Header */}
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center">
+                  <div className="p-2 bg-amber-100 rounded-full mr-3">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="text-amber-500" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900">{confirmDialog.title}</h3>
+                </div>
+              </div>
+              
+              {/* Dialog Body */}
+              <div className="px-6 py-4">
+                <p className="text-gray-700 whitespace-pre-line">{confirmDialog.message}</p>
+              </div>
+              
+              {/* Dialog Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button
+                  onClick={confirmDialog.onCancel}
+                  className="px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 focus:outline-none"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmDialog.onConfirm}
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none"
+                >
+                  Ya, Cabut Akses
                 </button>
               </div>
             </motion.div>

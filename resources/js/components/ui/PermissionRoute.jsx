@@ -15,14 +15,30 @@ const PermissionRoute = ({ permissionKey, component: Component, redirectTo = "/"
   const [showModal, setShowModal] = useState(false);
   const location = useLocation();
 
+  // Helper function to convert various truthy values to boolean
+  const toBool = (value) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+    if (typeof value === 'string') {
+      const lower = value.toLowerCase();
+      return lower === '1' || lower === 'true' || lower === 'yes';
+    }
+    return Boolean(value);
+  };
+
   useEffect(() => {
     const checkPermissions = async () => {
       try {
         const userPermissions = await getUserPermissions();
+        console.log(`PermissionRoute: Received permissions for ${permissionKey}:`, userPermissions);
         setPermissions(userPermissions);
         
-        // If permission is denied, show modal
-        if (!hasPermission(userPermissions, permissionKey)) {
+        // Check if user has the required permission using our helper function
+        const hasRequiredPermission = userPermissions && toBool(userPermissions[permissionKey]);
+        console.log(`PermissionRoute: Has ${permissionKey} permission:`, hasRequiredPermission);
+        
+        if (!hasRequiredPermission) {
+          console.log(`PermissionRoute: Permission denied for ${permissionKey}, showing modal`);
           setShowModal(true);
         }
       } catch (error) {
@@ -47,8 +63,15 @@ const PermissionRoute = ({ permissionKey, component: Component, redirectTo = "/"
   // Get the permission denied message
   const { title, message } = getPermissionDeniedMessage(permissionKey);
 
+  // Check if user has the required permission using our helper function
+  const hasRequiredPermission = permissions && toBool(permissions[permissionKey]);
+  
   // If user lacks the required permission
-  if (!hasPermission(permissions, permissionKey)) {
+  if (!hasRequiredPermission) {
+    console.log(`PermissionRoute: Access denied for ${permissionKey}, redirecting to ${redirectTo}`);
+    console.log(`PermissionRoute: Permission value:`, permissions ? permissions[permissionKey] : null);
+    console.log(`PermissionRoute: Permission type:`, permissions ? typeof permissions[permissionKey] : 'undefined');
+    
     return (
       <>
         <AccessDeniedModal 
@@ -66,6 +89,7 @@ const PermissionRoute = ({ permissionKey, component: Component, redirectTo = "/"
   }
 
   // User has permission, render the component
+  console.log(`PermissionRoute: Access granted for ${permissionKey}, rendering component`);
   return <Component />;
 };
 

@@ -323,27 +323,42 @@ function DonaturUserRiwayatTransaksi() {
   }, []);
 
   // Don't render the main component content if user doesn't have permission
-  if (permissionChecked && permissions && !permissions.canViewHistory) {
-    return (
-      <div className="pt-16 relative">
-        {/* Navbar */}
-        <div className="relative z-20">
-          <NavbarBaru />
+  if (permissionChecked && permissions) {
+    // Helper function to convert various truthy values to boolean
+    const toBool = (value) => {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'number') return value === 1;
+      if (typeof value === 'string') {
+        const lower = value.toLowerCase();
+        return lower === '1' || lower === 'true' || lower === 'yes';
+      }
+      return Boolean(value);
+    };
+    
+    const hasViewHistoryPermission = toBool(permissions.canViewHistory);
+    
+    if (!hasViewHistoryPermission) {
+      return (
+        <div className="pt-16 relative">
+          {/* Navbar */}
+          <div className="relative z-20">
+            <NavbarBaru />
+          </div>
+          
+          <AccessDeniedModal
+            isOpen={accessDeniedModal.show}
+            onClose={() => {
+              setAccessDeniedModal({ ...accessDeniedModal, show: false });
+              navigate('/');
+            }}
+            title={accessDeniedModal.title}
+            message={accessDeniedModal.message}
+          />
+          
+          <Navigate to="/" replace state={{ from: location }} />
         </div>
-        
-        <AccessDeniedModal
-          isOpen={accessDeniedModal.show}
-          onClose={() => {
-            setAccessDeniedModal({ ...accessDeniedModal, show: false });
-            navigate('/');
-          }}
-          title={accessDeniedModal.title}
-          message={accessDeniedModal.message}
-        />
-        
-        <Navigate to="/" replace state={{ from: location }} />
-      </div>
-    );
+      );
+    }
   }
   
   useEffect(() => {
@@ -545,7 +560,341 @@ function DonaturUserRiwayatTransaksi() {
 
   return (
     <div className="pt-16 relative">
-      {/* ... existing component JSX */}
+      {/* Navbar */}
+      <div className="relative z-20">
+        <NavbarBaru />
+      </div>
+      
+      {/* Main Content */}
+      <Container 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          mt: 12,
+          py: 4, 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: 3,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          overflow: 'hidden',
+          mb: 4,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <HistoryIcon sx={{ color: '#59B997', fontSize: 28 }} />
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontWeight: 'bold', 
+                color: '#59B997',
+              }}
+            >
+              Riwayat Transaksi
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Refresh Data">
+              <IconButton 
+                onClick={handleRefresh} 
+                sx={{ 
+                  color: '#59B997',
+                  '&:hover': {
+                    backgroundColor: 'rgba(89, 185, 151, 0.1)',
+                  } 
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mb: 3, borderRadius: 2 }}
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={handleRefresh}
+              >
+                Coba Lagi
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        )}
+
+        {/* Sorting Controls */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 2, 
+            mb: 3, 
+            borderRadius: 3, 
+            backgroundColor: 'rgba(89, 185, 151, 0.05)',
+            border: '1px solid rgba(89, 185, 151, 0.1)',
+          }}
+        >
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 3, 
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: isMobile ? 'center' : 'flex-start',
+            }}
+          >
+            <TextField
+              select
+              label="Urutkan"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              size="small"
+              sx={{
+                minWidth: 150,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '&:hover fieldset': {
+                    borderColor: '#59B997',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#59B997',
+                  },
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#59B997',
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SortIcon sx={{ color: '#59B997' }} />
+                  </InputAdornment>
+                ),
+              }}
+            >
+              <MenuItem value="desc">
+                Terbaru
+              </MenuItem>
+              <MenuItem value="asc">
+                Terlama
+              </MenuItem>
+            </TextField>
+          </Box>
+        </Paper>
+
+        {/* Donations Table or Empty State */}
+        {loading ? (
+          <TableSkeleton />
+        ) : filteredDonations.length === 0 ? (
+          <EmptyState />
+        ) : isMobile ? (
+          <MobileCardView 
+            donations={filteredDonations.slice(
+              page * rowsPerPage, 
+              page * rowsPerPage + rowsPerPage
+            )} 
+            handleOpenDialog={handleOpenDialog} 
+          />
+        ) : (
+          <Paper sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#59B997', '& th': { color: 'white' } }}>
+                    <TableCell>Tanggal Donasi</TableCell>
+                    <TableCell>Jumlah</TableCell>
+                    <TableCell>Metode Pembayaran</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>ID Transaksi</TableCell>
+                    <TableCell align="center">Aksi</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredDonations
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((donation) => (
+                      <TableRow key={donation.donasi_id}>
+                        <TableCell>{formatDate(donation.tanggal_donasi)}</TableCell>
+                        <TableCell>{formatCurrency(donation.jumlah)}</TableCell>
+                        <TableCell>{donation.payment_method_name}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label="Diterima"
+                            size="small"
+                            sx={{ 
+                              backgroundColor: 'rgba(89, 185, 151, 0.1)',
+                              color: '#59B997',
+                              fontWeight: 500,
+                            }}
+                            icon={<CheckCircleIcon style={{ color: '#59B997' }} />}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography 
+                            variant="body2" 
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.75rem',
+                            }}
+                          >
+                            {donation.order_id || donation.donasi_id || '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => handleOpenDialog(donation)}
+                            sx={{
+                              color: '#59B997',
+                              borderColor: '#59B997',
+                              borderRadius: 2,
+                              '&:hover': {
+                                backgroundColor: 'rgba(89, 185, 151, 0.1)',
+                                borderColor: '#59B997',
+                              },
+                            }}
+                          >
+                            Detail
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredDonations.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Baris per halaman:"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} dari ${count}`}
+            />
+          </Paper>
+        )}
+      </Container>
+      
+      {/* Footer */}
+      <div className="relative z-10">
+        <SimpleFooter />
+      </div>
+      
+      {/* Detail Dialog */}
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+          }
+        }}
+      >
+        {selectedDonation && (
+          <>
+            <DialogTitle sx={{ 
+              borderBottom: '1px solid rgba(0,0,0,0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <ReceiptIcon sx={{ color: '#59B997', mr: 1 }} />
+              Detail Transaksi Donasi
+              <IconButton
+                aria-label="close"
+                onClick={handleCloseDialog}
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  color: (theme) => theme.palette.grey[500],
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ pt: 2, pb: 1 }}>
+              <List>
+                <ListItem>
+                  <ListItemIcon>
+                    <EventIcon sx={{ color: '#59B997' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Tanggal Donasi" 
+                    secondary={formatDate(selectedDonation.tanggal_donasi, "dd MMMM yyyy, HH:mm")} 
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <AttachMoneyIcon sx={{ color: '#59B997' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Jumlah Donasi" 
+                    secondary={formatCurrency(selectedDonation.jumlah)} 
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <PaymentIcon sx={{ color: '#59B997' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Metode Pembayaran" 
+                    secondary={selectedDonation.payment_method_name} 
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <CheckCircleIcon sx={{ color: '#59B997' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Status" 
+                    secondary="Diterima" 
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemIcon>
+                    <ReceiptIcon sx={{ color: '#59B997' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="ID Transaksi" 
+                    secondary={selectedDonation.order_id || selectedDonation.donasi_id || '-'} 
+                  />
+                </ListItem>
+              </List>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              <Button 
+                onClick={handleCloseDialog}
+                variant="contained"
+                sx={{
+                  bgcolor: '#59B997',
+                  '&:hover': {
+                    bgcolor: '#47a07f',
+                  },
+                  borderRadius: 2,
+                }}
+              >
+                Tutup
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </div>
   );
 }

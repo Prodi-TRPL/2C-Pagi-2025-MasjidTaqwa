@@ -20,14 +20,49 @@ class ProfileController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // Helper function to convert value to boolean
+        $toBool = function($value) {
+            if (is_bool($value)) return $value;
+            if (is_numeric($value)) return (int)$value === 1;
+            if (is_string($value)) {
+                $lower = strtolower($value);
+                return $lower === '1' || $lower === 'true' || $lower === 'yes';
+            }
+            return (bool)$value;
+        };
+        
+        // Debug logging
+        Log::debug('User permissions from database:', [
+            'user_id' => $user->pengguna_id,
+            'can_donate_raw' => $user->can_donate,
+            'can_view_history_raw' => $user->can_view_history,
+            'can_view_notification_raw' => $user->can_view_notification,
+            'can_donate_type' => gettype($user->can_donate),
+            'can_view_history_type' => gettype($user->can_view_history),
+            'can_view_notification_type' => gettype($user->can_view_notification)
+        ]);
+
+        // Ensure all permission values are properly converted to boolean
+        $canDonate = $toBool($user->can_donate);
+        $canViewHistory = $toBool($user->can_view_history);
+        $canViewNotification = $toBool($user->can_view_notification);
+        
+        // Debug logging after conversion
+        Log::debug('User permissions after boolean conversion:', [
+            'user_id' => $user->pengguna_id,
+            'can_donate' => $canDonate,
+            'can_view_history' => $canViewHistory,
+            'can_view_notification' => $canViewNotification
+        ]);
+
         return response()->json([
             'pengguna_id' => $user->pengguna_id,
             'nama' => $user->nama,
             'email' => $user->email,
-            'nomor_hp' => $user->nomor_hp,
-            'created_at' => $user->created_at,
-            'alamat' => $user->alamat ?? 'Jl. Kenanga No. 15, Bandung, Jawa Barat',
-            'profile_image' => $user->profile_image ?? '/img/user/admin.jpeg',
+            'role' => $user->role,
+            'can_donate' => $canDonate,
+            'can_view_history' => $canViewHistory,
+            'can_view_notification' => $canViewNotification
         ]);
     }
 

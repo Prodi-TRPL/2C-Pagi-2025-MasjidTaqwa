@@ -40,44 +40,67 @@ class DonorPermissionsController extends Controller
     }
 
     /**
-     * Update donor permissions
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $id
-     * @return \Illuminate\Http\Response
+     * Update permissions for a donor
      */
     public function updatePermissions(Request $request, $id)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'can_donate' => 'required|boolean',
-                'can_view_history' => 'required|boolean',
-                'can_view_notification' => 'required|boolean',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['message' => 'Validation error', 'errors' => $validator->errors()], 422);
+        // Validate request
+        $request->validate([
+            'can_donate' => 'required|boolean',
+            'can_view_history' => 'required|boolean',
+            'can_view_notification' => 'required|boolean',
+        ]);
+        
+        // Helper function to convert value to boolean
+        $toBool = function($value) {
+            if (is_bool($value)) return $value ? 1 : 0;
+            if (is_numeric($value)) return (int)$value === 1 ? 1 : 0;
+            if (is_string($value)) {
+                $lower = strtolower($value);
+                return ($lower === '1' || $lower === 'true' || $lower === 'yes') ? 1 : 0;
             }
+            return (bool)$value ? 1 : 0;
+        };
 
-            $donor = Pengguna::where('role', 'donatur')->findOrFail($id);
+        try {
+            // Find the donor
+            $donor = Pengguna::where('pengguna_id', $id)
+                ->where('role', 'donatur')
+                ->firstOrFail();
             
-            $donor->update([
-                'can_donate' => $request->can_donate,
-                'can_view_history' => $request->can_view_history,
-                'can_view_notification' => $request->can_view_notification,
+            // Log the old permissions
+            Log::info("Updating permissions for donor {$id}", [
+                'old_can_donate' => $donor->can_donate,
+                'old_can_view_history' => $donor->can_view_history,
+                'old_can_view_notification' => $donor->can_view_notification,
+                'new_can_donate' => $request->can_donate,
+                'new_can_view_history' => $request->can_view_history,
+                'new_can_view_notification' => $request->can_view_notification,
             ]);
-
-            // Get updated donor with permissions
-            $updatedDonor = Pengguna::select('pengguna_id', 'nama', 'email', 'role', 'can_donate', 'can_view_history', 'can_view_notification', 'created_at')
-                ->findOrFail($id);
-
+            
+            // Update permissions - explicitly convert to 1/0
+            $donor->can_donate = $toBool($request->can_donate);
+            $donor->can_view_history = $toBool($request->can_view_history);
+            $donor->can_view_notification = $toBool($request->can_view_notification);
+            $donor->save();
+            
+            // Log the updated permissions
+            Log::info("Updated permissions for donor {$id}", [
+                'can_donate' => $donor->can_donate,
+                'can_view_history' => $donor->can_view_history,
+                'can_view_notification' => $donor->can_view_notification,
+            ]);
+            
             return response()->json([
-                'message' => 'Donor permissions updated successfully',
-                'donor' => $updatedDonor
+                'message' => 'Permissions updated successfully',
+                'donor' => $donor
             ]);
         } catch (\Exception $e) {
-            Log::error('Error updating donor permissions: ' . $e->getMessage());
-            return response()->json(['message' => 'Error updating donor permissions: ' . $e->getMessage()], 500);
+            Log::error("Error updating permissions for donor {$id}: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to update permissions',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

@@ -1,12 +1,32 @@
+// Cache for permissions and donation status
+let permissionsCache = null;
+let permissionsCacheTime = 0;
+let donationStatusCache = null;
+let donationStatusCacheTime = 0;
+
+// Cache expiration time in milliseconds (5 minutes)
+const CACHE_EXPIRATION = 5 * 60 * 1000;
+
 /**
  * Fetches the user permissions from the server
  * @returns {Promise<Object>} User permissions
  */
 export const getUserPermissions = async () => {
   try {
+    // Check if we have a valid cache
+    const now = Date.now();
+    if (permissionsCache && (now - permissionsCacheTime < CACHE_EXPIRATION)) {
+      console.log('Using cached permissions:', permissionsCache);
+      return permissionsCache;
+    }
+    
     const token = localStorage.getItem('token');
-    if (!token) return null;
+    if (!token) {
+      console.log('No token found, returning null permissions');
+      return null;
+    }
 
+    console.log('Fetching permissions from server...');
     const response = await fetch('/api/donatur/profile', {
       method: 'GET',
       headers: {
@@ -19,13 +39,38 @@ export const getUserPermissions = async () => {
     }
 
     const userData = await response.json();
+    console.log('Raw user data from API:', userData);
     
-    // Extract permission fields
-    return {
-      canDonate: userData.can_donate === true || userData.can_donate === 1,
-      canViewHistory: userData.can_view_history === true || userData.can_view_history === 1,
-      canViewNotification: userData.can_view_notification === true || userData.can_view_notification === 1
+    // Helper function to convert various truthy values to boolean
+    const toBool = (value) => {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'number') return value === 1;
+      if (typeof value === 'string') {
+        const lower = value.toLowerCase();
+        return lower === '1' || lower === 'true' || lower === 'yes';
+      }
+      return Boolean(value);
     };
+    
+    // Extract and explicitly cast permission fields to boolean
+    const permissions = {
+      canDonate: toBool(userData.can_donate),
+      canViewHistory: toBool(userData.can_view_history),
+      canViewNotification: toBool(userData.can_view_notification)
+    };
+    
+    console.log('Processed permissions:', permissions);
+    console.log('Permission types:', {
+      canDonate: typeof permissions.canDonate,
+      canViewHistory: typeof permissions.canViewHistory,
+      canViewNotification: typeof permissions.canViewNotification
+    });
+    
+    // Update cache
+    permissionsCache = permissions;
+    permissionsCacheTime = now;
+    
+    return permissions;
   } catch (error) {
     console.error('Error fetching user permissions:', error);
     return null;
@@ -38,6 +83,12 @@ export const getUserPermissions = async () => {
  */
 export const checkGlobalDonationStatus = async () => {
   try {
+    // Check if we have a valid cache
+    const now = Date.now();
+    if (donationStatusCache && (now - donationStatusCacheTime < CACHE_EXPIRATION)) {
+      return donationStatusCache;
+    }
+    
     const response = await fetch('/api/donation-status');
     
     if (!response.ok) {
@@ -47,7 +98,7 @@ export const checkGlobalDonationStatus = async () => {
     const data = await response.json();
     
     // Enhanced response with additional details
-    return {
+    const status = {
       is_active: data.is_active,
       message: data.message,
       details: data.details || {
@@ -56,6 +107,12 @@ export const checkGlobalDonationStatus = async () => {
         manually_disabled: false
       }
     };
+    
+    // Update cache
+    donationStatusCache = status;
+    donationStatusCacheTime = now;
+    
+    return status;
   } catch (error) {
     console.error('Error checking donation status:', error);
     return {
@@ -115,7 +172,18 @@ export const getDetailedDonationStatus = async () => {
  */
 export const hasPermission = (permissions, permissionKey) => {
   if (!permissions) return false;
-  return permissions[permissionKey] === true;
+  
+  const permValue = permissions[permissionKey];
+  
+  // Handle different value types
+  if (typeof permValue === 'boolean') return permValue;
+  if (typeof permValue === 'number') return permValue === 1;
+  if (typeof permValue === 'string') {
+    const lower = permValue.toLowerCase();
+    return lower === '1' || lower === 'true' || lower === 'yes';
+  }
+  
+  return Boolean(permValue);
 };
 
 /**
