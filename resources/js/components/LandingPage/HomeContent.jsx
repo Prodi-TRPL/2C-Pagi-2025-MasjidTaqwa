@@ -274,77 +274,141 @@ const HomeContent = () => {
             
             {/* Statistics Section */}
             <div className="bg-white py-16">
-                <div className="max-w-7xl mx-auto px-5 lg:px-15">
-                    <div className="mb-10 text-center">
-                        <h2 className="text-3xl font-bold text-gray-800 mb-2">Statistik Donasi</h2>
-                        <p className="text-gray-600">Transparansi penggunaan dana donasi untuk pembangunan masjid</p>
-                    </div>
-                    
-                    {loading ? (
-                        <div className="flex justify-center items-center py-8">
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#59B997]"></div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {/* Total Donasi */}
-                            <div className="bg-white shadow-lg rounded-lg p-6">
-                                <div className="flex items-center mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-700">Total Donasi</h3>
-                                </div>
-                                <p className="text-2xl md:text-3xl font-bold text-gray-600">{formatCurrency(stats.totalDonation)}</p>
-                                <p className="text-sm text-gray-500 mt-2">Jumlah keseluruhan dana yang telah diterima</p>
-                            </div>
-                            
-                            {/* Dana Dialokasikan */}
-                            <div className="bg-white shadow-lg rounded-lg p-6">
-                                <div className="flex items-center mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-[#59B997]/10 flex items-center justify-center mr-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#59B997]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-700">Dana Dialokasikan</h3>
-                                </div>
-                                <p className="text-2xl md:text-3xl font-bold text-[#59B997]">{formatCurrency(stats.totalExpense)}</p>
-                                <p className="text-sm text-gray-500 mt-2">Dana yang telah digunakan untuk pembangunan</p>
-                            </div>
-                            
-                            {/* Dana Belum Dialokasikan */}
-                            <div className="bg-white shadow-lg rounded-lg p-6">
-                                <div className="flex items-center mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mr-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-700">Dana Belum Dialokasikan</h3>
-                                </div>
-                                <p className="text-2xl md:text-3xl font-bold text-blue-600">{formatCurrency(stats.balance)}</p>
-                                <p className="text-sm text-gray-500 mt-2">Dana yang masih tersedia untuk dialokasikan</p>
-                            </div>
-                            
-                            {/* Total Proyek */}
-                            <div className="bg-white shadow-lg rounded-lg p-6">
-                                <div className="flex items-center mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center mr-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-700">Total Proyek</h3>
-                                </div>
-                                <p className="text-2xl md:text-3xl font-bold text-yellow-600">{stats.totalProjects}</p>
-                                <p className="text-sm text-gray-500 mt-2">Jumlah proyek pembangunan yang sedang berjalan</p>
-                            </div>
-                        </div>
-                    )}
+            <div className="max-w-7xl mx-auto px-5 lg:px-15">
+                <div className="mb-10 text-center">
+                <h2 className="text-3xl font-bold text-gray-800 mb-2">Statistik Donasi</h2>
+                <p className="text-gray-600">
+                    Transparansi penggunaan dana donasi untuk pembangunan masjid
+                </p>
                 </div>
+
+                {loading ? (
+                <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#59B997]"></div>
+                </div>
+                ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Total Donasi */}
+                    <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-100">
+                    <div className="flex items-center mb-2">
+                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-green-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-700">Total Donasi</h3>
+                    </div>
+                    <p className="text-2xl md:text-3xl font-bold text-green-600">
+                        {formatCurrency(stats.totalDonation)}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Jumlah keseluruhan dana yang telah diterima
+                    </p>
+                    </div>
+
+                    {/* Dana Dialokasikan */}
+                    <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-100">
+                    <div className="flex items-center mb-2">
+                        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-red-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"
+                            />
+                        </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-700">Dana Dialokasikan</h3>
+                    </div>
+                    <p className="text-2xl md:text-3xl font-bold text-red-600">
+                        {formatCurrency(stats.totalExpense)}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Dana yang telah digunakan untuk pembangunan
+                    </p>
+                    </div>
+
+                    {/* Dana Belum Dialokasikan */}
+                    <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-100">
+                    <div className="flex items-center mb-2">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-700">Dana Belum Dialokasikan</h3>
+                    </div>
+                    <p className="text-2xl md:text-3xl font-bold text-blue-600">
+                        {formatCurrency(stats.balance)}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Dana yang masih tersedia untuk dialokasikan
+                    </p>
+                    </div>
+
+                    {/* Total Proyek */}
+                    <div className="bg-white shadow-lg rounded-lg p-6 border border-gray-100">
+                    <div className="flex items-center mb-2">
+                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-purple-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            />
+                        </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-700">Total Proyek</h3>
+                    </div>
+                    <p className="text-2xl md:text-3xl font-bold text-purple-600">
+                        {stats.totalProjects}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Jumlah proyek pembangunan yang sedang berjalan
+                    </p>
+                    </div>
+                </div>
+                )}
             </div>
+            </div>
+
+
             
             {/* Projects Section */}
             <div className="bg-gray-50 py-16">
