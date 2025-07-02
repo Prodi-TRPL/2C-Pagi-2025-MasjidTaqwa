@@ -10,25 +10,9 @@ class Donasi extends Model
     protected $primaryKey = 'donasi_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    public $timestamps = true;
+    public $timestamps = false;
 
-    protected $fillable = [
-        'pengguna_id', 
-        'laporan_keuangan_id', 
-        'jumlah',
-        'status', 
-        'order_id',
-        'payment_type',
-        'snap_token',
-        'name',
-        'email',
-        'created_at',
-        'updated_at'
-    ];
-    
-    protected $attributes = [
-        'status' => 'Kadaluarsa', // Default value until payment is confirmed
-    ];
+    protected $fillable = ['pengguna_id', 'laporan_keuangan_id', 'jumlah', 'metode_pembayaran_id', 'status', 'tanggal_donasi'];
 
     public function pengguna()
     {
@@ -38,5 +22,10 @@ class Donasi extends Model
     public function laporanKeuangan()
     {
         return $this->belongsTo(LaporanKeuangan::class, 'laporan_keuangan_id');
+    }
+
+    public function metodePembayaran()
+    {
+        return $this->belongsTo(MetodePembayaran::class, 'metode_pembayaran_id');
     }
 }

@@ -5,59 +5,30 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTachometerAlt, faUser, faHistory, faRightFromBracket, faBell } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
-import { getUserPermissions, hasPermission, getPermissionDeniedMessage } from "../../utils/permissions";
-import AccessDeniedModal from "../ui/AccessDeniedModal";
 
 export default function NavbarUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [role, setRole] = useState("donatur");
-  const [user, setUser] = useState({ name: "User", email: "user@example.com" });
+  const [role, setRole] = useState(null);
+  const [user, setUser] = useState({ name: "", email: "" });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [userPermissions, setUserPermissions] = useState(null);
-  const [accessDeniedModal, setAccessDeniedModal] = useState({
-    show: false,
-    title: "",
-    message: "",
-    permissionKey: ""
-  });
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserAndPermissions = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
+    const userData = localStorage.getItem("user");
+    if (userData) {
       try {
-        const res = await fetch("/api/donatur/profile", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error("Gagal mengambil profil");
-
-        const data = await res.json();
-
+        const parsedUser = JSON.parse(userData);
+        if (parsedUser.role) {
+          setRole(parsedUser.role);
+        }
         setUser({
-          name: data.nama || "User",
-          email: data.email || "user@example.com",
+          name: parsedUser.name || "",
+          email: parsedUser.email || "",
         });
-
-        setRole("donatur");
-        
-        // Set user permissions
-        setUserPermissions({
-          canDonate: data.can_donate === true || data.can_donate === 1,
-          canViewHistory: data.can_view_history === true || data.can_view_history === 1,
-          canViewNotification: data.can_view_notification === true || data.can_view_notification === 1
-        });
-      } catch (err) {
-        console.error("Gagal ambil user:", err);
+      } catch (error) {
+        console.error("Failed to parse user data from localStorage", error);
       }
-    };
-
-    fetchUserAndPermissions();
+    }
   }, []);
 
   useEffect(() => {
@@ -75,45 +46,9 @@ export default function NavbarUserDropdown() {
     setIsOpen(false);
   }
 
-  // Function to handle permission-based navigation
-  function handleNavigate(path, permissionKey) {
-    closeDropdown();
-    
-    // If not logged in or permissions not loaded, redirect to login
-    if (!userPermissions) {
-      navigate('/login');
-      return;
-    }
-    
-    // Check if user has the required permission
-    if (hasPermission(userPermissions, permissionKey)) {
-      navigate(path);
-    } else {
-      // Get denial message based on the permission
-      const { title, message } = getPermissionDeniedMessage(permissionKey);
-      
-      // Show access denied modal
-      setAccessDeniedModal({
-        show: true,
-        title,
-        message,
-        permissionKey
-      });
-    }
-  }
-
-  // Function to close the access denial modal
-  function closeAccessDeniedModal() {
-    setAccessDeniedModal({
-      ...accessDeniedModal,
-      show: false
-    });
-  }
-
   async function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
-
     const result = await Swal.fire({
       icon: "success",
       title: "Logout berhasil!",
@@ -129,8 +64,9 @@ export default function NavbarUserDropdown() {
         backdrop: "bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full",
       },
     });
-
-    if (result.isDismissed || result.isConfirmed) {
+    if (result.isDismissed) {
+      navigate("/", { replace: true });
+    } else {
       navigate("/", { replace: true });
     }
   }
@@ -146,10 +82,12 @@ export default function NavbarUserDropdown() {
           <img src="/img/user/admin.jpeg" alt="User avatar" />
         </span>
         <span className="hidden sm:block mr-1 font-medium text-theme-sm">
-          {user.name}
+          {user.name || "User"}
         </span>
         <svg
-          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
           width="18"
           height="20"
           viewBox="0 0 18 20"
@@ -173,95 +111,127 @@ export default function NavbarUserDropdown() {
       >
         <div className="mb-2 px-3">
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user.name}
+            {user.name || "User"}
           </span>
           <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user.email}
+            {user.email || "user@example.com"}
           </span>
         </div>
-
         <ul className="flex flex-col gap-1">
-          {role === "donatur" && (
+          {role === "admin" && (
             <>
               <li>
-                <DropdownItem 
-                  onItemClick={closeDropdown} 
-                  tag="a" 
-                  to="/profile" 
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/profile"
                   className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                 >
-                  <FontAwesomeIcon 
-                    icon={faUser} 
-                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
-                  />
-                  <span>Profile</span>
+                  <FontAwesomeIcon icon={faUser} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Profile
                 </DropdownItem>
-              </li>
-              <li>
-                <div 
-                  onClick={() => handleNavigate("/notifikasi", "canViewNotification")}
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 cursor-pointer"
-                >
-                  <FontAwesomeIcon 
-                    icon={faBell} 
-                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
-                  />
-                  <span>Notifikasi</span>
-                </div>
-              </li>
-              <li>
-                <div 
-                  onClick={() => handleNavigate("/riwayat-transaksi", "canViewHistory")}
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 cursor-pointer"
-                >
-                  <FontAwesomeIcon 
-                    icon={faHistory} 
-                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
-                  />
-                  <span>Riwayat Transaksi</span>
-                </div>
               </li>
               <li>
                 <DropdownItem
                   onItemClick={closeDropdown}
                   tag="a"
-                  to="/pembangunan"
+                  to="/notifikasi"
                   className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                 >
-                  <FontAwesomeIcon
-                    icon={faTachometerAlt}
-                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
-                  />
-                  <span>Progress Pembangunan</span>
+                  <FontAwesomeIcon icon={faBell} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Notifikasi
                 </DropdownItem>
               </li>
               <li>
-                <div
-                  onClick={() => {
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/dashboardhome"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faTachometerAlt} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Dashboard
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={() => {
                     setIsLoggingOut(true);
                     closeDropdown();
                   }}
-                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 cursor-pointer"
+                  tag="button"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                 >
-                  <FontAwesomeIcon 
-                    icon={faRightFromBracket} 
-                    className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
-                  />
-                  <span>Keluar</span>
-                </div>
+                  <FontAwesomeIcon icon={faRightFromBracket} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Keluar
+                </DropdownItem>
+              </li>
+            </>
+          )}
+
+          {role === "donatur" && (
+            <>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/profile"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faUser} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Profile
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/notifikasi"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faBell} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Notifikasi
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/riwayat-transaksi"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faHistory} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Riwayat Transaksi
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={closeDropdown}
+                  tag="a"
+                  to="/progress-pembangunan"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faTachometerAlt} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Progress Pembangunan
+                </DropdownItem>
+              </li>
+              <li>
+                <DropdownItem
+                  onItemClick={() => {
+                    setIsLoggingOut(true);
+                    closeDropdown();
+                  }}
+                  tag="button"
+                  className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                  <FontAwesomeIcon icon={faRightFromBracket} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
+                  Keluar
+                </DropdownItem>
               </li>
             </>
           )}
         </ul>
       </Dropdown>
-
-      {/* Access Denied Modal */}
-      <AccessDeniedModal
-        isOpen={accessDeniedModal.show}
-        onClose={closeAccessDeniedModal}
-        title={accessDeniedModal.title}
-        message={accessDeniedModal.message}
-      />
     </div>
   );
 }

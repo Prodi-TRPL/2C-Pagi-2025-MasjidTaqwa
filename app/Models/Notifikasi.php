@@ -10,21 +10,9 @@ class Notifikasi extends Model
     protected $primaryKey = 'notifikasi_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    public $timestamps = true;
+    public $timestamps = false;
 
-    protected $fillable = ['notifikasi_id', 'pengguna_id', 'donasi_id', 'tipe', 'judul', 'pesan', 'status'];
-    
-    protected $appends = ['is_read'];
-
-    /**
-     * Get whether the notification has been read.
-     *
-     * @return bool
-     */
-    public function getIsReadAttribute()
-    {
-        return $this->status === 'dibaca';
-    }
+    protected $fillable = ['pengguna_id', 'donasi_id', 'tipe', 'pesan', 'status', 'created_at'];
 
     public function pengguna()
     {

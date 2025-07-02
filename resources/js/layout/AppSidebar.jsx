@@ -9,14 +9,12 @@ import {
     MdPayment,
     MdCategory,
     MdMoreHoriz,
-    MdNotifications,
-    MdSecurity
+    MdNotifications 
 } from "react-icons/md";
 import { 
     FaHandHoldingHeart, 
     FaBuilding, 
-    FaMoneyBillWave,
-    FaUsersCog
+    FaMoneyBillWave 
 } from "react-icons/fa";
 import { BsFileEarmarkBarGraph } from "react-icons/bs";
 
@@ -52,14 +50,14 @@ const navItems = [
         path: "/dashboardhome/kategoripengaluaran",
     },
     {
+        icon: <MdPayment className="w-5 h-5" />,
+        name: "Metode Pembayaran",
+        path: "/dashboardhome/metode-pembayaran",
+    },
+    {
         icon: <MdNotifications className="w-5 h-5" />,
         name: "Notifikasi",
         path: "/dashboardhome/notifikasi",
-    },
-    {
-        icon: <FaUsersCog className="w-5 h-5" />,
-        name: "Kelola Akses Donatur",
-        path: "/dashboardhome/kelola-akses-donatur",
     },
 ];
 

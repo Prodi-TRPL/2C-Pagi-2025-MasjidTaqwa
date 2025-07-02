@@ -11,12 +11,6 @@ class KategoriPengeluaranController extends Controller
     public function index()
     {
         $kategori = KategoriPengeluaran::all();
-        
-        // Check if request is from API
-        if (request()->wantsJson() || request()->is('api/*')) {
-            return response()->json($kategori);
-        }
-        
         return view('kategori_pengeluaran.index', compact('kategori'));
     }
 
@@ -38,19 +32,10 @@ class KategoriPengeluaranController extends Controller
         }
         $newId = 'KT' . str_pad($number, 3, '0', STR_PAD_LEFT);
 
-        $kategori = KategoriPengeluaran::create([
+        KategoriPengeluaran::create([
             'kategori_pengeluaran_id' => $newId,
             'nama_kategori' => $request->nama_kategori
         ]);
-
-        // Check if request is from API
-        if ($request->wantsJson() || $request->is('api/*')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data berhasil ditambahkan',
-                'data' => $kategori
-            ]);
-        }
 
         return redirect('/kategori_pengeluaran')->with('success', 'Data berhasil ditambahkan');
     }
@@ -59,12 +44,6 @@ class KategoriPengeluaranController extends Controller
     public function edit($id)
     {
         $kategori = KategoriPengeluaran::findOrFail($id);
-        
-        // Check if request is from API
-        if (request()->wantsJson() || request()->is('api/*')) {
-            return response()->json($kategori);
-        }
-        
         return view('kategori_pengeluaran.edit', compact('kategori'));
     }
 
@@ -76,15 +55,6 @@ class KategoriPengeluaranController extends Controller
             'nama_kategori' => $request->nama_kategori
         ]);
 
-        // Check if request is from API
-        if ($request->wantsJson() || $request->is('api/*')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data berhasil diperbarui',
-                'data' => $kategori
-            ]);
-        }
-
         return redirect('/kategori_pengeluaran')->with('success', 'Data berhasil diperbarui');
     }
 
@@ -93,14 +63,6 @@ class KategoriPengeluaranController extends Controller
     {
         $kategori = KategoriPengeluaran::findOrFail($id);
         $kategori->delete();
-
-        // Check if request is from API
-        if (request()->wantsJson() || request()->is('api/*')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data berhasil dihapus'
-            ]);
-        }
 
         return redirect('/kategori_pengeluaran')->with('success', 'Data berhasil dihapus');
     }

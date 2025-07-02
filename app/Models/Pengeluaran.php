@@ -10,10 +10,9 @@ class Pengeluaran extends Model
     protected $primaryKey = 'pengeluaran_id';
     public $incrementing = false;
     protected $keyType = 'string';
-    public $timestamps = true;
-    const UPDATED_AT = null;
+    public $timestamps = false;
 
-    protected $fillable = ['proyek_id', 'penginput_id', 'kategori_pengeluaran_id', 'laporan_keuangan_id', 'jumlah', 'nama_pengeluaran', 'keterangan', 'created_at'];
+    protected $fillable = ['proyek_id', 'penginput_id', 'kategori_pengeluaran_id', 'laporan_keuangan_id', 'jumlah', 'tanggal_pengeluaran', 'nama_pengeluaran', 'keterangan'];
 
     public function proyek()
     {

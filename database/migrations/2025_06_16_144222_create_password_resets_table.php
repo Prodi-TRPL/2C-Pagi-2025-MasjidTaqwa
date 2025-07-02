@@ -9,10 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
-        Schema::table('notifikasi', function (Blueprint $table) {
-            $table->string('judul', 255)->nullable()->after('tipe');
+        Schema::create('password_resets', function (Blueprint $table) {
+            $table->string('email')->index();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
         });
     }
 
@@ -21,8 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('notifikasi', function (Blueprint $table) {
-            $table->dropColumn('judul');
-        });
+        Schema::dropIfExists('password_resets');
     }
 };

@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('proyek_pembangunan', function (Blueprint $table) {
-            $table->string('gambar')->nullable()->after('dana_terkumpul')->comment('Path to the project image');
+        Schema::create('metode_pembayaran', function (Blueprint $table) {
+            $table->uuid('metode_pembayaran_id')->primary();
+            $table->string('nama_metode', 50)->nullable();
         });
     }
 
@@ -21,8 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('proyek_pembangunan', function (Blueprint $table) {
-            $table->dropColumn('gambar');
-        });
+        Schema::dropIfExists('metode_pembayaran');
     }
-};
+}; 

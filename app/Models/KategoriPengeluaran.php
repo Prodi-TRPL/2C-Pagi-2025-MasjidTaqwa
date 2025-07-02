@@ -12,7 +12,7 @@ class KategoriPengeluaran extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['kategori_pengeluaran_id', 'nama_kategori'];
+    protected $fillable = ['nama_kategori'];
 
     public function pengeluaran()
     {

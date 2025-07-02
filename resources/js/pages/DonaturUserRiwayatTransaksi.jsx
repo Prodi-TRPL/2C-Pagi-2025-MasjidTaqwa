@@ -57,9 +57,6 @@ import NavbarBaru from '../components/LandingPage/NavbarBaru';
 import { SimpleFooter } from '../components/LandingPage/SimpleFooter';
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
-import { getUserPermissions, hasPermission, getPermissionDeniedMessage } from "../utils/permissions";
-import AccessDeniedModal from "../components/ui/AccessDeniedModal";
 
 // Define status configurations
 const statusConfig = {
@@ -86,6 +83,8 @@ const statusConfig = {
   },
 };
 
+const statusOptions = ['Semua', 'Menunggu', 'Diterima', 'Kadaluarsa'];
+
 // Table skeleton loader
 const TableSkeleton = () => (
   <Paper sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
@@ -97,7 +96,7 @@ const TableSkeleton = () => (
             <TableCell>Jumlah</TableCell>
             <TableCell>Metode Pembayaran</TableCell>
             <TableCell>Status</TableCell>
-            <TableCell>ID Transaksi</TableCell>
+            <TableCell>Periode</TableCell>
             <TableCell align="center">Aksi</TableCell>
           </TableRow>
         </TableHead>
@@ -108,7 +107,7 @@ const TableSkeleton = () => (
               <TableCell><Skeleton width={100} /></TableCell>
               <TableCell><Skeleton width={150} /></TableCell>
               <TableCell><Skeleton width={80} /></TableCell>
-              <TableCell><Skeleton width={140} /></TableCell>
+              <TableCell><Skeleton width={100} /></TableCell>
               <TableCell align="center"><Skeleton width={90} height={36} sx={{ mx: 'auto', borderRadius: 1 }} /></TableCell>
             </TableRow>
           ))}
@@ -121,8 +120,8 @@ const TableSkeleton = () => (
   </Paper>
 );
 
-// Updated EmptyState component - removed statusFilter parameter since we only show accepted donations
-const EmptyState = () => (
+// Empty state component
+const EmptyState = ({ statusFilter, onReset }) => (
   <Box 
     sx={{ 
       display: 'flex', 
@@ -143,24 +142,33 @@ const EmptyState = () => (
       />
     </Zoom>
     <Typography variant="h6" color="text.secondary" gutterBottom>
-      Belum ada riwayat donasi yang diterima
+      {statusFilter !== 'Semua' 
+        ? `Belum ada donasi dengan status "${statusFilter}"` 
+        : "Belum ada riwayat donasi"}
     </Typography>
     <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 400 }}>
-      Riwayat donasi yang sudah diterima akan muncul di sini setelah Anda melakukan donasi.
+      {statusFilter !== 'Semua' 
+        ? "Coba pilih filter lain atau tampilkan semua donasi" 
+        : "Riwayat donasi Anda akan muncul di sini setelah Anda melakukan donasi"}
     </Typography>
-    <Button 
-      variant="contained" 
-      component="a"
-      href="/donasi"
-      startIcon={<AttachMoneyIcon />}
-      sx={{
-        borderRadius: 2,
-        bgcolor: '#59B997',
-        '&:hover': { bgcolor: '#4a9d80' },
-      }}
-    >
-      Donasi Sekarang
-    </Button>
+    {statusFilter !== 'Semua' && (
+      <Button 
+        startIcon={<RefreshIcon />}
+        variant="outlined" 
+        onClick={onReset}
+        sx={{
+          borderRadius: 2,
+          borderColor: '#59B997',
+          color: '#59B997',
+          '&:hover': {
+            borderColor: '#59B997',
+            backgroundColor: 'rgba(89, 185, 151, 0.1)',
+          }
+        }}
+      >
+        Tampilkan Semua
+      </Button>
+    )}
   </Box>
 );
 
@@ -169,12 +177,6 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
   <Grid container spacing={2}>
     {donations.map((donation, index) => {
       const status = statusConfig[donation.status] || statusConfig.Menunggu;
-      
-      // Ensure jumlah is a number
-      const numericAmount = typeof donation.jumlah === 'number' 
-        ? donation.jumlah 
-        : parseInt(String(donation.jumlah).replace(/[^\d]/g, ''), 10) || 0;
-      
       return (
         <Grid item xs={12} key={donation.donasi_id || index}>
           <Zoom in={true} style={{ transitionDelay: `${index * 100}ms` }}>
@@ -195,7 +197,7 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <CalendarTodayIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      {format(new Date(donation.tanggal_donasi || donation.created_at), "dd MMMM yyyy", { locale: id })}
+                      {format(new Date(donation.tanggal_donasi), "dd MMMM yyyy", { locale: id })}
                     </Typography>
                   </Box>
                   <Chip 
@@ -213,7 +215,7 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
                 
                 <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                   <AttachMoneyIcon sx={{ mr: 1, color: '#59B997' }} />
-                  Rp {numericAmount.toLocaleString('id-ID')}
+                  Rp {donation.jumlah.toLocaleString('id-ID')}
                 </Typography>
                 
                 <Divider sx={{ my: 1 }} />
@@ -221,27 +223,18 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <PaymentIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
                   <Typography variant="body2">
-                    {donation.payment_method_name || 
-                     formatPaymentMethod(donation.payment_type) || 
-                     'Tidak diketahui'}
+                    {donation.metode_pembayaran?.nama_metode || 'Tidak diketahui'}
                   </Typography>
                 </Box>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <ReceiptIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
-                  <Typography 
-                    variant="body2" 
-                    sx={{
-                      fontFamily: 'monospace',
-                      fontSize: '0.75rem',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    ID: {donation.order_id || donation.donasi_id || '-'}
-                  </Typography>
-                </Box>
+                {donation.laporan_keuangan?.periode && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <EventIcon sx={{ fontSize: 20, color: 'text.secondary', mr: 1 }} />
+                    <Typography variant="body2">
+                      {format(new Date(donation.laporan_keuangan.periode), "MMMM yyyy", { locale: id })}
+                    </Typography>
+                  </Box>
+                )}
                 
                 <Button 
                   variant="outlined" 
@@ -276,6 +269,7 @@ function DonaturUserRiwayatTransaksi() {
   
   const [donations, setDonations] = useState([]);
   const [filteredDonations, setFilteredDonations] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('Semua');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -284,175 +278,26 @@ function DonaturUserRiwayatTransaksi() {
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [permissions, setPermissions] = useState(null);
-  const [permissionChecked, setPermissionChecked] = useState(false);
-  const [accessDeniedModal, setAccessDeniedModal] = useState({
-    show: false,
-    title: "",
-    message: ""
-  });
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  // Effect to check permissions
-  useEffect(() => {
-    const checkPermission = async () => {
-      try {
-        const userPermissions = await getUserPermissions();
-        setPermissions(userPermissions);
-        
-        // Check if user has the required permission
-        if (!hasPermission(userPermissions, 'canViewHistory')) {
-          // Show access denied modal
-          const { title, message } = getPermissionDeniedMessage('canViewHistory');
-          setAccessDeniedModal({
-            show: true,
-            title,
-            message
-          });
-        }
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-      } finally {
-        setPermissionChecked(true);
-      }
-    };
-    
-    checkPermission();
-  }, []);
-
-  // Don't render the main component content if user doesn't have permission
-  if (permissionChecked && permissions) {
-    // Helper function to convert various truthy values to boolean
-    const toBool = (value) => {
-      if (typeof value === 'boolean') return value;
-      if (typeof value === 'number') return value === 1;
-      if (typeof value === 'string') {
-        const lower = value.toLowerCase();
-        return lower === '1' || lower === 'true' || lower === 'yes';
-      }
-      return Boolean(value);
-    };
-    
-    const hasViewHistoryPermission = toBool(permissions.canViewHistory);
-    
-    if (!hasViewHistoryPermission) {
-      return (
-        <div className="pt-16 relative">
-          {/* Navbar */}
-          <div className="relative z-20">
-            <NavbarBaru />
-          </div>
-          
-          <AccessDeniedModal
-            isOpen={accessDeniedModal.show}
-            onClose={() => {
-              setAccessDeniedModal({ ...accessDeniedModal, show: false });
-              navigate('/');
-            }}
-            title={accessDeniedModal.title}
-            message={accessDeniedModal.message}
-          />
-          
-          <Navigate to="/" replace state={{ from: location }} />
-        </div>
-      );
-    }
-  }
-  
   useEffect(() => {
     const fetchDonations = async () => {
       setLoading(true);
       setError(null);
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          setError('Sesi login tidak ditemukan. Silakan login kembali.');
-          setLoading(false);
-          return;
-        }
-
         const response = await fetch('/api/donasi/user', {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
-        
         if (!response.ok) {
-          if (response.status === 401) {
-            setError('Sesi login telah berakhir. Silakan login kembali.');
-          } else {
-            throw new Error('Gagal mengambil data donasi');
-          }
-          return;
+          throw new Error('Gagal mengambil data donasi');
         }
-        
         const data = await response.json();
-        
-        // Check if data has the correct structure
-        const donationsArray = data.donations || data;
-        
-        if (Array.isArray(donationsArray)) {
-          // Transform donation data and filter to show ONLY "Diterima" status
-          const processedDonations = donationsArray
-            .filter(donation => donation.status === 'Diterima')
-            .map(donation => {
-              // Debug the raw amount value
-              console.log(`Raw donation amount for ${donation.donasi_id || 'unknown'}: ${donation.jumlah}, type: ${typeof donation.jumlah}`);
-              
-              // Process jumlah correctly based on data type
-              let amount = donation.jumlah;
-              
-              // Use toString() to ensure we're working with a string, then remove non-digits
-              if (amount !== undefined && amount !== null) {
-                // Convert to string first for consistent handling
-                const amountStr = String(amount);
-                
-                // Check if the string already contains digits only
-                const isCleanDigits = /^\d+$/.test(amountStr);
-                
-                if (isCleanDigits) {
-                  // If it's already clean digits, parse it directly
-                  amount = parseInt(amountStr, 10);
-                } else {
-                  // Otherwise, remove non-digits and then parse
-                  amount = parseInt(amountStr.replace(/[^\d]/g, ''), 10);
-                }
-                
-                console.log(`Processed amount (after parsing): ${amount}`);
-              } else {
-                // Default to 0 if undefined or null
-                amount = 0;
-              }
-              
-              // Critical debugging
-              console.log(`Final donation amount for ${donation.donasi_id || 'unknown'}: Original=${donation.jumlah}, Processed=${amount}`);
-              
-              return {
-                ...donation,
-                // If tanggal_donasi is missing, use created_at
-                tanggal_donasi: donation.tanggal_donasi || donation.created_at,
-                // Store the processed amount without any additional manipulation
-                jumlah: amount,
-                // Preserve raw amount for debugging
-                raw_jumlah: donation.jumlah,
-                // Handle payment method display
-                payment_method_name: donation.payment_method_name || 
-                  (donation.payment_type ? formatPaymentMethod(donation.payment_type) : 'Midtrans')
-              };
-            });
-          
-          console.log('Processed donations:', processedDonations);
-          setDonations(processedDonations);
-          setFilteredDonations(processedDonations);
-        } else {
-          console.error('Unexpected data format:', data);
-          setError('Format data tidak valid');
-        }
+        setDonations(data);
+        setFilteredDonations(data);
       } catch (err) {
-        console.error('Error fetching donations:', err);
         setError(err.message);
       } finally {
         // Add slight delay to show loading state
@@ -461,13 +306,14 @@ function DonaturUserRiwayatTransaksi() {
         }, 600);
       }
     };
-    
     fetchDonations();
   }, [refreshKey]);
 
   useEffect(() => {
-    // Only sort by date - no filtering since we only display "Diterima" status
     let filtered = [...donations];
+    if (statusFilter !== 'Semua') {
+      filtered = filtered.filter((d) => d.status === statusFilter);
+    }
     filtered.sort((a, b) => {
       const dateA = new Date(a.tanggal_donasi);
       const dateB = new Date(b.tanggal_donasi);
@@ -475,7 +321,7 @@ function DonaturUserRiwayatTransaksi() {
     });
     setFilteredDonations(filtered);
     setPage(0);
-  }, [sortOrder, donations]);
+  }, [statusFilter, sortOrder, donations]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -496,6 +342,10 @@ function DonaturUserRiwayatTransaksi() {
     setOpenDialog(false);
   };
 
+  const handleResetFilter = () => {
+    setStatusFilter('Semua');
+  };
+
   const handleRefresh = () => {
     setRefreshKey(prevKey => prevKey + 1);
   };
@@ -509,78 +359,32 @@ function DonaturUserRiwayatTransaksi() {
   };
 
   const formatCurrency = (amount) => {
-    // Debugging to track value before formatting
-    console.log(`Formatting currency: ${amount}, type: ${typeof amount}`);
-    
-    // Handle different types safely
-    let numericAmount;
-    
-    // First, ensure we're working with a number
-    if (typeof amount === 'string') {
-      // If string contains formatting characters, remove them
-      const cleanAmount = amount.replace(/[^\d.-]/g, '');
-      numericAmount = parseFloat(cleanAmount);
-    } else {
-      numericAmount = Number(amount);
-    }
-    
-    // Check for valid number
-    if (isNaN(numericAmount)) {
-      console.error('Invalid amount value:', amount);
-      return 'Rp 0';
-    }
-    
-    console.log(`After conversion to number: ${numericAmount}`);
-    
-    try {
-      return `Rp ${numericAmount.toLocaleString('id-ID')}`;
-    } catch (error) {
-      console.error('Error formatting currency:', error);
-      return `Rp ${amount}`;
-    }
-  };
-
-  // Function to format payment method names
-  const formatPaymentMethod = (paymentType) => {
-    if (!paymentType) return 'Tidak diketahui';
-    
-    const methodMap = {
-      'bank_transfer': 'Transfer Bank',
-      'echannel': 'Virtual Account',
-      'gopay': 'GoPay',
-      'shopeepay': 'ShopeePay',
-      'credit_card': 'Kartu Kredit',
-      'cstore': 'Convenience Store',
-      'midtrans': 'Midtrans',
-    };
-    
-    return methodMap[paymentType.toLowerCase()] || 
-      paymentType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return `Rp ${amount.toLocaleString('id-ID')}`;
   };
 
   return (
-    <div className="pt-16 relative">
-      {/* Navbar */}
-      <div className="relative z-20">
-        <NavbarBaru />
-      </div>
-      
-      {/* Main Content */}
+    <Box 
+      sx={{ 
+        minHeight: "100vh", 
+        display: "flex", 
+        flexDirection: "column",
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
+        backgroundImage: 'url("data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="%2359B997" fill-opacity="0.05" fill-rule="evenodd"/%3E%3C/svg%3E")',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      <NavbarBaru />
       <Container 
-        component="main" 
+        maxWidth="lg" 
         sx={{ 
           flexGrow: 1, 
-          mt: 5,
+          mt: 12, 
+          mb: 4, 
           py: 4, 
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(10px)',
           borderRadius: 3,
           boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          overflow: 'hidden',
-          mb: 4,
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -593,25 +397,23 @@ function DonaturUserRiwayatTransaksi() {
                 color: '#59B997',
               }}
             >
-              Riwayat Transaksi
+              Riwayat Transaksi Donasi
             </Typography>
           </Box>
           
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Refresh Data">
-              <IconButton 
-                onClick={handleRefresh} 
-                sx={{ 
-                  color: '#59B997',
-                  '&:hover': {
-                    backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                  } 
-                }}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
+          <Tooltip title="Refresh Data">
+            <IconButton 
+              onClick={handleRefresh} 
+              sx={{ 
+                color: '#59B997',
+                '&:hover': {
+                  backgroundColor: 'rgba(89, 185, 151, 0.1)',
+                } 
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         {error && (
@@ -632,7 +434,6 @@ function DonaturUserRiwayatTransaksi() {
           </Alert>
         )}
 
-        {/* Sorting Controls */}
         <Paper 
           elevation={0} 
           sx={{ 
@@ -646,12 +447,48 @@ function DonaturUserRiwayatTransaksi() {
           <Box 
             sx={{ 
               display: 'flex', 
-              gap: 3, 
+              gap: 2, 
               flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: isMobile ? 'center' : 'flex-start',
             }}
           >
+            <TextField
+              select
+              label="Filter Status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              size="small"
+              sx={{
+                minWidth: 180,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '&:hover fieldset': {
+                    borderColor: '#59B997',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#59B997',
+                  },
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#59B997',
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FilterListIcon sx={{ color: '#59B997' }} />
+                  </InputAdornment>
+                ),
+              }}
+            >
+              {statusOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
+
             <TextField
               select
               label="Urutkan"
@@ -691,211 +528,250 @@ function DonaturUserRiwayatTransaksi() {
           </Box>
         </Paper>
 
-        {/* Donations Table or Empty State */}
         {loading ? (
           <TableSkeleton />
         ) : filteredDonations.length === 0 ? (
-          <EmptyState />
+          <EmptyState statusFilter={statusFilter} onReset={handleResetFilter} />
         ) : isMobile ? (
           <MobileCardView 
-            donations={filteredDonations.slice(
-              page * rowsPerPage, 
-              page * rowsPerPage + rowsPerPage
-            )} 
+            donations={filteredDonations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)} 
             handleOpenDialog={handleOpenDialog} 
           />
         ) : (
-          <Paper sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: '#59B997', '& th': { color: 'white' } }}>
-                    <TableCell>Tanggal Donasi</TableCell>
-                    <TableCell>Jumlah</TableCell>
-                    <TableCell>Metode Pembayaran</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>ID Transaksi</TableCell>
-                    <TableCell align="center">Aksi</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredDonations
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((donation) => (
-                      <TableRow key={donation.donasi_id}>
-                        <TableCell>{formatDate(donation.tanggal_donasi)}</TableCell>
-                        <TableCell>{formatCurrency(donation.jumlah)}</TableCell>
-                        <TableCell>{donation.payment_method_name}</TableCell>
-                        <TableCell>
-                          <Chip 
-                            label="Diterima"
-                            size="small"
+          <Fade in={true}>
+            <Paper sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <TableContainer>
+                <Table sx={{ minWidth: 650 }}>
+                  <TableHead>
+                    <TableRow sx={{ 
+                      backgroundColor: '#59B997', 
+                      '& th': { 
+                        color: 'white',
+                        fontWeight: 'bold',
+                      }
+                    }}>
+                      <TableCell>Tanggal Donasi</TableCell>
+                      <TableCell>Jumlah</TableCell>
+                      <TableCell>Metode Pembayaran</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Periode</TableCell>
+                      <TableCell align="center">Aksi</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredDonations
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((donation, index) => {
+                        const status = statusConfig[donation.status] || statusConfig.Menunggu;
+                        return (
+                          <TableRow 
+                            key={donation.donasi_id || index}
                             sx={{ 
-                              backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                              color: '#59B997',
-                              fontWeight: 500,
-                            }}
-                            icon={<CheckCircleIcon style={{ color: '#59B997' }} />}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography 
-                            variant="body2" 
-                            sx={{
-                              fontFamily: 'monospace',
-                              fontSize: '0.75rem',
-                            }}
-                          >
-                            {donation.order_id || donation.donasi_id || '-'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => handleOpenDialog(donation)}
-                            sx={{
-                              color: '#59B997',
-                              borderColor: '#59B997',
-                              borderRadius: 2,
-                              '&:hover': {
-                                backgroundColor: 'rgba(89, 185, 151, 0.1)',
-                                borderColor: '#59B997',
+                              '&:nth-of-type(even)': { 
+                                backgroundColor: 'rgba(0, 0, 0, 0.02)'
                               },
+                              '&:hover': {
+                                backgroundColor: 'rgba(89, 185, 151, 0.05)',
+                              },
+                              transition: 'background-color 0.3s',
                             }}
                           >
-                            Detail
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={filteredDonations.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              labelRowsPerPage="Baris per halaman:"
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} dari ${count}`}
-            />
-          </Paper>
-        )}
-      </Container>
-      
-      {/* Footer */}
-      <div className="relative z-10">
-        <SimpleFooter />
-      </div>
-      
-      {/* Detail Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-          }
-        }}
-      >
-        {selectedDonation && (
-          <>
-            <DialogTitle sx={{ 
-              borderBottom: '1px solid rgba(0,0,0,0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
-              <ReceiptIcon sx={{ color: '#59B997', mr: 1 }} />
-              Detail Transaksi Donasi
-              <IconButton
-                aria-label="close"
-                onClick={handleCloseDialog}
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <CalendarTodayIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                                {formatDate(donation.tanggal_donasi)}
+                              </Box>
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'medium' }}>
+                              {formatCurrency(donation.jumlah)}
+                            </TableCell>
+                            <TableCell>
+                              {donation.metode_pembayaran?.nama_metode || 'Tidak diketahui'}
+                            </TableCell>
+                            <TableCell>
+                              <Chip 
+                                icon={status.icon} 
+                                label={status.label}
+                                size="small"
+                                sx={{ 
+                                  backgroundColor: status.bgColor,
+                                  color: status.color,
+                                  '& .MuiChip-icon': { color: status.color },
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {donation.laporan_keuangan?.periode
+                                ? formatDate(donation.laporan_keuangan.periode, "MMMM yyyy")
+                                : '-'}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Button 
+                                variant="outlined" 
+                                size="small" 
+                                onClick={() => handleOpenDialog(donation)}
+                                sx={{
+                                  color: '#59B997',
+                                  borderColor: '#59B997',
+                                  borderRadius: 2,
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(89, 185, 151, 0.1)',
+                                    borderColor: '#59B997',
+                                  },
+                                }}
+                              >
+                                Lihat Detail
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                component="div"
+                count={filteredDonations.length}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[5, 10, 25]}
+                labelRowsPerPage="Baris per halaman:"
+                labelDisplayedRows={({ from, to, count }) => `${from}-${to} dari ${count}`}
                 sx={{
-                  position: 'absolute',
-                  right: 8,
-                  top: 8,
-                  color: (theme) => theme.palette.grey[500],
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent sx={{ pt: 2, pb: 1 }}>
-              <List>
-                <ListItem>
-                  <ListItemIcon>
-                    <EventIcon sx={{ color: '#59B997' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Tanggal Donasi" 
-                    secondary={formatDate(selectedDonation.tanggal_donasi, "dd MMMM yyyy, HH:mm")} 
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <AttachMoneyIcon sx={{ color: '#59B997' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Jumlah Donasi" 
-                    secondary={formatCurrency(selectedDonation.jumlah)} 
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <PaymentIcon sx={{ color: '#59B997' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Metode Pembayaran" 
-                    secondary={selectedDonation.payment_method_name} 
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <CheckCircleIcon sx={{ color: '#59B997' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Status" 
-                    secondary="Diterima" 
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <ReceiptIcon sx={{ color: '#59B997' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="ID Transaksi" 
-                    secondary={selectedDonation.order_id || selectedDonation.donasi_id || '-'} 
-                  />
-                </ListItem>
-              </List>
-            </DialogContent>
-            <DialogActions sx={{ px: 3, py: 2 }}>
-              <Button 
-                onClick={handleCloseDialog}
-                variant="contained"
-                sx={{
-                  bgcolor: '#59B997',
-                  '&:hover': {
-                    bgcolor: '#47a07f',
+                  borderTop: '1px solid rgba(224, 224, 224, 1)',
+                  '& .MuiTablePagination-selectIcon': {
+                    color: '#59B997',
                   },
-                  borderRadius: 2,
                 }}
-              >
-                Tutup
-              </Button>
-            </DialogActions>
-          </>
+              />
+            </Paper>
+          </Fade>
         )}
-      </Dialog>
-    </div>
+
+        <Dialog 
+          open={openDialog} 
+          onClose={handleCloseDialog} 
+          maxWidth="sm" 
+          fullWidth
+          TransitionComponent={Zoom}
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+            }
+          }}
+        >
+          {selectedDonation && (
+            <>
+              <DialogTitle sx={{ 
+                backgroundColor: '#59B997',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}>
+                <ReceiptIcon />
+                Detail Transaksi Donasi
+                <IconButton
+                  aria-label="close"
+                  onClick={handleCloseDialog}
+                  sx={{
+                    position: 'absolute',
+                    right: 8,
+                    top: 8,
+                    color: 'white',
+                  }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent dividers>
+                <Box sx={{ mb: 2, textAlign: 'center' }}>
+                  <Typography variant="h5" sx={{ mb: 1, color: '#59B997', fontWeight: 'bold' }}>
+                    {formatCurrency(selectedDonation.jumlah)}
+                  </Typography>
+                  
+                  <Chip 
+                    icon={statusConfig[selectedDonation.status]?.icon} 
+                    label={selectedDonation.status}
+                    sx={{ 
+                      backgroundColor: statusConfig[selectedDonation.status]?.bgColor,
+                      color: statusConfig[selectedDonation.status]?.color,
+                      '& .MuiChip-icon': { color: statusConfig[selectedDonation.status]?.color },
+                      fontWeight: 'medium',
+                    }}
+                  />
+                </Box>
+                
+                <Divider sx={{ my: 2 }} />
+                
+                <List disablePadding>
+                  <ListItem sx={{ px: 0, py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <CalendarTodayIcon sx={{ color: '#59B997' }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary="Tanggal Donasi" 
+                      secondary={format(new Date(selectedDonation.tanggal_donasi), "dd MMMM yyyy, HH:mm", { locale: id })} 
+                    />
+                  </ListItem>
+                  
+                  <ListItem sx={{ px: 0, py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <PaymentIcon sx={{ color: '#59B997' }} />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary="Metode Pembayaran" 
+                      secondary={selectedDonation.metode_pembayaran?.nama_metode || 'Tidak diketahui'} 
+                    />
+                  </ListItem>
+                  
+                  {selectedDonation.laporan_keuangan?.periode && (
+                    <ListItem sx={{ px: 0, py: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <EventIcon sx={{ color: '#59B997' }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Periode Laporan" 
+                        secondary={format(new Date(selectedDonation.laporan_keuangan.periode), "MMMM yyyy", { locale: id })} 
+                      />
+                    </ListItem>
+                  )}
+                  
+                  {selectedDonation.keterangan && (
+                    <ListItem sx={{ px: 0, py: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <InfoIcon sx={{ color: '#59B997' }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Keterangan" 
+                        secondary={selectedDonation.keterangan} 
+                      />
+                    </ListItem>
+                  )}
+                </List>
+              </DialogContent>
+              <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button 
+                  onClick={handleCloseDialog} 
+                  variant="contained"
+                  sx={{ 
+                    bgcolor: '#59B997',
+                    '&:hover': { bgcolor: '#4a9d80' },
+                    borderRadius: 2,
+                  }}
+                >
+                  Tutup
+                </Button>
+              </DialogActions>
+            </>
+          )}
+        </Dialog>
+      </Container>
+      <SimpleFooter />
+    </Box>
   );
 }
 

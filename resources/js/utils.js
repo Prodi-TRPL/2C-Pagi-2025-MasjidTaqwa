@@ -37,11 +37,6 @@ export const Menus = [
                 link: "/rekapandonatur",
                 icon: Users,
             },
-            {
-                name: "Distribusi Dana dan Proyek",
-                link: "/distribusi-dana-proyek",
-                icon: BarChart2,
-            },
         ],
     },
     {

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import ForcedLogoutAlert from '../components/ui/ForcedLogoutAlert';
 
 const LoginBaru = () => {
   const [email, setEmail] = useState('');
@@ -125,10 +124,6 @@ const LoginBaru = () => {
       >
         <div className="p-6 max-w-md mx-auto">
           <h1 className="text-2xl font-semibold mb-4">Masuk</h1>
-          
-          {/* Forced Logout Alert */}
-          <ForcedLogoutAlert />
-          
           <form onSubmit={handleSubmit}>
             {/* Email Input */}
             <div className="mb-4">

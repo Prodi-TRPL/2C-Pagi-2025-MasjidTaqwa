@@ -2,115 +2,113 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Pengguna;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Database\QueryException;
-use PDOException;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Auth\Events\PasswordReset;
 
 class AuthController extends Controller
 {
     /**
-     * Handle user login.
+     * Register a new user (donatur).
      */
-    public function login(Request $request)
+    public function register(Request $request)
     {
+        $request->validate([
+            'username' => 'required|email|unique:pengguna,email',
+            'password' => 'required|min:6',
+        ]);
+
         try {
-            $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
+            $user = Pengguna::create([
+                'pengguna_id' => Str::uuid(),
+                'nama' => 'Donatur',
+                'email' => $request->username,
+                'password' => Hash::make($request->password),
+                'role' => 'donatur',
+                'nomor_hp' => null,
+                'created_at' => now(),
             ]);
 
-            try {
-                // Attempt to find the user by email
-                $user = Pengguna::where('email', $request->email)->first();
-                
-                if (!$user || !Hash::check($request->password, $user->password)) {
-                    return response()->json(['message' => 'Email atau password salah'], 401);
-                }
-
-                if ($user->role !== 'admin' && $user->role !== 'donatur') {
-                    return response()->json(['message' => 'Anda tidak memiliki akses sebagai admin'], 403);
-                }
-
-                // Create token (assuming Laravel Sanctum or Passport is used)
-                $token = $user->createToken('auth_token')->plainTextToken;
-
-                return response()->json([
-                    'token' => $token,
-                    'user' => $user,
-                ]);
-                
-            } catch (QueryException $e) {
-                // Log the actual database error for administrators
-                Log::error('Database error during login: ' . $e->getMessage(), [
-                    'email' => $request->email,
-                    'error_code' => $e->getCode()
-                ]);
-                
-                // Check for specific MySQL error codes
-                $errorCode = $e->getCode();
-                $errorMessage = $e->getMessage();
-                
-                // Common MySQL error codes for permission issues
-                if (in_array($errorCode, ['1044', '1142', '1045']) || 
-                    str_contains($errorMessage, 'SQLSTATE[HY000]') || 
-                    str_contains($errorMessage, 'Access denied for user')) {
-                    return response()->json([
-                        'message' => 'Akun Anda tidak dapat diakses saat ini. Silakan hubungi administrator.'
-                    ], 403);
-                }
-                
-                // Generic database error
-                return response()->json([
-                    'message' => 'Terjadi masalah pada sistem. Silakan coba beberapa saat lagi.'
-                ], 500);
-                
-            } catch (PDOException $e) {
-                // Log the PDO error
-                Log::error('PDO error during login: ' . $e->getMessage(), [
-                    'email' => $request->email,
-                    'error_code' => $e->getCode()
-                ]);
-                
-                // PDOException error codes for access issues
-                if (str_contains($e->getMessage(), 'Access denied for user') || 
-                    str_contains($e->getMessage(), 'SQLSTATE[HY000]')) {
-                    return response()->json([
-                        'message' => 'Akun Anda tidak dapat diakses saat ini. Silakan hubungi administrator.'
-                    ], 403);
-                }
-                
-                return response()->json([
-                    'message' => 'Terjadi masalah pada sistem. Silakan coba beberapa saat lagi.'
-                ], 500);
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Unexpected error during login: ' . $e->getMessage(), [
-                'email' => $request->email ?? 'not provided',
-                'exception_class' => get_class($e)
-            ]);
-            
             return response()->json([
-                'message' => 'Terjadi kesalahan yang tidak diharapkan. Silakan coba lagi nanti.'
+                'message' => 'Pendaftaran berhasil!',
+                'user' => $user,
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat mendaftar.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Handle user logout.
+     * Log in user (admin atau donatur).
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $user = Pengguna::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Email atau password salah'], 401);
+        }
+
+        if (!in_array($user->role, ['admin', 'donatur'])) {
+            return response()->json(['message' => 'Anda tidak memiliki akses'], 403);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user' => $user,
+        ]);
+    }
+
+    /**
+     * Logout user.
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        $request->user()->tokens()->delete();
 
-        $request->session()->invalidate();
+        return response()->json(['message' => 'Berhasil logout']);
+    }
 
-        $request->session()->regenerateToken();
-
-        return response()->json(['message' => 'Logged out successfully']);
+    /**
+     * Kirim link reset password ke email pengguna.
+     */
+    public function resetPasswordLangsung(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+    
+        $user = Pengguna::where('email', $request->email)->first();
+    
+        if (!$user) {
+            return response()->json(['message' => 'Email tidak ditemukan.'], 404);
+        }
+    
+        // Ganti password ke default baru
+        $newPassword = '12345678'; // kamu bisa acak jika mau
+        $user->password = Hash::make($newPassword);
+        $user->save();
+    
+        return response()->json([
+            'message' => 'Password berhasil direset.',
+            'new_password' => $newPassword,
+        ]);
     }
 }

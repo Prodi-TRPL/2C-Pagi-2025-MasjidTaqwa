@@ -4,15 +4,41 @@ import { Link } from 'react-router-dom';
 const LupaPassword = () => {
   const [email, setEmail] = useState('');
   const [fadeIn, setFadeIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle forgot password logic here, e.g., send reset link
-    console.log({ email });
+    setLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/reset-password-langsung', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(`Password berhasil direset. Password baru Anda: ${data.new_password}`);
+      } else {
+        setError(data.message || 'Gagal mereset sandi.');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan jaringan. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -30,27 +56,22 @@ const LupaPassword = () => {
           style={{ height: '100vh' }}
         />
       </div>
-      {/* Right: Form Layout adjusted */}
+
+      {/* Right: Form */}
       <div className="w-full lg:w-1/2 p-6 sm:p-8 md:p-12 bg-gray-100 flex flex-col items-center justify-center relative">
-        {/* Back button top right */}
+        {/* Back button */}
         <a
           href="/"
           className="absolute top-4 right-4 text-blue-500 hover:text-blue-700 flex items-center space-x-1"
-          aria-label="Back to homepage"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
           <span>Kembali</span>
         </a>
+
         <h1 className="text-2xl font-semibold mb-6 text-center">Lupa Kata Sandi</h1>
+
         <form onSubmit={handleSubmit} className="w-full max-w-md">
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-600 mb-2">
@@ -59,29 +80,35 @@ const LupaPassword = () => {
             <input
               type="email"
               id="email"
-              name="email"
               className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:border-blue-500"
-              autoComplete="off"
               value={email}
               onChange={handleEmailChange}
               required
+              autoComplete="off"
             />
           </div>
+
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4"
+            disabled={loading}
+            className={`w-full ${loading ? 'bg-blue-300' : 'bg-blue-500 hover:bg-blue-600'} text-white font-semibold rounded-md py-2 px-4`}
           >
-            Reset Kata Sandi
+            {loading ? 'Memproses...' : 'Reset Kata Sandi'}
           </button>
         </form>
+
+        {/* Success or Error Message */}
+        {message && <p className="mt-4 text-green-600 text-center">{message}</p>}
+        {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
+
         <div className="mt-6 text-center w-full max-w-md">
           <Link to="/loginbaru" className="text-blue-500 hover:underline">
             Kembali ke Masuk
           </Link>
         </div>
-        {/* Footer */}
+
         <div className="mt-6 text-gray-600 text-center">
-            <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
+          <p>&copy; 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
         </div>
       </div>
     </div>
