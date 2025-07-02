@@ -3,8 +3,9 @@ import axios from 'axios';
 // Store the initial permissions when the user logs in
 let initialPermissions = null;
 let consecutiveErrors = 0;
-const MAX_CONSECUTIVE_ERRORS = 2; // After this many consecutive errors, consider it a permission issue
+const MAX_CONSECUTIVE_ERRORS = 3; // Increased tolerance for network issues
 let intervalId = null;
+let isPaused = false; // Track if the checker is paused
 
 // Compare current permissions with initial permissions to detect changes
 export const havePermissionsChanged = (currentPermissions) => {
@@ -21,20 +22,31 @@ export const havePermissionsChanged = (currentPermissions) => {
   const changes = {};
   let changed = false;
   
-  // Check each permission
-  if (initialPermissions.canDonate && !currentPermissions.canDonate) {
+  // Only consider permission revoked (false→true), not granted (true→false)
+  // This prevents false alerts when permissions are actually being granted
+  if (initialPermissions.canDonate === true && currentPermissions.canDonate === false) {
     changes.canDonate = true;
     changed = true;
   }
   
-  if (initialPermissions.canViewHistory && !currentPermissions.canViewHistory) {
+  if (initialPermissions.canViewHistory === true && currentPermissions.canViewHistory === false) {
     changes.canViewHistory = true;
     changed = true;
   }
   
-  if (initialPermissions.canViewNotification && !currentPermissions.canViewNotification) {
+  if (initialPermissions.canViewNotification === true && currentPermissions.canViewNotification === false) {
     changes.canViewNotification = true;
     changed = true;
+  }
+  
+  // If permissions are being granted (not revoked), update the initial permissions
+  if (
+    (initialPermissions.canDonate === false && currentPermissions.canDonate === true) ||
+    (initialPermissions.canViewHistory === false && currentPermissions.canViewHistory === true) ||
+    (initialPermissions.canViewNotification === false && currentPermissions.canViewNotification === true)
+  ) {
+    // Update the base permissions to prevent future false positives
+    initialPermissions = { ...currentPermissions };
   }
   
   return {
@@ -44,9 +56,15 @@ export const havePermissionsChanged = (currentPermissions) => {
 };
 
 // Set up the permission checker to run at regular intervals
-export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 10000) => {
+export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 30000) => { // Reduced frequency
   // Function to check permissions
   const checkPermissions = async () => {
+    // Skip check if paused
+    if (isPaused) {
+      console.log('Permission checker is paused, skipping check');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -58,7 +76,9 @@ export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 
       const response = await axios.get('/api/user/permissions', {
         headers: {
           Authorization: `Bearer ${token}`
-        }
+        },
+        // Add cache buster to prevent browser caching
+        params: { _t: Date.now() }
       });
       
       // Reset consecutive errors counter on successful request
@@ -74,18 +94,54 @@ export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 
       if (changed) {
         console.log('Permissions have changed:', changes);
         
-        // Call the callback if provided
-        if (typeof onPermissionRevoked === 'function') {
-          handlePermissionRevoked(changes, onPermissionRevoked);
-        } else {
-          // Default behavior: store revocation info and force logout
-          handlePermissionRevoked(changes);
-        }
-        
-        // Stop checking after permissions have changed
-        stop();
+        // Double-check to prevent false positives - wait and check again
+        setTimeout(async () => {
+          try {
+            // Make a second API request to confirm the change
+            const confirmResponse = await axios.get('/api/user/permissions', {
+              headers: {
+                Authorization: `Bearer ${token}`
+              },
+              params: { _t: Date.now() } // Cache buster
+            });
+            
+            const confirmedPermissions = confirmResponse.data;
+            const confirmedChanges = {};
+            let confirmedChanged = false;
+            
+            // Verify each changed permission
+            for (const key in changes) {
+              if (
+                initialPermissions[key] === true && 
+                confirmedPermissions[key] === false
+              ) {
+                confirmedChanges[key] = true;
+                confirmedChanged = true;
+              }
+            }
+            
+            // Only proceed if changes are confirmed
+            if (confirmedChanged) {
+              // Call the callback if provided
+              if (typeof onPermissionRevoked === 'function') {
+                handlePermissionRevoked(confirmedChanges, onPermissionRevoked);
+              } else {
+                // Default behavior: store revocation info and force logout
+                handlePermissionRevoked(confirmedChanges);
+              }
+              
+              // Stop checking after permissions have changed
+              stop();
+            } else {
+              // Changes not confirmed, update initial permissions to prevent false positives
+              initialPermissions = { ...confirmedPermissions };
+              console.log('Permission changes were not confirmed in second check - false positive avoided');
+            }
+          } catch (error) {
+            console.error('Error in confirmation check:', error);
+          }
+        }, 2000); // Wait 2 seconds before confirming
       }
-      
     } catch (error) {
       console.error('Error checking permissions:', error);
       
@@ -97,9 +153,22 @@ export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 
                                errorMessage.toLowerCase().includes('access denied');
         
         if (isDatabaseError) {
-          // Database access has been revoked
-          handleDatabaseAccessRevoked(onPermissionRevoked);
-          stop();
+          // Double-check to prevent false positives
+          setTimeout(async () => {
+            try {
+              await axios.get('/api/user/permissions', {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+              });
+              // If successful, it was a temporary error
+              consecutiveErrors = 0;
+            } catch (error) {
+              // If still failing, handle as database access revoked
+              handleDatabaseAccessRevoked(onPermissionRevoked);
+              stop();
+            }
+          }, 2000);
           return;
         }
       }
@@ -147,6 +216,7 @@ export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 
   const start = () => {
     // First check immediately
     console.log('Permission checker starting - checking permissions immediately');
+    isPaused = false;
     checkPermissions();
     
     // Then set up interval for regular checks
@@ -157,11 +227,30 @@ export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 
       console.warn('Permission checker already running');
     }
     
-    // Return methods to control the checker
-    return {
+    // Make the controller available globally for components to access
+    window.__permissionCheckerController = {
       stop,
+      pause,
+      resume,
       checkNow: checkPermissions
     };
+    
+    // Return methods to control the checker
+    return window.__permissionCheckerController;
+  };
+  
+  // Pause checking permissions temporarily
+  const pause = () => {
+    isPaused = true;
+    console.log('Permission checker paused');
+    return { resume };
+  };
+  
+  // Resume checking permissions
+  const resume = () => {
+    isPaused = false;
+    console.log('Permission checker resumed');
+    return { pause };
   };
   
   // Stop checking permissions
@@ -177,6 +266,8 @@ export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 
   return {
     start,
     stop,
+    pause,
+    resume,
     checkNow: checkPermissions
   };
 };

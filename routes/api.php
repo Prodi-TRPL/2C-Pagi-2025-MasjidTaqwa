@@ -71,9 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/donatur/change-password', [ProfileController::class, 'updatePassword']);
     Route::put('/donatur/profile', [ProfileController::class, 'update']);
     
-    // Route CRUD ProyekPembangunan
-    Route::apiResource('ProyekPembangunan', ProyekPembangunanController::class);
-    
+    // Route CRUD ProyekPembangunan - Moved outside auth group
     // API CRUD Kategori Pengeluaran
     Route::apiResource('KategoriPengeluaran', KategoriPengeluaranController::class);
     
@@ -127,6 +125,14 @@ Route::get('/Pengeluaran', [PengeluaranController::class, 'index']); // Get peng
 Route::get('/Pengeluaran/stats', [PengeluaranController::class, 'getStats']); // Get pengeluaran stats without auth
 Route::get('/KategoriPengeluaran', [KategoriPengeluaranController::class, 'index']); // Get kategori pengeluaran without auth
 Route::get('/ProyekPembangunan', [ProyekPembangunanController::class, 'index']); // Get proyek pembangunan without auth
+Route::get('/ProyekPembangunan/{id}', [ProyekPembangunanController::class, 'show']); // Get specific proyek pembangunan without auth
+
+// Protected ProyekPembangunan routes (create, update, delete)
+Route::middleware('auth:sanctum')->group(function() {
+    Route::post('/ProyekPembangunan', [ProyekPembangunanController::class, 'store']);
+    Route::put('/ProyekPembangunan/{id}', [ProyekPembangunanController::class, 'update']);
+    Route::delete('/ProyekPembangunan/{id}', [ProyekPembangunanController::class, 'destroy']);
+});
 
 // Admin routes - requires auth and admin role
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
@@ -139,6 +145,7 @@ Route::get('/donations', [DonationHistoryController::class, 'index']);
 
 // Monthly report data for graphs
 Route::get('/monthly-amount', [AdminGraphAmountController::class, 'getMonthlyReport']);
+Route::get('/dashboard-summary', [AdminGraphAmountController::class, 'getSummaryData']);
 
 // Laporan Keuangan routes
 Route::get('/laporan-keuangan', [LaporanKeuanganController::class, 'index']);
@@ -160,6 +167,9 @@ Route::get('/test/revoke-permission', function () {
         'message' => 'This route simulates permissions being revoked'
     ], 200);
 });
+
+// Add a public route for pengeluaran stats
+Route::get('/public-api/pengeluaran-stats', [PengeluaranController::class, 'getStats']);
 
 // Add a route to get user permissions
 Route::middleware('auth:sanctum')->get('/user/permissions', function (Request $request) {

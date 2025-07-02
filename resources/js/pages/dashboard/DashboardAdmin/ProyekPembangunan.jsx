@@ -42,11 +42,9 @@ const ProyekPembangunan = () => {
     jumlah: '',
     keterangan: '',
     kategori_pengeluaran_id: '',
-    tanggal_pengeluaran: null,
   });
   const [filterPengeluaran, setFilterPengeluaran] = useState({
     kategori_pengeluaran_id: '',
-    tanggal_pengeluaran: null,
   });
   const [activeTab, setActiveTab] = useState('proyek');
   const [showProyekForm, setShowProyekForm] = useState(false);
@@ -83,6 +81,14 @@ const ProyekPembangunan = () => {
     persentasePengeluaran: 0,
     targetDana: 0,
   });
+  // Pagination for project expenses
+  const [currentPengeluaranPage, setCurrentPengeluaranPage] = useState(1);
+  const [pengeluaranPerPage] = useState(5);
+  // Filtering and sorting for project expenses
+  const [expenseSearchTerm, setExpenseSearchTerm] = useState('');
+  const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('');
+  const [expenseSortOption, setExpenseSortOption] = useState('date-desc'); // Default: newest first
+  const [filteredProyekPengeluarans, setFilteredProyekPengeluarans] = useState([]);
   // State for the pengeluaran form in detail section
   const [showPengeluaranForm, setShowPengeluaranForm] = useState(false);
   const [detailFormPengeluaran, setDetailFormPengeluaran] = useState({
@@ -91,7 +97,6 @@ const ProyekPembangunan = () => {
     jumlah: '',
     keterangan: '',
     kategori_pengeluaran_id: '',
-    tanggal_pengeluaran: new Date(),
   });
   // Ref for scrolling to detail section
   const detailSectionRef = useRef(null);
@@ -116,6 +121,12 @@ const ProyekPembangunan = () => {
     setTimeout(() => {
       setToast(prev => ({ ...prev, show: false }));
     }, 3000);
+    
+    // When showing a success toast for adding/updating expense, ensure sorting is by newest first
+    if (type === 'success' && (message.includes('ditambahkan') || message.includes('diperbarui'))) {
+      setExpenseSortOption('date-desc');
+      setCurrentPengeluaranPage(1); // Return to first page
+    }
   };
 
   // Add a function to show confirmation modal instead of browser alerts
@@ -216,6 +227,10 @@ const ProyekPembangunan = () => {
           jumlah: p.jumlah // Keep as is
         }));
         setProyekPengeluarans(pengeluaranWithRawValues);
+        // Reset to first page when loading new expense data
+        setCurrentPengeluaranPage(1);
+        // Ensure default sort is by newest first
+        setExpenseSortOption('date-desc');
       } else {
         await fetchDetailPengeluarans(id);
       }
@@ -264,6 +279,10 @@ const ProyekPembangunan = () => {
       }));
       
       setProyekPengeluarans(pengeluaransData);
+      // Reset to first page when loading new expense data
+      setCurrentPengeluaranPage(1);
+      // Ensure default sort is by newest first
+      setExpenseSortOption('date-desc');
       setAuthError(null);
     } catch (error) {
       console.error('Error fetching detail expenses:', error);
@@ -283,9 +302,11 @@ const ProyekPembangunan = () => {
       jumlah: '',
       keterangan: '',
       kategori_pengeluaran_id: '',
-      tanggal_pengeluaran: new Date(),
     });
     setDisplayDetailJumlah('');
+    
+    // Ensure the default sort is by date (newest first)
+    setExpenseSortOption('date-desc');
   };
   
   // Function to clear detail view
@@ -295,6 +316,10 @@ const ProyekPembangunan = () => {
     setProyekPengeluarans([]);
     setShowPengeluaranForm(false);
     clearDetailForm();
+    setCurrentPengeluaranPage(1); // Reset pagination when clearing view
+    setExpenseSortOption('date-desc'); // Reset sort to default
+    setExpenseSearchTerm(''); // Clear search
+    setExpenseCategoryFilter(''); // Clear category filter
   };
   
   // Function to handle form changes in detail modal
@@ -336,16 +361,11 @@ const ProyekPembangunan = () => {
       setDetailFormPengeluaran(prev => ({ ...prev, [name]: value }));
     }
   };
-  
-  // Function to handle date changes in detail modal
-  const handleDetailDateChange = (date) => {
-    setDetailFormPengeluaran(prev => ({ ...prev, tanggal_pengeluaran: date }));
-  };
 
   // Function to handle submit pengeluaran in detail modal
   const handleSubmitDetailPengeluaran = async () => {
-    const { nama_pengeluaran, jumlah, kategori_pengeluaran_id, tanggal_pengeluaran, pengeluaran_id } = detailFormPengeluaran;
-    if (!nama_pengeluaran || !jumlah || !kategori_pengeluaran_id || !tanggal_pengeluaran) {
+    const { nama_pengeluaran, jumlah, kategori_pengeluaran_id, pengeluaran_id } = detailFormPengeluaran;
+    if (!nama_pengeluaran || !jumlah || !kategori_pengeluaran_id) {
       showToast('Harap isi semua kolom pengeluaran yang wajib', 'error');
       return;
     }
@@ -412,7 +432,6 @@ const ProyekPembangunan = () => {
       jumlah: p.jumlah?.toString() || '',
       keterangan: p.keterangan || '',
       kategori_pengeluaran_id: p.kategori_pengeluaran_id,
-      tanggal_pengeluaran: p.tanggal_pengeluaran ? new Date(p.tanggal_pengeluaran) : new Date(),
     });
     // Set formatted display value
     setDisplayDetailJumlah(formatCurrency(p.jumlah));
@@ -540,9 +559,6 @@ const ProyekPembangunan = () => {
       const params = { proyek_id: proyekId };
       if (filterPengeluaran.kategori_pengeluaran_id) {
         params.kategori_pengeluaran_id = filterPengeluaran.kategori_pengeluaran_id;
-      }
-      if (filterPengeluaran.tanggal_pengeluaran instanceof Date) {
-        params.tanggal_pengeluaran = filterPengeluaran.tanggal_pengeluaran.toISOString().split('T')[0];
       }
       
       const res = await axios.get('/api/Pengeluaran', { 
@@ -776,19 +792,6 @@ const ProyekPembangunan = () => {
     }
   };
 
-  const handleFormPengeluaranDateChange = (date) => {
-    setFormPengeluaran(prev => ({ ...prev, tanggal_pengeluaran: date }));
-  };
-
-  const handleFilterPengeluaranChange = (e) => {
-    const { name, value } = e.target;
-    setFilterPengeluaran(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFilterPengeluaranDateChange = (date) => {
-    setFilterPengeluaran(prev => ({ ...prev, tanggal_pengeluaran: date }));
-  };
-
   // Clear forms
   const clearFormProyek = () => {
     setFormProyek({
@@ -809,7 +812,6 @@ const ProyekPembangunan = () => {
       jumlah: '',
       keterangan: '',
       kategori_pengeluaran_id: '',
-      tanggal_pengeluaran: new Date(),
     });
     setDisplayJumlah('');
   };
@@ -950,8 +952,8 @@ const ProyekPembangunan = () => {
   };
 
   const handleSubmitPengeluaran = async () => {
-    const { nama_pengeluaran, jumlah, kategori_pengeluaran_id, tanggal_pengeluaran, pengeluaran_id } = formPengeluaran;
-    if (!nama_pengeluaran || !jumlah || !kategori_pengeluaran_id || !tanggal_pengeluaran) {
+    const { nama_pengeluaran, jumlah, kategori_pengeluaran_id, pengeluaran_id } = formPengeluaran;
+    if (!nama_pengeluaran || !jumlah || !kategori_pengeluaran_id) {
       showToast('Harap isi semua kolom pengeluaran yang wajib', 'error');
       return;
     }
@@ -1065,13 +1067,12 @@ const ProyekPembangunan = () => {
     const headers = getAuthHeaders();
     if (!headers) return;
     
-    const { nama_pengeluaran, kategori_pengeluaran_id, tanggal_pengeluaran, pengeluaran_id, keterangan } = formPengeluaran;
+    const { nama_pengeluaran, kategori_pengeluaran_id, pengeluaran_id, keterangan } = formPengeluaran;
 
       const submitForm = {
         ...formPengeluaran,
         jumlah: parsedJumlah,
         proyek_id: selectedProyek.proyek_id,
-        tanggal_pengeluaran: formPengeluaran.tanggal_pengeluaran.toISOString().split('T')[0],
       };
     
       if (pengeluaran_id) {
@@ -1117,7 +1118,7 @@ const ProyekPembangunan = () => {
       jumlah: p.jumlah?.toString() || '',
       keterangan: p.keterangan || '',
       kategori_pengeluaran_id: p.kategori_pengeluaran_id,
-      tanggal_pengeluaran: p.tanggal_pengeluaran ? new Date(p.tanggal_pengeluaran) : null,
+      
     });
     
     // Set formatted display value for jumlah
@@ -1250,6 +1251,62 @@ const ProyekPembangunan = () => {
   const indexOfFirstProject = indexOfLastProject - projectsPerPage;
   const currentProjects = filteredProyeks.slice(indexOfFirstProject, indexOfLastProject);
   const totalPages = Math.ceil(filteredProyeks.length / projectsPerPage);
+  
+  // Filter and sort project expenses
+  useEffect(() => {
+    if (!proyekPengeluarans.length) {
+      setFilteredProyekPengeluarans([]);
+      return;
+    }
+    
+    let filtered = [...proyekPengeluarans];
+    
+    // Apply search filter
+    if (expenseSearchTerm.trim() !== '') {
+      filtered = filtered.filter(p => 
+        p.nama_pengeluaran.toLowerCase().includes(expenseSearchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply category filter
+    if (expenseCategoryFilter) {
+      filtered = filtered.filter(p => 
+        p.kategori_pengeluaran_id.toString() === expenseCategoryFilter.toString()
+      );
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (expenseSortOption) {
+        case 'date-desc': // Newest first (default)
+          return new Date(b.tanggal_pengeluaran || b.created_at) - new Date(a.tanggal_pengeluaran || a.created_at);
+        case 'date-asc': // Oldest first
+          return new Date(a.tanggal_pengeluaran || a.created_at) - new Date(b.tanggal_pengeluaran || b.created_at);
+        case 'amount-desc': // Largest amount first
+          const amountB = typeof b.jumlah === 'string' ? 
+            parseFloat(b.jumlah.replace(/[^\d.-]/g, '')) : 
+            parseFloat(b.jumlah) || 0;
+          const amountA = typeof a.jumlah === 'string' ? 
+            parseFloat(a.jumlah.replace(/[^\d.-]/g, '')) : 
+            parseFloat(a.jumlah) || 0;
+          return amountB - amountA;
+        case 'amount-asc': // Smallest amount first
+          const amountB2 = typeof b.jumlah === 'string' ? 
+            parseFloat(b.jumlah.replace(/[^\d.-]/g, '')) : 
+            parseFloat(b.jumlah) || 0;
+          const amountA2 = typeof a.jumlah === 'string' ? 
+            parseFloat(a.jumlah.replace(/[^\d.-]/g, '')) : 
+            parseFloat(a.jumlah) || 0;
+          return amountA2 - amountB2;
+        default:
+          return new Date(b.tanggal_pengeluaran || b.created_at) - new Date(a.tanggal_pengeluaran || a.created_at);
+      }
+    });
+    
+    setFilteredProyekPengeluarans(filtered);
+    // Reset to first page when filters change
+    setCurrentPengeluaranPage(1);
+  }, [proyekPengeluarans, expenseSearchTerm, expenseCategoryFilter, expenseSortOption]);
 
   // Function to change page
   const paginate = (pageNumber) => {
@@ -1359,14 +1416,13 @@ const ProyekPembangunan = () => {
     const headers = getAuthHeaders();
     if (!headers) return;
     
-    const { nama_pengeluaran, kategori_pengeluaran_id, tanggal_pengeluaran, pengeluaran_id, keterangan } = detailFormPengeluaran;
+    const { nama_pengeluaran, kategori_pengeluaran_id, pengeluaran_id, keterangan } = detailFormPengeluaran;
     
     // Prepare the data for the API
     const pengeluaranData = {
       nama_pengeluaran,
       jumlah: parsedJumlah,
       kategori_pengeluaran_id,
-      tanggal_pengeluaran: format(tanggal_pengeluaran, 'yyyy-MM-dd'),
       proyek_id: proyekDetail.proyek_id,
       keterangan
     };
@@ -1739,13 +1795,13 @@ const ProyekPembangunan = () => {
                         </div>
                         
                         <div className="space-y-1">
-                          <label className="block text-sm font-medium text-gray-700">Target Dana *</label>
+                          <label className="block text-sm font-medium text-gray-700">Kebutuhan Dana *</label>
                           <input
                             name="target_dana"
                             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] transition-all"
                             value={displayTargetDana}
                             onChange={handleFormProyekChange}
-                            placeholder="Masukkan target dana"
+                            placeholder="Masukkan kebutuhan dana"
                           />
                         </div>
                         
@@ -2022,7 +2078,7 @@ const ProyekPembangunan = () => {
                                       <svg className="mr-1 h-2 w-2 text-yellow-500" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                       </svg>
-                                      Dalam Progress
+                                      Dalam Proses
                                     </span>
                                   );
                                 })()}
@@ -2075,8 +2131,8 @@ const ProyekPembangunan = () => {
 
                         <div className="mt-4">
                           <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Dana Terkumpul: {formatCurrency(getTotalExpenses(p.proyek_id))}</span>
-                            <span>Target: {formatCurrency(p.target_dana || 0)}</span>
+                            <span>Dana Dialokasikan: {formatCurrency(getTotalExpenses(p.proyek_id))}</span>
+                            <span>Kebutuhan: {formatCurrency(p.target_dana || 0)}</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2.5">
                             <div
@@ -2205,9 +2261,9 @@ const ProyekPembangunan = () => {
                             )}
                             
                             {/* Progress Bar */}
-                            <div className="mb-2 flex justify-between items-center">
+                                                          <div className="mb-2 flex justify-between items-center">
                               <span className="text-sm font-medium text-gray-700">
-                                Progress Dana ({detailStats.persentasePengeluaran}%)
+                                Progress Pendanaan ({detailStats.persentasePengeluaran}%)
                               </span>
                               <span className="text-sm font-medium text-gray-700">
                                 {formatCurrency(detailStats.totalPengeluaran)} / {formatCurrency(proyekDetail.target_dana)}
@@ -2233,11 +2289,11 @@ const ProyekPembangunan = () => {
                                 Refresh
                               </button>
                               <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                                <p className="text-sm text-blue-600 font-medium">Target Dana</p>
+                                <p className="text-sm text-blue-600 font-medium">Kebutuhan Dana</p>
                                 <p className="text-xl font-bold text-blue-800">{formatCurrency(proyekDetail.target_dana)}</p>
                               </div>
                               <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-                                <p className="text-sm text-green-600 font-medium">Dana Terkumpul</p>
+                                <p className="text-sm text-green-600 font-medium">Dana Dialokasikan</p>
                                 <p className="text-xl font-bold text-green-800">{formatCurrency(detailStats.totalPengeluaran)}</p>
                               </div>
                               <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-100">
@@ -2326,15 +2382,7 @@ const ProyekPembangunan = () => {
                                       </select>
                                     </div>
                                     
-                                    <div className="space-y-1">
-                                      <label className="block text-sm font-medium text-gray-700">Tanggal *</label>
-                                      <DatePicker
-                                        selected={detailFormPengeluaran.tanggal_pengeluaran}
-                                        onChange={handleDetailDateChange}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] transition-all"
-                                        dateFormat="yyyy-MM-dd"
-                                      />
-                                    </div>
+                                    
                                     
                                     <div className="md:col-span-2 space-y-1">
                                       <label className="block text-sm font-medium text-gray-700">Keterangan</label>
@@ -2371,6 +2419,84 @@ const ProyekPembangunan = () => {
                             )}
                           </AnimatePresence>
 
+                          {/* Filter dan Pencarian Pengeluaran */}
+                          <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              {/* Pencarian nama pengeluaran */}
+                              <div className="col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Cari Pengeluaran</label>
+                                <div className="relative">
+                                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] text-sm"
+                                    placeholder="Cari berdasarkan nama pengeluaran..."
+                                    value={expenseSearchTerm}
+                                    onChange={(e) => setExpenseSearchTerm(e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                              
+                              {/* Filter kategori */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                                <select
+                                  value={expenseCategoryFilter}
+                                  onChange={(e) => setExpenseCategoryFilter(e.target.value)}
+                                  className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] text-sm"
+                                >
+                                  <option value="">Semua Kategori</option>
+                                  {kategoris.map(k => (
+                                    <option 
+                                      key={k.kategori_pengeluaran_id || k.id} 
+                                      value={k.kategori_pengeluaran_id || k.id}
+                                    >
+                                      {k.nama_kategori}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              
+                              {/* Pengurutan */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Urutkan</label>
+                                <select
+                                  value={expenseSortOption}
+                                  onChange={(e) => setExpenseSortOption(e.target.value)}
+                                  className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] text-sm"
+                                >
+                                  <option value="date-desc">Tanggal Terbaru</option>
+                                  <option value="date-asc">Tanggal Terlama</option>
+                                  <option value="amount-desc">Jumlah Terbesar</option>
+                                  <option value="amount-asc">Jumlah Terkecil</option>
+                                </select>
+                              </div>
+                            </div>
+                            
+                            {/* Reset filter button */}
+                            {(expenseSearchTerm || expenseCategoryFilter || expenseSortOption !== 'date-desc') && (
+                              <div className="mt-3 flex justify-end">
+                                <button
+                                  onClick={() => {
+                                    setExpenseSearchTerm('');
+                                    setExpenseCategoryFilter('');
+                                    setExpenseSortOption('date-desc');
+                                  }}
+                                  className="text-sm text-gray-500 hover:text-gray-700 flex items-center px-3 py-1 bg-white border border-gray-200 rounded-lg"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                  Reset Filter
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
                           {/* Daftar Pengeluaran */}
                           {proyekPengeluarans.length === 0 ? (
                             <div className="text-center py-12 bg-gray-50 rounded-lg">
@@ -2381,6 +2507,29 @@ const ProyekPembangunan = () => {
                               </div>
                               <h3 className="text-lg font-medium text-gray-700">Belum ada pengeluaran</h3>
                               <p className="mt-1 text-gray-500">Tambahkan pengeluaran pertama untuk proyek ini</p>
+                            </div>
+                          ) : filteredProyekPengeluarans.length === 0 ? (
+                            <div className="text-center py-12 bg-gray-50 rounded-lg">
+                              <div className="mx-auto h-24 w-24 text-gray-300 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                              </div>
+                              <h3 className="text-lg font-medium text-gray-700">Tidak ada pengeluaran yang sesuai</h3>
+                              <p className="mt-1 text-gray-500">Coba ubah filter atau reset pencarian</p>
+                              <button 
+                                onClick={() => {
+                                  setExpenseSearchTerm('');
+                                  setExpenseCategoryFilter('');
+                                  setExpenseSortOption('date-desc');
+                                }}
+                                className="mt-4 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors inline-flex items-center"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Reset Pencarian
+                              </button>
                             </div>
                           ) : (
                             <div className="overflow-x-auto">
@@ -2396,7 +2545,13 @@ const ProyekPembangunan = () => {
                                   </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                  {proyekPengeluarans.map((p, index) => (
+                                  {/* Calculate pagination for expenses */}
+                                  {filteredProyekPengeluarans
+                                    .slice(
+                                      (currentPengeluaranPage - 1) * pengeluaranPerPage,
+                                      currentPengeluaranPage * pengeluaranPerPage
+                                    )
+                                    .map((p, index) => (
                                     <tr 
                                       key={p.pengeluaran_id} 
                                       className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
@@ -2413,7 +2568,7 @@ const ProyekPembangunan = () => {
                                         </span>
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-500">{formatDate(p.tanggal_pengeluaran || p.created_at)}</div>
+                                        <div className="text-sm text-gray-500">{formatDate(p.created_at)}</div>
                                       </td>
                                       <td className="px-6 py-4">
                                         <div className="text-sm text-gray-500 max-w-xs truncate">{p.keterangan || '-'}</div>
@@ -2439,6 +2594,59 @@ const ProyekPembangunan = () => {
                                   ))}
                                 </tbody>
                               </table>
+                              
+                              {/* Pagination Controls for Expenses */}
+                              {filteredProyekPengeluarans.length > pengeluaranPerPage && (
+                                <div className="flex justify-between items-center p-4 border-t border-gray-200">
+                                  <div className="text-sm text-gray-500">
+                                    Menampilkan {Math.min(filteredProyekPengeluarans.length, 1 + (currentPengeluaranPage - 1) * pengeluaranPerPage)}-{Math.min(currentPengeluaranPage * pengeluaranPerPage, filteredProyekPengeluarans.length)} dari {filteredProyekPengeluarans.length} pengeluaran
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <button 
+                                      onClick={() => setCurrentPengeluaranPage(prev => Math.max(prev - 1, 1))}
+                                      disabled={currentPengeluaranPage === 1}
+                                      className={`px-3 py-1 rounded-lg border transition-colors ${
+                                        currentPengeluaranPage === 1 
+                                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                                          : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                                      }`}
+                                    >
+                                      Sebelumnya
+                                    </button>
+                                    <div className="flex space-x-1">
+                                      {Array.from(
+                                        { length: Math.ceil(filteredProyekPengeluarans.length / pengeluaranPerPage) },
+                                        (_, i) => i + 1
+                                      ).map(number => (
+                                        <button
+                                          key={number}
+                                          onClick={() => setCurrentPengeluaranPage(number)}
+                                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                                            currentPengeluaranPage === number
+                                              ? 'bg-[#59B997] text-white'
+                                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                                          }`}
+                                        >
+                                          {number}
+                                        </button>
+                                      ))}
+                                    </div>
+                                    <button 
+                                      onClick={() => setCurrentPengeluaranPage(prev => 
+                                        Math.min(prev + 1, Math.ceil(filteredProyekPengeluarans.length / pengeluaranPerPage))
+                                      )}
+                                      disabled={currentPengeluaranPage >= Math.ceil(filteredProyekPengeluarans.length / pengeluaranPerPage)}
+                                      className={`px-3 py-1 rounded-lg border transition-colors ${
+                                        currentPengeluaranPage >= Math.ceil(filteredProyekPengeluarans.length / pengeluaranPerPage)
+                                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                                          : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                                      }`}
+                                    >
+                                      Berikutnya
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -2483,14 +2691,14 @@ const ProyekPembangunan = () => {
                   Filter Pengeluaran
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700">Kategori</label>
                     <select
                       name="kategori_pengeluaran_id"
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] transition-all"
                       value={filterPengeluaran.kategori_pengeluaran_id}
-                      onChange={handleFilterPengeluaranChange}
+                      onChange={(e) => setFilterPengeluaran({ kategori_pengeluaran_id: e.target.value })}
                     >
                       <option value="">Semua Kategori</option>
                       {kategoris.map((k) => (
@@ -2501,21 +2709,9 @@ const ProyekPembangunan = () => {
                     </select>
                   </div>
                   
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Tanggal</label>
-                    <DatePicker
-                      selected={filterPengeluaran.tanggal_pengeluaran}
-                      onChange={handleFilterPengeluaranDateChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] transition-all"
-                      placeholderText="Pilih Tanggal"
-                      dateFormat="dd/MM/yyyy"
-                      isClearable
-                    />
-                  </div>
-                  
                   <div className="flex items-end">
                     <button
-                      onClick={() => setFilterPengeluaran({ kategori_pengeluaran_id: '', tanggal_pengeluaran: null })}
+                      onClick={() => setFilterPengeluaran({ kategori_pengeluaran_id: '' })}
                       className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors w-full"
                     >
                       Reset Filter
@@ -2573,17 +2769,6 @@ const ProyekPembangunan = () => {
                         </option>
                       ))}
                     </select>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">Tanggal *</label>
-                    <DatePicker
-                      selected={formPengeluaran.tanggal_pengeluaran}
-                      onChange={handleFormPengeluaranDateChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997] transition-all"
-                      placeholderText="Pilih Tanggal"
-                      dateFormat="dd/MM/yyyy"
-                    />
                   </div>
                   
                   <div className="md:col-span-2 space-y-1">
@@ -2670,7 +2855,7 @@ const ProyekPembangunan = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">{formatDate(p.tanggal_pengeluaran || p.created_at)}</div>
+                            <div className="text-sm text-gray-500">{formatDate(p.created_at)}</div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-500 max-w-xs truncate">{p.keterangan || '-'}</div>
@@ -2743,3 +2928,6 @@ const ProyekPembangunan = () => {
 };
 
 export default ProyekPembangunan;
+
+
+

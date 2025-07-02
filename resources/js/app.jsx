@@ -5,12 +5,14 @@ import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import { SidebarProvider } from './context/SidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { setupPermissionChecker } from './utils/permissionChecker';
+import { invalidatePermissionsCache } from './utils/permissions';
 
 import '../css/app.css'; // Tailwind
 import Beranda from './pages/Beranda';
 import Hubungi from './pages/Hubungi';
 import RekapanBulanan from './pages/RekapanBulanan';
 import RekapanDonatur from './pages/RekapanDonatur';
+import DistribusiDanaProyek from './pages/DistribusiDanaProyek';
 import LoginBaru from './pages/LoginBaru';
 import SignUp from './pages/SignUp';
 import LupaPassword from './pages/LupaPassword';
@@ -66,9 +68,12 @@ const AppRoutes = () => {
     // Set up permission checker if user is logged in
     const token = localStorage.getItem('token');
     if (token) {
-      // Create permission checker with custom handler
+      // Force permission cache refresh on component mount
+      invalidatePermissionsCache();
+      
+      // Create permission checker with custom handler - using larger interval
       const permissionChecker = setupPermissionChecker((changedPermissions) => {
-        // This will be called when permissions are revoked
+        // This will be called when permissions are revoked and confirmed
         setRevokedPermissions(changedPermissions);
         setPermissionRevoked(true);
         
@@ -84,7 +89,7 @@ const AppRoutes = () => {
           // Redirect to login
           window.location.href = '/loginbaru';
         }, 3000);
-      }, 10000); // Check every 10 seconds
+      }, 30000); // Check every 30 seconds (reduced frequency)
       
       // Start the permission checker
       const controller = permissionChecker.start();
@@ -124,6 +129,7 @@ const AppRoutes = () => {
             <Route path="/donasi-sekarang" element={<DonasiSekarang />} />
             <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
             <Route path="/rekapandonatur" element={<RekapanDonatur />} />
+            <Route path="/distribusi-dana-proyek" element={<DistribusiDanaProyek />} />
             
             {/* User routes with permission checks */}
             <Route path="/profile" element={<DonaturUserProfile />} />

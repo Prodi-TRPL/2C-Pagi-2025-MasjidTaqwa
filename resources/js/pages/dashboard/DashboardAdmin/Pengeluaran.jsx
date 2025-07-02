@@ -17,12 +17,17 @@ const Pengeluaran = () => {
   const [stats, setStats] = useState({
     totalPengeluaran: 0,
     totalProyek: 0,
+    totalTargetDana: 0,
     totalDana: 0,
     sisaDana: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [authError, setAuthError] = useState(null);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const itemsPerPageOptions = [10, 25, 50, 100];
 
   // Helper function to get auth token
   const getAuthHeaders = () => {
@@ -54,6 +59,7 @@ const Pengeluaran = () => {
       const res = await axios.get('/api/Pengeluaran', { params });
       
       setPengeluarans(res.data.data || res.data);
+      setCurrentPage(1); // Reset to first page when fetching new data
       setAuthError(null);
     } catch (error) {
       console.error('Error fetching expenses:', error);
@@ -66,6 +72,23 @@ const Pengeluaran = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Pagination functions
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = pengeluarans.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(pengeluarans.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   const fetchOptions = async () => {
@@ -102,10 +125,12 @@ const Pengeluaran = () => {
   const fetchStats = async () => {
     try {
       // Use the public endpoint that doesn't require authentication
-      const res = await axios.get('/public-api/pengeluaran-stats');
+      const res = await axios.get('/api/public-api/pengeluaran-stats');
+      console.log('Stats data:', res.data);
       setStats(res.data || {
         totalPengeluaran: 0,
         totalProyek: 0,
+        totalTargetDana: 0,
         totalDana: 0,
         sisaDana: 0
       });
@@ -238,7 +263,7 @@ const Pengeluaran = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -257,7 +282,7 @@ const Pengeluaran = () => {
             </div>
           </div>
           <div className="text-xs text-gray-500">
-            Dari {pengeluarans.length} transaksi pengeluaran
+            Dari {pengeluarans.length} pengeluaran
           </div>
         </motion.div>
 
@@ -274,61 +299,12 @@ const Pengeluaran = () => {
               </svg>
             </div>
             <div>
-              <p className="text-sm text-gray-500 font-medium">Total Dana Proyek</p>
-              <h3 className="text-xl font-bold text-gray-800">{formatCurrency(stats.totalDana || 0)}</h3>
+              <p className="text-sm text-gray-500 font-medium">Dana Dibutuhkan</p>
+              <h3 className="text-xl font-bold text-gray-800">{formatCurrency(stats.totalTargetDana || 0)}</h3>
             </div>
           </div>
           <div className="text-xs text-gray-500">
-            Dari {stats.totalProyek || 0} proyek aktif
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-        >
-          <div className="flex items-center mb-3">
-            <div className="p-3 bg-yellow-100 rounded-full mr-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Sisa Dana</p>
-              <h3 className="text-xl font-bold text-gray-800">{formatCurrency(stats.sisaDana || 0)}</h3>
-            </div>
-          </div>
-          <div className="text-xs text-gray-500">
-            {stats.sisaDana > 0 ? 'Masih tersedia untuk digunakan' : 'Tidak ada sisa dana'}
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-        >
-          <div className="flex items-center mb-3">
-            <div className="p-3 bg-purple-100 rounded-full mr-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Persentase Penggunaan</p>
-              <h3 className="text-xl font-bold text-gray-800">
-                {stats.totalDana ? Math.round((stats.totalPengeluaran / stats.totalDana) * 100) : 0}%
-              </h3>
-            </div>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div 
-              className="bg-purple-600 h-2.5 rounded-full" 
-              style={{ width: `${stats.totalDana ? Math.min(100, Math.round((stats.totalPengeluaran / stats.totalDana) * 100)) : 0}%` }}
-            ></div>
+            Total kebutuhan dana dari {stats.totalProyek || 0} proyek
           </div>
         </motion.div>
       </div>
@@ -442,8 +418,23 @@ const Pengeluaran = () => {
               <span className="w-1 h-6 bg-[#59B997] rounded-full mr-3"></span>
               Daftar Pengeluaran
             </h2>
-            <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              {pengeluarans.length} transaksi
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                {pengeluarans.length} transaksi
+              </div>
+              <div className="flex items-center">
+                <label htmlFor="itemsPerPage" className="text-sm text-gray-600 mr-2">Tampilkan:</label>
+                <select
+                  id="itemsPerPage"
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  className="border border-gray-300 rounded-lg text-sm px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#59B997]/50 focus:border-[#59B997]"
+                >
+                  {itemsPerPageOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -476,7 +467,7 @@ const Pengeluaran = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {pengeluarans.map((p, index) => (
+                {currentItems.map((p, index) => (
                   <tr 
                     key={p.pengeluaran_id} 
                     className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
@@ -498,7 +489,7 @@ const Pengeluaran = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{formatDate(p.tanggal_pengeluaran || p.created_at)}</div>
+                      <div className="text-sm text-gray-500">{formatDate(p.created_at)}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500 max-w-xs truncate">{p.keterangan || '-'}</div>
@@ -507,6 +498,67 @@ const Pengeluaran = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {pengeluarans.length > 0 && (
+              <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div className="text-sm text-gray-500">
+                  Menampilkan {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, pengeluarans.length)} dari {pengeluarans.length} transaksi
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded-lg border transition-colors ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                    }`}
+                  >
+                    Sebelumnya
+                  </button>
+                  <div className="flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(num => {
+                        // Show first page, last page, and pages around current page
+                        return (
+                          num === 1 ||
+                          num === totalPages ||
+                          (num >= currentPage - 1 && num <= currentPage + 1)
+                        );
+                      })
+                      .map((number, i, arr) => (
+                        <React.Fragment key={number}>
+                          {i > 0 && arr[i - 1] !== number - 1 && (
+                            <span className="w-8 h-8 flex items-center justify-center text-gray-500">...</span>
+                          )}
+                          <button
+                            onClick={() => paginate(number)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                              currentPage === number
+                                ? 'bg-[#59B997] text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                            }`}
+                          >
+                            {number}
+                          </button>
+                        </React.Fragment>
+                      ))}
+                  </div>
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded-lg border transition-colors ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                    }`}
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </motion.div>

@@ -164,7 +164,7 @@ const DonaturUserNotifikasi = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
-    severity: "success",
+    severity: "success"
   });
   const [permissions, setPermissions] = useState(null);
   const [permissionChecked, setPermissionChecked] = useState(false);
@@ -173,38 +173,54 @@ const DonaturUserNotifikasi = () => {
     title: "",
     message: ""
   });
+  const [lastPermissionCheck, setLastPermissionCheck] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   
-  const [refreshKey, setRefreshKey] = useState(0); // Key to force re-fetch
-  
-  // State for notification detail popup
+  const [refreshKey, setRefreshKey] = useState(0);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  
-  // State for confirmation dialogs
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogAction, setConfirmDialogAction] = useState(null);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
-  
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [lastCheckedTime, setLastCheckedTime] = useState(Date.now());
   const [notificationCount, setNotificationCount] = useState(0);
 
-  // Effect to check permissions
+  // Effect to check permissions - Modified to prevent false triggers
   useEffect(() => {
     const checkPermission = async () => {
       try {
+        // Add a debounce mechanism to prevent multiple checks in short time
+        const now = Date.now();
+        if (now - lastPermissionCheck < 5000) {
+          // Skip if we checked less than 5 seconds ago
+          return;
+        }
+        
+        setLastPermissionCheck(now);
         const userPermissions = await getUserPermissions();
+        
+        // Store previous permissions to compare
+        const prevPermissions = permissions;
         setPermissions(userPermissions);
         
         // Check if user has the required permission
         if (!hasPermission(userPermissions, 'canViewNotification')) {
-          // Show access denied modal
-          const { title, message } = getPermissionDeniedMessage('canViewNotification');
+          // Only show modal if this is the first check or permissions actually changed
+          if (!prevPermissions || (prevPermissions && prevPermissions.canViewNotification === true)) {
+            const { title, message } = getPermissionDeniedMessage('canViewNotification');
+            setAccessDeniedModal({
+              show: true,
+              title,
+              message
+            });
+          }
+        } else {
+          // Make sure to hide the modal if permissions were restored
           setAccessDeniedModal({
-            show: true,
-            title,
-            message
+            show: false,
+            title: "",
+            message: ""
           });
         }
       } catch (error) {
@@ -215,6 +231,28 @@ const DonaturUserNotifikasi = () => {
     };
     
     checkPermission();
+    
+    // Disable the auto permission checker from permissionChecker.js for this component
+    const disableAutoCheck = () => {
+      // Check if the global permission checker controller exists
+      if (window.__permissionCheckerController) {
+        // Store the original state
+        window.__permissionCheckerControllerPaused = true;
+        // Stop the checker temporarily
+        window.__permissionCheckerController.pause?.();
+      }
+      
+      return () => {
+        // Resume the checker when component unmounts
+        if (window.__permissionCheckerController && window.__permissionCheckerControllerPaused) {
+          window.__permissionCheckerControllerPaused = false;
+          window.__permissionCheckerController.resume?.();
+        }
+      };
+    };
+    
+    // Return cleanup function
+    return disableAutoCheck();
   }, []);
 
   // Don't render the main component content if user doesn't have permission
@@ -266,8 +304,6 @@ const DonaturUserNotifikasi = () => {
         }
       });
       
-      console.log("Notifications received:", response.data);
-      
       // Filter notifications by type if specified
       let filteredNotifications = response.data;
       if (type && type !== "") {
@@ -296,6 +332,7 @@ const DonaturUserNotifikasi = () => {
       // Only update error state if not just checking for new
       if (!checkForNew) {
         if (error.response) {
+          // Don't show 401 errors as they're handled by the auth system
           if (error.response.status === 401) {
             setError("Sesi Anda telah berakhir atau tidak valid. Silakan login kembali.");
           } else if (error.response.status === 429) {
@@ -515,7 +552,7 @@ const DonaturUserNotifikasi = () => {
     setSnackbar({...snackbar, open: false});
   };
 
-  // Handle refresh button click
+  // Handle refresh button click - Modified to prevent triggering permission check
   const handleRefresh = () => {
     // Clear any error state first
     setError(null);
@@ -528,9 +565,12 @@ const DonaturUserNotifikasi = () => {
     
     // Use refreshKey to trigger a re-fetch
     setRefreshKey(prevKey => prevKey + 1);
+    
+    // Explicitly update the last permission check time to prevent unnecessary check
+    setLastPermissionCheck(Date.now());
   };
   
-  // Check for new notifications periodically
+  // Check for new notifications periodically - Modified to prevent permission checks
   useEffect(() => {
     // Initial fetch
     fetchNotifications(filterType);

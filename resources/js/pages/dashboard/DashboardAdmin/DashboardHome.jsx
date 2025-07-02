@@ -15,6 +15,7 @@ export default function DashboardHome() {
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
   const [donationsLoading, setDonationsLoading] = useState(true);
+  const [expensesLoading, setExpensesLoading] = useState(true);
   const [stats, setStats] = useState({
     totalDonations: 0,
     totalExpenses: 0,
@@ -29,7 +30,6 @@ export default function DashboardHome() {
   });
   const [recentDonations, setRecentDonations] = useState([]);
   const [recentExpenses, setRecentExpenses] = useState([]);
-  const [timeFilter, setTimeFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
   
   // Format currency to Indonesian Rupiah
@@ -66,13 +66,8 @@ export default function DashboardHome() {
     setRefreshing(true);
     await fetchDashboardData();
     await fetchDonations();
+    await fetchExpenses();
     setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  // Handle filter change
-  const handleFilterChange = (filter) => {
-    setTimeFilter(filter);
-    // In a real application, this would trigger a new API call with the filter
   };
 
   // Fetch donation data from the API
@@ -110,37 +105,59 @@ export default function DashboardHome() {
     }
   };
 
+  // Fetch expense data from the API
+  const fetchExpenses = async () => {
+    try {
+      setExpensesLoading(true);
+      
+      // Fetch real expense data from the API
+      const response = await axios.get('/api/Pengeluaran');
+      console.log("Fetched expenses for dashboard:", response.data);
+      
+      // Process the expense data
+      const expenses = response.data.data || response.data || [];
+      
+      if (expenses.length > 0) {
+        // Calculate total expense amount
+        const totalAmount = expenses.reduce((sum, expense) => sum + parseFloat(expense.jumlah || 0), 0);
+        
+        // Update stats with real expense data
+        setStats(prevStats => ({
+          ...prevStats,
+          totalExpenses: totalAmount,
+          balance: prevStats.totalDonations - totalAmount
+        }));
+        
+        // Set recent expenses (latest 5)
+        const sortedExpenses = [...expenses].sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        ).slice(0, 5);
+        
+        setRecentExpenses(sortedExpenses);
+      }
+    } catch (error) {
+      console.error("Error fetching expense data:", error);
+    } finally {
+      setExpensesLoading(false);
+    }
+  };
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
-      // This API call is mocked for now, replace with actual endpoint when available
-      // Since the API might not be fully implemented yet, using dummy data as fallback
+      // Use our new dashboard summary endpoint
+      const response = await axios.get('/api/dashboard-summary');
       
-      /* Uncomment when API is ready
-      const response = await axios.get('/api/admin/dashboard-stats');
-      setStats(response.data.stats);
-      setRecentExpenses(response.data.recentExpenses);
-      */
-      
-      // Dummy data for expenses
-      setRecentExpenses([
-        { id: 1, nama_pengeluaran: "Pembelian Semen", jumlah: 15000000, tanggal_pengeluaran: "2025-06-14", kategori: "Material Bangunan" },
-        { id: 2, nama_pengeluaran: "Upah Tukang", jumlah: 10000000, tanggal_pengeluaran: "2025-06-13", kategori: "Jasa" },
-        { id: 3, nama_pengeluaran: "Besi Beton", jumlah: 7500000, tanggal_pengeluaran: "2025-06-10", kategori: "Material Bangunan" },
-        { id: 4, nama_pengeluaran: "Biaya Konsultasi Arsitek", jumlah: 5000000, tanggal_pengeluaran: "2025-06-08", kategori: "Jasa" },
-        { id: 5, nama_pengeluaran: "Keramik Lantai", jumlah: 12000000, tanggal_pengeluaran: "2025-06-05", kategori: "Material Bangunan" }
-      ]);
-      
-      // Calculate total expenses
-      const totalExpenses = recentExpenses.reduce((sum, expense) => sum + expense.jumlah, 0);
-      
-      // Update stats with expense data
-      setStats(prevStats => ({
-        ...prevStats,
-        totalExpenses: totalExpenses,
-        balance: prevStats.totalDonations - totalExpenses
-      }));
+      if (response.data) {
+        setStats(prevStats => ({
+          ...prevStats,
+          totalDonations: response.data.totalDonations || 0,
+          totalExpenses: response.data.totalExpenses || 0,
+          balance: response.data.balance || 0,
+          donorCount: response.data.donorCount || 0
+        }));
+      }
       
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -153,6 +170,7 @@ export default function DashboardHome() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setUserName(user.name || "Admin");
     fetchDonations();
+    fetchExpenses();
     fetchDashboardData();
   }, []);
 
@@ -224,6 +242,7 @@ export default function DashboardHome() {
   // Recent transaction component
   const TransactionItem = ({ donation, isExpense = false }) => {
     if (isExpense) {
+      // For expenses: use created_at directly
       return (
         <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 rounded-lg px-2 transition-colors">
           <div className="flex items-center">
@@ -234,7 +253,7 @@ export default function DashboardHome() {
               <p className="font-medium text-gray-800">{donation.nama_pengeluaran}</p>
               <div className="flex items-center text-xs text-gray-500">
                 <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
-                {formatDate(donation.tanggal_pengeluaran)}
+                {formatDate(donation.created_at)}
               </div>
             </div>
           </div>
@@ -322,16 +341,6 @@ export default function DashboardHome() {
           </div>
           
           <div className="flex gap-2">
-            <div className="relative">
-              <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg flex items-center gap-2 text-sm font-medium text-gray-600 hover:bg-gray-50">
-                <FontAwesomeIcon icon={faFilter} />
-                {timeFilter === "all" ? "Semua Waktu" : timeFilter}
-                <FontAwesomeIcon icon={faArrowDown} className="text-xs" />
-              </button>
-
-              {/* Filter dropdown would go here */}
-            </div>
-            
             <button 
               onClick={handleRefresh}
               className={`px-4 py-2 bg-white border border-gray-300 rounded-lg flex items-center gap-2 text-sm font-medium text-gray-600 hover:bg-gray-50 ${refreshing ? "opacity-50" : ""}`}
@@ -362,7 +371,7 @@ export default function DashboardHome() {
             value={formatRupiah(stats.totalExpenses)} 
             trend={stats.trends.expenses}
             color="border-l-4 border-red-500"
-            isLoading={loading}
+            isLoading={expensesLoading}
           />
           <StatCard 
             icon={faMosque} 
@@ -370,7 +379,7 @@ export default function DashboardHome() {
             value={formatRupiah(stats.balance)} 
             trend={stats.trends.balance}
             color="border-l-4 border-blue-500"
-            isLoading={loading || donationsLoading}
+            isLoading={loading || donationsLoading || expensesLoading}
           />
           <StatCard 
             icon={faBuilding} 
@@ -382,11 +391,25 @@ export default function DashboardHome() {
           />
         </div>
 
-        {/* Monthly Chart - Now full width */}
+        {/* Financial Chart - Now full width */}
         <div className="grid grid-cols-1 gap-6">
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Pemasukan dan Pengeluaran Masjid Taqwa Muhammadiyah</h3>
-            <MonthlyReportChart />
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+              <h3 className="text-lg font-semibold text-white flex items-center">
+                <FontAwesomeIcon icon={faChartLine} className="mr-2" />
+                Grafik Keuangan Masjid Taqwa Muhammadiyah
+              </h3>
+              <p className="text-blue-100 text-sm mt-1">Visualisasi data pemasukan dan pengeluaran masjid</p>
+            </div>
+            <div className="p-4">
+              {loading ? (
+                <div className="flex justify-center items-center h-80">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : (
+                <MonthlyReportChart />
+              )}
+            </div>
           </div>
         </div>
         
@@ -431,7 +454,7 @@ export default function DashboardHome() {
               )}
             </div>
             <button 
-              onClick={() => window.location.href = '/admin/data-donasi'}
+              onClick={() => window.location.href = '/dashboardhome/datadonasi'}
               className="mt-6 w-full py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
             >
               Lihat Semua Donasi
@@ -450,7 +473,7 @@ export default function DashboardHome() {
               Pengeluaran Terbaru
             </h3>
             <div className="space-y-2">
-              {loading ? (
+              {expensesLoading ? (
                 [...Array(5)].map((_, i) => (
                   <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 animate-pulse">
                     <div className="flex items-center">
@@ -466,7 +489,7 @@ export default function DashboardHome() {
               ) : recentExpenses.length > 0 ? (
                 recentExpenses.map(expense => (
                   <TransactionItem 
-                    key={expense.id}
+                    key={expense.pengeluaran_id || expense.id}
                     donation={expense}
                     isExpense={true}
                   />

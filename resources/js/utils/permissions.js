@@ -3,26 +3,55 @@ let permissionsCache = null;
 let permissionsCacheTime = 0;
 let donationStatusCache = null;
 let donationStatusCacheTime = 0;
+let permissionsFetchInProgress = false;
 
 // Cache expiration time in milliseconds (5 minutes)
 const CACHE_EXPIRATION = 5 * 60 * 1000;
 
+// Flag to track if we're forcing a refresh
+let forceRefresh = false;
+
 /**
  * Fetches the user permissions from the server
+ * @param {boolean} ignoreCache - If true, bypasses the cache
  * @returns {Promise<Object>} User permissions
  */
-export const getUserPermissions = async () => {
+export const getUserPermissions = async (ignoreCache = false) => {
   try {
-    // Check if we have a valid cache
+    // Prevent multiple concurrent requests for permissions
+    if (permissionsFetchInProgress) {
+      // Wait for the existing request to finish if already in progress
+      await new Promise(resolve => {
+        const checkInterval = setInterval(() => {
+          if (!permissionsFetchInProgress) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 100);
+      });
+      
+      // If a request just completed, return the cache
+      if (permissionsCache && !ignoreCache) {
+        return permissionsCache;
+      }
+    }
+    
+    // Check if we have a valid cache and aren't forcing a refresh
     const now = Date.now();
-    if (permissionsCache && (now - permissionsCacheTime < CACHE_EXPIRATION)) {
-      console.log('Using cached permissions:', permissionsCache);
+    if (permissionsCache && (now - permissionsCacheTime < CACHE_EXPIRATION) && !ignoreCache && !forceRefresh) {
       return permissionsCache;
     }
+    
+    // Reset force refresh flag
+    forceRefresh = false;
+    
+    // Mark fetch as in progress
+    permissionsFetchInProgress = true;
     
     const token = localStorage.getItem('token');
     if (!token) {
       console.log('No token found, returning null permissions');
+      permissionsFetchInProgress = false;
       return null;
     }
 
@@ -30,16 +59,24 @@ export const getUserPermissions = async () => {
     const response = await fetch('/api/donatur/profile', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      // Add cache buster
+      cache: 'no-store'
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch user permissions');
+      // Don't throw error for 401 as it's handled by auth system
+      if (response.status !== 401) {
+        throw new Error(`Failed to fetch user permissions: ${response.status}`);
+      }
+      permissionsFetchInProgress = false;
+      return null;
     }
 
     const userData = await response.json();
-    console.log('Raw user data from API:', userData);
     
     // Helper function to convert various truthy values to boolean
     const toBool = (value) => {
@@ -59,37 +96,55 @@ export const getUserPermissions = async () => {
       canViewNotification: toBool(userData.can_view_notification)
     };
     
-    console.log('Processed permissions:', permissions);
-    console.log('Permission types:', {
-      canDonate: typeof permissions.canDonate,
-      canViewHistory: typeof permissions.canViewHistory,
-      canViewNotification: typeof permissions.canViewNotification
-    });
+    // If any permission value is undefined or null, use previous value to prevent false negatives
+    if (permissionsCache) {
+      if (permissions.canDonate === null || permissions.canDonate === undefined) {
+        permissions.canDonate = permissionsCache.canDonate;
+      }
+      if (permissions.canViewHistory === null || permissions.canViewHistory === undefined) {
+        permissions.canViewHistory = permissionsCache.canViewHistory;
+      }
+      if (permissions.canViewNotification === null || permissions.canViewNotification === undefined) {
+        permissions.canViewNotification = permissionsCache.canViewNotification;
+      }
+    }
     
     // Update cache
     permissionsCache = permissions;
     permissionsCacheTime = now;
     
+    // Mark fetch as complete
+    permissionsFetchInProgress = false;
+    
     return permissions;
   } catch (error) {
     console.error('Error fetching user permissions:', error);
-    return null;
+    // Return the cached values on error to prevent false permission revocation
+    permissionsFetchInProgress = false;
+    return permissionsCache || null;
   }
 };
 
 /**
  * Checks the global donation status
+ * @param {boolean} ignoreCache - If true, bypasses the cache
  * @returns {Promise<Object>} Donation status and message
  */
-export const checkGlobalDonationStatus = async () => {
+export const checkGlobalDonationStatus = async (ignoreCache = false) => {
   try {
     // Check if we have a valid cache
     const now = Date.now();
-    if (donationStatusCache && (now - donationStatusCacheTime < CACHE_EXPIRATION)) {
+    if (donationStatusCache && (now - donationStatusCacheTime < CACHE_EXPIRATION) && !ignoreCache) {
       return donationStatusCache;
     }
     
-    const response = await fetch('/api/donation-status');
+    const response = await fetch('/api/donation-status', {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store'
+    });
     
     if (!response.ok) {
       throw new Error('Failed to check donation status');
@@ -115,8 +170,9 @@ export const checkGlobalDonationStatus = async () => {
     return status;
   } catch (error) {
     console.error('Error checking donation status:', error);
-    return {
-      is_active: true, // Default to active if error
+    // Return cached value on error, or default to active if no cache
+    return donationStatusCache || {
+      is_active: true,
       message: null,
       details: {
         end_date_reached: false,
@@ -128,16 +184,31 @@ export const checkGlobalDonationStatus = async () => {
 };
 
 /**
+ * Force refresh of permissions data on next request
+ */
+export const invalidatePermissionsCache = () => {
+  forceRefresh = true;
+};
+
+/**
  * Fetches the detailed donation settings and statistics
  * @returns {Promise<Object>} Donation settings and status
  */
 export const getDetailedDonationStatus = async () => {
   try {
     const token = localStorage.getItem('token');
-    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const headers = token ? { 
+      'Authorization': `Bearer ${token}`,
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    } : {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    };
     
     const response = await fetch('/api/donation-settings', {
-      headers
+      headers,
+      cache: 'no-store'
     });
     
     if (!response.ok) {
@@ -181,6 +252,12 @@ export const hasPermission = (permissions, permissionKey) => {
   if (typeof permValue === 'string') {
     const lower = permValue.toLowerCase();
     return lower === '1' || lower === 'true' || lower === 'yes';
+  }
+  
+  // If permission is undefined, return true to prevent false negatives
+  if (permValue === undefined || permValue === null) {
+    console.warn(`Permission ${permissionKey} is undefined/null, returning true to prevent false negative`);
+    return true;
   }
   
   return Boolean(permValue);

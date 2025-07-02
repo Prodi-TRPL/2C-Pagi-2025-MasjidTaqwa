@@ -26,21 +26,21 @@ class PengeluaranController extends Controller
         
         // Filter by tanggal_start if provided
         if ($request->has('tanggal_start') && $request->tanggal_start) {
-            $query->whereDate('tanggal_pengeluaran', '>=', $request->tanggal_start);
+            $query->whereDate('created_at', '>=', $request->tanggal_start);
         }
         
         // Filter by tanggal_end if provided
         if ($request->has('tanggal_end') && $request->tanggal_end) {
-            $query->whereDate('tanggal_pengeluaran', '<=', $request->tanggal_end);
+            $query->whereDate('created_at', '<=', $request->tanggal_end);
         }
         
         // Filter by single date if provided
         if ($request->has('tanggal_pengeluaran') && $request->tanggal_pengeluaran) {
-            $query->whereDate('tanggal_pengeluaran', $request->tanggal_pengeluaran);
+            $query->whereDate('created_at', $request->tanggal_pengeluaran);
         }
         
-        // Order by tanggal_pengeluaran desc (newest first)
-        $query->orderBy('tanggal_pengeluaran', 'desc');
+        // Order by created_at desc (newest first)
+        $query->orderBy('created_at', 'desc');
         
         $data = $query->get();
         return response()->json($data);
@@ -56,6 +56,9 @@ class PengeluaranController extends Controller
             // Get total number of projects
             $totalProyek = ProyekPembangunan::count();
             
+            // Get total target dana from all projects (total required funds)
+            $totalTargetDana = ProyekPembangunan::sum('target_dana');
+            
             // Get total dana terkumpul from all projects
             $totalDana = ProyekPembangunan::sum('dana_terkumpul');
             
@@ -65,6 +68,7 @@ class PengeluaranController extends Controller
             return response()->json([
                 'totalPengeluaran' => $totalPengeluaran,
                 'totalProyek' => $totalProyek,
+                'totalTargetDana' => $totalTargetDana,
                 'totalDana' => $totalDana,
                 'sisaDana' => $sisaDana
             ]);
@@ -84,7 +88,6 @@ class PengeluaranController extends Controller
             'proyek_id' => 'required|string',
             'kategori_pengeluaran_id' => 'required|string',
             'jumlah' => 'required|numeric',
-            'tanggal_pengeluaran' => 'required|date',
             'keterangan' => 'nullable|string',
         ]);
 
@@ -99,7 +102,6 @@ class PengeluaranController extends Controller
             $pengeluaran->proyek_id = $validated['proyek_id'];
             $pengeluaran->kategori_pengeluaran_id = $validated['kategori_pengeluaran_id'];
             $pengeluaran->jumlah = $validated['jumlah'];
-            $pengeluaran->tanggal_pengeluaran = $validated['tanggal_pengeluaran'];
             $pengeluaran->keterangan = $validated['keterangan'] ?? null;
             
             // Set penginput_id if user is authenticated
@@ -141,7 +143,6 @@ class PengeluaranController extends Controller
             'proyek_id' => 'sometimes|required|string',
             'kategori_pengeluaran_id' => 'sometimes|required|string',
             'jumlah' => 'sometimes|required|numeric',
-            'tanggal_pengeluaran' => 'sometimes|required|date',
             'keterangan' => 'nullable|string',
         ]);
 

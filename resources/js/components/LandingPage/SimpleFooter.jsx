@@ -87,6 +87,14 @@ export const SimpleFooter = () => {
                   Rekapan Donatur
                 </a>
               </li>
+              <li>
+                <a
+                  href="/distribusi-dana-proyek"
+                  className="text-gray-600 transition-colors duration-300 hover:text-[#59B997] hover:underline"
+                >
+                  Distribusi Dana dan Proyek
+                </a>
+              </li>
             </ul>
           </div>
           <div>
