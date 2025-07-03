@@ -150,6 +150,8 @@ Route::get('/dashboard-summary', [AdminGraphAmountController::class, 'getSummary
 // Laporan Keuangan routes
 Route::get('/laporan-keuangan', [LaporanKeuanganController::class, 'index']);
 Route::post('/laporan-keuangan', [LaporanKeuanganController::class, 'store']);
+Route::get('/donations-by-period/{period}', [LaporanKeuanganController::class, 'getDonationsByPeriod']);
+Route::get('/expenses-by-period/{period}', [LaporanKeuanganController::class, 'getExpensesByPeriod']);
 
 // Test route for simulating database access revocation
 Route::get('/test-db-revocation', function() {

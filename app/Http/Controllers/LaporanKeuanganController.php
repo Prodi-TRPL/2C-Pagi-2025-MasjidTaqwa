@@ -23,6 +23,10 @@ class LaporanKeuanganController extends Controller
         // Get filter type (default to 'bulanan' if not specified)
         $filter = $request->query('filter', 'bulanan');
         
+        // Get date range if specified
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        
         // Validate filter parameter
         if (!in_array($filter, ['harian', 'bulanan', 'tahunan'])) {
             return response()->json(['error' => 'Filter tidak valid. Gunakan harian, bulanan, atau tahunan.'], 400);
@@ -48,22 +52,40 @@ class LaporanKeuanganController extends Controller
         }
 
         // Query for income (donasi)
-        $pemasukan = DB::table('donasi')
+        $pemasukanQuery = DB::table('donasi')
             ->select(
-                DB::raw("DATE_FORMAT(tanggal_donasi, '$dateFormat') as periode"),
+                DB::raw("DATE_FORMAT(created_at, '$dateFormat') as periode"),
                 DB::raw("SUM(jumlah) as total_pemasukan")
             )
-            ->where('status', 'Diterima')
-            ->groupBy(DB::raw("DATE_FORMAT(tanggal_donasi, '$dateFormat')"))
+            ->where('status', 'Diterima');
+        
+        // Apply date filters if provided
+        if ($startDate) {
+            $pemasukanQuery->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $pemasukanQuery->where('created_at', '<=', $endDate . ' 23:59:59');
+        }
+        
+        $pemasukan = $pemasukanQuery->groupBy(DB::raw("DATE_FORMAT(created_at, '$dateFormat')"))
             ->get();
 
         // Query for expenses (pengeluaran)
-        $pengeluaran = DB::table('pengeluaran')
+        $pengeluaranQuery = DB::table('pengeluaran')
             ->select(
-                DB::raw("DATE_FORMAT(tanggal_pengeluaran, '$dateFormat') as periode"),
+                DB::raw("DATE_FORMAT(created_at, '$dateFormat') as periode"),
                 DB::raw("SUM(jumlah) as total_pengeluaran")
-            )
-            ->groupBy(DB::raw("DATE_FORMAT(tanggal_pengeluaran, '$dateFormat')"))
+            );
+            
+        // Apply date filters if provided
+        if ($startDate) {
+            $pengeluaranQuery->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $pengeluaranQuery->where('created_at', '<=', $endDate . ' 23:59:59');
+        }
+        
+        $pengeluaran = $pengeluaranQuery->groupBy(DB::raw("DATE_FORMAT(created_at, '$dateFormat')"))
             ->get();
 
         // Combine and process results
@@ -188,5 +210,95 @@ class LaporanKeuanganController extends Controller
             'message' => 'Laporan berhasil ditambahkan',
             'data' => $report
         ], 201);
+    }
+    
+    /**
+     * Get donations for a specific period
+     * 
+     * @param string $period The period in raw format (YYYY-MM-DD, YYYY-MM, or YYYY)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getDonationsByPeriod($period)
+    {
+        try {
+            // Determine the period type based on the format
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $period)) {
+                // Daily format: YYYY-MM-DD
+                $startDate = Carbon::createFromFormat('Y-m-d', $period)->startOfDay();
+                $endDate = Carbon::createFromFormat('Y-m-d', $period)->endOfDay();
+            } elseif (preg_match('/^\d{4}-\d{2}$/', $period)) {
+                // Monthly format: YYYY-MM
+                $startDate = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
+                $endDate = Carbon::createFromFormat('Y-m', $period)->endOfMonth();
+            } elseif (preg_match('/^\d{4}$/', $period)) {
+                // Yearly format: YYYY
+                $startDate = Carbon::createFromFormat('Y', $period)->startOfYear();
+                $endDate = Carbon::createFromFormat('Y', $period)->endOfYear();
+            } else {
+                return response()->json(['error' => 'Format periode tidak valid'], 400);
+            }
+            
+            // Query donations for the period
+            $donations = DB::table('donasi')
+                ->select(
+                    'id',
+                    'jumlah',
+                    'status',
+                    DB::raw('COALESCE(name, "Anonymous") as nama'),
+                    DB::raw('DATE_FORMAT(created_at, "%d %b %Y") as tanggal')
+                )
+                ->where('status', 'Diterima')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->orderBy('created_at', 'desc')
+                ->get();
+                
+            return response()->json($donations);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal mengambil data donasi: ' . $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Get expenses for a specific period
+     * 
+     * @param string $period The period in raw format (YYYY-MM-DD, YYYY-MM, or YYYY)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getExpensesByPeriod($period)
+    {
+        try {
+            // Determine the period type based on the format
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $period)) {
+                // Daily format: YYYY-MM-DD
+                $startDate = Carbon::createFromFormat('Y-m-d', $period)->startOfDay();
+                $endDate = Carbon::createFromFormat('Y-m-d', $period)->endOfDay();
+            } elseif (preg_match('/^\d{4}-\d{2}$/', $period)) {
+                // Monthly format: YYYY-MM
+                $startDate = Carbon::createFromFormat('Y-m', $period)->startOfMonth();
+                $endDate = Carbon::createFromFormat('Y-m', $period)->endOfMonth();
+            } elseif (preg_match('/^\d{4}$/', $period)) {
+                // Yearly format: YYYY
+                $startDate = Carbon::createFromFormat('Y', $period)->startOfYear();
+                $endDate = Carbon::createFromFormat('Y', $period)->endOfYear();
+            } else {
+                return response()->json(['error' => 'Format periode tidak valid'], 400);
+            }
+            
+            // Query expenses for the period
+            $expenses = DB::table('pengeluaran')
+                ->select(
+                    'id',
+                    'jumlah',
+                    'keterangan',
+                    DB::raw('DATE_FORMAT(created_at, "%d %b %Y") as tanggal')
+                )
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->orderBy('created_at', 'desc')
+                ->get();
+                
+            return response()->json($expenses);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal mengambil data pengeluaran: ' . $e->getMessage()], 500);
+        }
     }
 } 
