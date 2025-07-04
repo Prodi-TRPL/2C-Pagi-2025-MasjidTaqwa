@@ -6,12 +6,12 @@ use Illuminate\Database\Seeder;
 use App\Models\Pengguna;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Notifications\EmailVerificationNotification;
 
 class DonorsUserSeeder extends Seeder
 {
     public function run()
     {
-        // Sample donor accounts
         $donors = [
             [
                 'nama' => 'Muhammad Addin',
@@ -62,7 +62,11 @@ class DonorsUserSeeder extends Seeder
                 $donor->can_view_notification = $donorData['can_view_notification'];
                 $donor->created_at = now();
                 $donor->save();
-                
+
+                // Kirim kode verifikasi
+                $kode = $donor->generateVerificationCode();
+                $donor->notify(new EmailVerificationNotification($kode, $donor->nama));
+
                 $this->command->info('Created donor: ' . $donorData['nama']);
             }
         }

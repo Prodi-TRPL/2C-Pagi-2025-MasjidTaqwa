@@ -19,6 +19,7 @@ use App\Http\Controllers\DonorPermissionsController;
 use App\Http\Controllers\DonationSettingsController;
 use App\Http\Controllers\DonationSummaryController;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Validator;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +52,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
+Route::post('/resend-verification', [AuthController::class, 'resendVerificationCode']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/verify-reset-code', [AuthController::class, 'verifyResetCode']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/reset-password-langsung', [AuthController::class, 'resetPasswordLangsung']);
 
 // Notifikasi routes
@@ -103,7 +109,7 @@ Route::get('/donation-status', [DonationSettingsController::class, 'checkDonatio
 Route::get('/donation-summary/monthly', [DonationSummaryController::class, 'getMonthlyDonationSummary']);
 Route::get('/donation-summary/chart', [DonationSummaryController::class, 'getDonationChartData']);
 
-Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/notifikasi', [AdminNotifikasiController::class, 'index']);
     Route::post('/notifikasi', [AdminNotifikasiController::class, 'store']);
     Route::delete('/notifikasi/{id}', [AdminNotifikasiController::class, 'destroy']);
@@ -182,6 +188,63 @@ Route::middleware('auth:sanctum')->get('/user/permissions', function (Request $r
         'canViewHistory' => $user->can_view_history === 1 || $user->can_view_history === true,
         'canViewNotification' => $user->can_view_notification === 1 || $user->can_view_notification === true
     ]);
+});
+
+// Add debugging route for registration
+Route::post('/debug-register', function(Request $request) {
+    return response()->json([
+        'status' => 'received',
+        'data' => $request->all(),
+        'validation' => Validator::make($request->all(), [
+            'nama' => 'required|string|max:100',
+            'email' => 'required|email|unique:pengguna,email',
+            'password' => 'required|string|min:8|confirmed',
+            'nomor_hp' => 'nullable|string|max:15',
+        ])->errors()
+    ]);
+});
+
+// Add a simplified registration test route
+Route::post('/simple-register', function(Request $request) {
+    try {
+        $validator = Validator::make($request->all(), [
+            'nama' => 'required|string|max:100',
+            'email' => 'required|email|unique:pengguna,email',
+            'password' => 'required|string|min:8|confirmed',
+            'nomor_hp' => 'nullable|string|max:15',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Validation passed',
+            'data' => $request->except(['password', 'password_confirmation'])
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+
+use App\Models\Pengguna;
+use App\Notifications\EmailVerificationNotification;
+
+Route::get('/test-mail', function () {
+    $user = \App\Models\Pengguna::first();
+    $kode = rand(100000, 999999);
+    $user->notify(new EmailVerificationNotification($kode, $user->nama));
+    return 'Email test terkirim';
 });
 
 

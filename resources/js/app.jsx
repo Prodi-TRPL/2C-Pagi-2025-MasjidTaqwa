@@ -6,6 +6,7 @@ import { SidebarProvider } from './context/SidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { setupPermissionChecker } from './utils/permissionChecker';
 import { invalidatePermissionsCache } from './utils/permissions';
+import axios from 'axios';
 
 import '../css/app.css'; // Tailwind
 import Beranda from './pages/Beranda';
@@ -31,6 +32,133 @@ import LaporanKeuangan from './pages/dashboard/DashboardAdmin/LaporanKeuangan';
 import ProyekPembangunan from './pages/dashboard/DashboardAdmin/ProyekPembangunan';
 import DetailProyek from './pages/dashboard/DashboardAdmin/DetailProyek';
 import KelolaAksesDonatur from './pages/dashboard/DashboardAdmin/KelolaAksesDonatur';
+
+// Import new auth components
+import VerifyEmail from './pages/auth/VerifyEmail';
+import ResetPassword from './pages/auth/ResetPassword';
+import ResendVerification from './pages/auth/ResendVerification';
+import VerificationFailed from './pages/auth/VerificationFailed';
+import VerificationError from './pages/auth/VerificationError';
+
+// Diagnostic component
+const DiagnosticPage = () => {
+  const [testStatus, setTestStatus] = useState('Ready');
+  const [results, setResults] = useState([]);
+  
+  const runTest = async (name, testFn) => {
+    try {
+      setResults(prev => [...prev, { name, status: 'Running...' }]);
+      await testFn();
+      setResults(prev => prev.map(r => r.name === name ? { ...r, status: 'Passed' } : r));
+    } catch (error) {
+      setResults(prev => prev.map(r => r.name === name ? { ...r, status: 'Failed', error: error.message } : r));
+    }
+  };
+  
+  const testRegistration = async () => {
+    const testData = {
+      nama: 'Test User ' + Date.now(),
+      email: 'test' + Date.now() + '@example.com',
+      password: 'password123',
+      password_confirmation: 'password123'
+    };
+    
+    setTestStatus('Testing registration...');
+    
+    try {
+      const debugResponse = await axios.post('/api/debug-register', testData);
+      console.log('Debug response:', debugResponse.data);
+      
+      if (Object.keys(debugResponse.data.validation).length > 0) {
+        throw new Error('Validation failed: ' + JSON.stringify(debugResponse.data.validation));
+      }
+      
+      setTestStatus('Registration validation OK');
+    } catch (error) {
+      setTestStatus('Registration test failed');
+      throw error;
+    }
+  };
+  
+  const testSimpleRegistration = async () => {
+    const testData = {
+      nama: 'Simple Test User ' + Date.now(),
+      email: 'simple' + Date.now() + '@example.com',
+      password: 'password123',
+      password_confirmation: 'password123'
+    };
+    
+    setTestStatus('Testing simple registration...');
+    
+    try {
+      const response = await axios.post('/api/simple-register', testData);
+      console.log('Simple registration response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error('Validation failed: ' + JSON.stringify(response.data.errors));
+      }
+      
+      setTestStatus('Simple registration validation OK');
+    } catch (error) {
+      console.error('Simple registration error:', error);
+      setTestStatus('Simple registration test failed');
+      throw error;
+    }
+  };
+  
+  return (
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Diagnostic Tests</h1>
+      
+      <div className="mb-4">
+        <p>Status: {testStatus}</p>
+      </div>
+      
+      <div className="flex gap-4 mb-6">
+        <button 
+          onClick={() => runTest('Registration', testRegistration)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Test Registration
+        </button>
+        
+        <button 
+          onClick={() => runTest('Simple Registration', testSimpleRegistration)}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Test Simple Registration
+        </button>
+      </div>
+      
+      <div className="border rounded p-4">
+        <h2 className="text-xl font-semibold mb-3">Results:</h2>
+        
+        {results.length === 0 ? (
+          <p className="text-gray-500">No tests run yet</p>
+        ) : (
+          <ul>
+            {results.map((result, index) => (
+              <li key={index} className="mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{result.name}:</span>
+                  <span className={`px-2 py-1 rounded text-white text-sm ${
+                    result.status === 'Passed' ? 'bg-green-500' : 
+                    result.status === 'Failed' ? 'bg-red-500' : 'bg-yellow-500'
+                  }`}>
+                    {result.status}
+                  </span>
+                </div>
+                {result.error && (
+                  <p className="text-red-500 text-sm mt-1">{result.error}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+};
 
 import { AppWrapper } from './components/common/PageMeta'; // Import AppWrapper for HelmetProvider
 import AppLayout from './layout/AppLayout'; // Dashboard layout component
@@ -170,6 +298,13 @@ const AppRoutes = () => {
             />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/lupapassword" element={<LupaPassword />} />
+            
+            {/* New auth routes */}
+            <Route path="/verify-email/:id/:token" element={<VerifyEmail />} />
+            <Route path="/reset-password/:id/:token" element={<ResetPassword />} />
+            <Route path="/resend-verification" element={<ResendVerification />} />
+            <Route path="/verification-failed" element={<VerificationFailed />} />
+            <Route path="/verification-error" element={<VerificationError />} />
 
             {/* Dashboard routes wrapped in layout and protected */}
             <Route
@@ -201,6 +336,9 @@ const AppRoutes = () => {
                 </PrivateRoute>
               }
             />
+
+            {/* Diagnostic route */}
+            <Route path="/diagnostic" element={<DiagnosticPage />} />
           </Routes>
            
         </CSSTransition>
