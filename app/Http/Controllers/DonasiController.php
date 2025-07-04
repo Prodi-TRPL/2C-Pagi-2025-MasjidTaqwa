@@ -31,7 +31,8 @@ class DonasiController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
                 'amount' => 'required|numeric|min:10000',
-                'user_id' => 'nullable|string'
+                'user_id' => 'nullable|string',
+                'is_anonymous' => 'nullable|boolean'
             ]);
             
             // Parse and validate amount to ensure it's an integer
@@ -54,7 +55,8 @@ class DonasiController extends Controller
                 'email' => $request->email,
                 'raw_amount' => $request->amount,
                 'processed_amount' => $amount,
-                'user_id' => $request->user_id
+                'user_id' => $request->user_id,
+                'is_anonymous' => $request->is_anonymous
             ]);
             
             // Generate order ID
@@ -94,8 +96,11 @@ class DonasiController extends Controller
             $donation->snap_token = $snapToken;
             $donation->payment_type = 'midtrans';
             
+            // Handle anonymous donations
+            $isAnonymous = $request->has('is_anonymous') && $request->is_anonymous === true;
+            
             // Always store name and email regardless of authentication status
-            $donation->name = $request->name;
+            $donation->name = $isAnonymous ? 'Donatur Anonim' : $request->name;
             $donation->email = $request->email;
             
             // Set user ID if authenticated or provided
@@ -108,17 +113,24 @@ class DonasiController extends Controller
                 // Try to get user data for this ID
                 $user = Pengguna::find($request->user_id);
                 if ($user) {
-                    $donation->name = $user->nama;
+                    // Only override name if not anonymous
+                    if (!$isAnonymous) {
+                        $donation->name = $user->nama;
+                    }
                     $donation->email = $user->email;
                 }
                 
                 Log::info('Setting pengguna_id from request', [
                     'id' => $request->user_id,
                     'name' => $donation->name,
-                    'email' => $donation->email
+                    'email' => $donation->email,
+                    'is_anonymous' => $isAnonymous
                 ]);
             } else {
-                Log::info('Setting anonymous donor info', ['name' => $request->name]);
+                Log::info('Setting donor info', [
+                    'name' => $donation->name,
+                    'is_anonymous' => $isAnonymous
+                ]);
             }
             
             $donation->save();
@@ -126,7 +138,8 @@ class DonasiController extends Controller
             Log::info('Donation record created successfully', [
                 'donasi_id' => $donation->donasi_id,
                 'amount' => $donation->jumlah,
-                'order_id' => $orderId
+                'order_id' => $orderId,
+                'is_anonymous' => $isAnonymous
             ]);
             
             // Return token to frontend

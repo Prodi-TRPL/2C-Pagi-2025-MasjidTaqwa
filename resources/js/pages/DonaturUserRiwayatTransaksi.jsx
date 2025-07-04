@@ -440,7 +440,7 @@ function DonaturUserRiwayatTransaksi() {
                 raw_jumlah: donation.jumlah,
                 // Handle payment method display
                 payment_method_name: donation.payment_method_name || 
-                  (donation.payment_type ? formatPaymentMethod(donation.payment_type) : 'Midtrans')
+                  (donation.payment_type ? formatPaymentMethod(donation.payment_type) : 'Transfer')
               };
             });
           
@@ -551,7 +551,7 @@ function DonaturUserRiwayatTransaksi() {
       'shopeepay': 'ShopeePay',
       'credit_card': 'Kartu Kredit',
       'cstore': 'Convenience Store',
-      'midtrans': 'Midtrans',
+      'midtrans': 'Transfer',
     };
     
     return methodMap[paymentType.toLowerCase()] || 

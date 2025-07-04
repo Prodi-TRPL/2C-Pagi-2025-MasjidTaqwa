@@ -68,31 +68,31 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     
     // Add route to directly fix donations (without command)
     Route::get('/fix-donations-directly', function () {
-        // Find a Midtrans payment method or create one
-        $midtransMethod = DB::table('metode_pembayaran')
-            ->where('nama_metode', 'Midtrans')
+        // Find a Transfer payment method or create one
+        $transferMethod = DB::table('metode_pembayaran')
+            ->where('nama_metode', 'Transfer')
             ->first();
 
-        if (!$midtransMethod) {
-            $midtransId = Str::uuid();
+        if (!$transferMethod) {
+            $transferId = Str::uuid();
             DB::table('metode_pembayaran')->insert([
-                'metode_pembayaran_id' => $midtransId,
-                'nama_metode' => 'Midtrans',
-                'deskripsi' => 'Pembayaran via Midtrans (online)'
+                'metode_pembayaran_id' => $transferId,
+                'nama_metode' => 'Transfer',
+                'deskripsi' => 'Pembayaran via transfer'
             ]);
         } else {
-            $midtransId = $midtransMethod->metode_pembayaran_id;
+            $transferId = $transferMethod->metode_pembayaran_id;
         }
 
         // Fix null payment types
         DB::table('donasi')
             ->whereNull('payment_type')
-            ->update(['payment_type' => 'midtrans']);
+            ->update(['payment_type' => 'transfer']);
 
         // Fix null metode_pembayaran_id
         DB::table('donasi')
             ->whereNull('metode_pembayaran_id')
-            ->update(['metode_pembayaran_id' => $midtransId]);
+            ->update(['metode_pembayaran_id' => $transferId]);
 
         // Fix non-Diterima statuses
         DB::table('donasi')

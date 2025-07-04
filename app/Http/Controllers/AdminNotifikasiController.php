@@ -17,11 +17,11 @@ class AdminNotifikasiController extends Controller
     public function index()
     {
         try {
-            // Cek apakah user adalah admin (sesuaikan dengan sistem role Anda)
-            $user = Auth::user();
-            if (!$user) {
-                return response()->json(['message' => 'Unauthorized'], 401);
-            }
+        // Cek apakah user adalah admin (sesuaikan dengan sistem role Anda)
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
             // Log untuk debugging
             \Illuminate\Support\Facades\Log::info('Admin notification index accessed by user:', [
@@ -39,14 +39,14 @@ class AdminNotifikasiController extends Controller
                 return response()->json(['message' => 'Forbidden: Admin access required'], 403);
             }
 
-            // Ambil notifikasi yang dibuat manual (bukan dari sistem donasi)
-            // Asumsi: notifikasi manual tidak punya donasi_id
-            $notifications = Notifikasi::whereNull('donasi_id')
+        // Ambil notifikasi yang dibuat manual (bukan dari sistem donasi)
+        // Asumsi: notifikasi manual tidak punya donasi_id
+        $notifications = Notifikasi::whereNull('donasi_id')
                 ->select('notifikasi_id', 'tipe', 'judul', 'pesan', 'status', 'created_at')
-                ->orderBy('created_at', 'desc')
-                ->get();
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-            return response()->json($notifications);
+        return response()->json($notifications);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Error fetching admin notifications: ' . $e->getMessage());
             \Illuminate\Support\Facades\Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -64,24 +64,24 @@ class AdminNotifikasiController extends Controller
     public function store(Request $request)
     {
         try {
-            $user = Auth::user();
-            if (!$user) {
-                return response()->json(['message' => 'Unauthorized'], 401);
-            }
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
-            $request->validate([
-                'jenis' => 'required|string|in:Progress Pembangunan,Target Proyek Tercapai',
-                'judul' => 'required|string|max:255',
-                'pesan' => 'required|string',
-            ]);
+        $request->validate([
+            'jenis' => 'required|string|in:Progress Pembangunan,Target Proyek Tercapai',
+            'judul' => 'required|string|max:255',
+            'pesan' => 'required|string',
+        ]);
 
-            // Map frontend types to database types
-            $typeMapping = [
-                'Progress Pembangunan' => 'progres_pembangunan',
-                'Target Proyek Tercapai' => 'target_tercapai'
-            ];
+        // Map frontend types to database types
+        $typeMapping = [
+            'Progress Pembangunan' => 'progres_pembangunan',
+            'Target Proyek Tercapai' => 'target_tercapai'
+        ];
 
-            $tipe = $typeMapping[$request->jenis];
+        $tipe = $typeMapping[$request->jenis];
 
             // Cari semua user donatur - sesuaikan dengan struktur tabel user Anda
             $users = DB::table('pengguna')
@@ -182,10 +182,10 @@ class AdminNotifikasiController extends Controller
     public function getStats()
     {
         try {
-            $user = Auth::user();
-            if (!$user) {
-                return response()->json(['message' => 'Unauthorized'], 401);
-            }
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
             // Log untuk debugging
             \Illuminate\Support\Facades\Log::info('Admin notification stats accessed by user:', [
@@ -222,7 +222,7 @@ class AdminNotifikasiController extends Controller
                 'total_unread' => $totalUnread,
                 'read_percentage' => $readPercentage
             ]);
-            
+
             return response()->json([
                 'total_sent' => $totalSent,
                 'total_read' => $totalRead,

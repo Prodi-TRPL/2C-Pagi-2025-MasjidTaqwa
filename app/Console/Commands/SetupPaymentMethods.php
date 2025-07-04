@@ -31,7 +31,7 @@ class SetupPaymentMethods extends Command
         $this->info('Setting up default payment methods...');
         
         $paymentMethods = [
-            ['name' => 'Midtrans', 'description' => 'Pembayaran via Midtrans (online)'],
+            ['name' => 'Transfer', 'description' => 'Pembayaran via transfer'],
             ['name' => 'Transfer Bank', 'description' => 'Pembayaran via transfer bank'],
             ['name' => 'QRIS', 'description' => 'Pembayaran via QRIS'],
             ['name' => 'GoPay', 'description' => 'Pembayaran via GoPay'],

@@ -344,12 +344,12 @@ public function register(Request $request)
                 ], 403);
             }
 
-            // Attempt to authenticate
-            if (!Auth::attempt($credentials, $remember)) {
+            // Attempt to authenticate using web guard explicitly
+            if (!Auth::guard('web')->attempt($credentials, $remember)) {
                 return response()->json(['message' => 'Email atau password salah.'], 401);
             }
 
-            $user = Auth::user();
+            $user = Auth::guard('web')->user();
             // Use the createToken method from HasApiTokens trait which is properly used in the Pengguna model
             $token = $user->createToken('authToken')->plainTextToken;
 
@@ -369,7 +369,7 @@ public function register(Request $request)
      */
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 

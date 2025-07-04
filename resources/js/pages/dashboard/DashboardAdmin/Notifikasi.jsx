@@ -407,7 +407,7 @@ const Notifikasi = () => {
       {/* Tabel */}
       <div className="overflow-x-auto mb-4">
         <table className="w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <thead style={{ backgroundColor: "#59B997" }} className="text-white">
+                      <thead style={{ backgroundColor: "#59B997" }} className="text-white">
             <tr>
               <th className="px-4 py-2 text-left">Jenis</th>
               <th className="px-4 py-2 text-left">Judul</th>
@@ -453,7 +453,7 @@ const Notifikasi = () => {
                     {formatDate(item.created_at)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
+                                          <button
                       onClick={() => openDeleteConfirm(item.notifikasi_id)}
                       className="text-red-500 hover:text-red-700 text-sm p-1 rounded hover:bg-red-50 transition-colors"
                       title="Hapus notifikasi untuk semua donatur"

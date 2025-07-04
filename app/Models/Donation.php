@@ -22,12 +22,14 @@ class Donation extends Model
         'payment_type',
         'name',
         'email',
+        'is_anonymous',
         'created_at',
         'updated_at'
     ];
     
     protected $attributes = [
         'status' => 'Kadaluarsa', // Default value until payment is confirmed
+        'is_anonymous' => false,  // Default value for anonymous flag
     ];
 
     public function pengguna()

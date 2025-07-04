@@ -4,7 +4,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faSearch, faEye, faCheckCircle, 
   faCalendarAlt, faCreditCard, faUser, faMoneyBillWave,
-  faExclamationTriangle, faIdCard
+  faExclamationTriangle, faIdCard,
+  faAngleLeft, faAngleRight
 } from "@fortawesome/free-solid-svg-icons";
 import { motion } from "framer-motion";
 
@@ -14,10 +15,13 @@ export default function DataDonasi() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [error, setError] = useState(null);
-  const itemsPerPage = 10;
+  
+  // Data limit options
+  const limitOptions = [10, 20, 50, 100];
 
   // Format currency to Indonesian Rupiah
   const formatRupiah = (amount) => {
@@ -94,6 +98,12 @@ export default function DataDonasi() {
     setSearchTerm(e.target.value);
   };
 
+  // Handle items per page change
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
   // View donation details
   const viewDonationDetails = (donation) => {
     setSelectedDonation(donation);
@@ -122,6 +132,11 @@ export default function DataDonasi() {
   useEffect(() => {
     filterDonations();
   }, [searchTerm, donations]);
+
+  // Reset to page 1 when itemsPerPage changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   // Get status badge style
   const getStatusBadge = (status) => {
@@ -176,7 +191,7 @@ export default function DataDonasi() {
     } else if (donation.payment_type) {
       return donation.payment_type.replace('_', ' ').toUpperCase();
     } else if (donation.snap_token) {
-      return "Midtrans";
+      return "Transfer";
     } else {
       return "Pembayaran Online";
     }
@@ -193,6 +208,144 @@ export default function DataDonasi() {
       </div>
     </div>
   );
+
+  // Render pagination controls
+  const renderPagination = () => {
+    if (filteredDonations.length <= itemsPerPage) return null;
+
+    return (
+      <div className="px-6 py-3 flex flex-wrap items-center justify-between border-t border-gray-200">
+        {/* Mobile pagination */}
+        <div className="flex-1 flex justify-between sm:hidden">
+          <button
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+          >
+            Sebelumnya
+          </button>
+          <button
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`relative ml-3 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+          >
+            Berikutnya
+          </button>
+        </div>
+        
+        {/* Desktop pagination */}
+        <div className="hidden sm:flex-1 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Menampilkan <span className="font-medium">{indexOfFirstItem + 1}</span> sampai <span className="font-medium">{Math.min(indexOfLastItem, filteredDonations.length)}</span> dari <span className="font-medium">{filteredDonations.length}</span> data
+            </p>
+          </div>
+          
+          <div className="flex items-center mt-2 sm:mt-0">
+            {/* Items per page selector */}
+            <div className="mr-4">
+              <label htmlFor="itemsPerPage" className="mr-2 text-sm text-gray-600">Tampilkan:</label>
+              <select
+                id="itemsPerPage"
+                value={itemsPerPage}
+                onChange={handleItemsPerPageChange}
+                className="rounded border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {limitOptions.map(option => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Pagination controls */}
+            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+              >
+                <span className="sr-only">Previous</span>
+                <FontAwesomeIcon icon={faAngleLeft} className="h-5 w-5" aria-hidden="true" />
+              </button>
+              
+              {/* Page numbers */}
+              {(() => {
+                let pages = [];
+                const maxVisiblePages = 5;
+                
+                if (totalPages <= maxVisiblePages) {
+                  // Show all pages if total pages are less than or equal to maxVisiblePages
+                  pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+                } else {
+                  // Show a window of pages centered around the current page when possible
+                  const leftBound = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                  const rightBound = Math.min(totalPages, leftBound + maxVisiblePages - 1);
+                  
+                  // Adjust leftBound if we're near the end to always show maxVisiblePages
+                  const adjustedLeftBound = Math.max(1, rightBound - maxVisiblePages + 1);
+                  
+                  pages = Array.from(
+                    { length: rightBound - adjustedLeftBound + 1 },
+                    (_, i) => adjustedLeftBound + i
+                  );
+                  
+                  // Add first page and ellipsis if needed
+                  if (adjustedLeftBound > 1) {
+                    pages.unshift('ellipsis-start');
+                    pages.unshift(1);
+                  }
+                  
+                  // Add last page and ellipsis if needed
+                  if (rightBound < totalPages) {
+                    pages.push('ellipsis-end');
+                    pages.push(totalPages);
+                  }
+                }
+                
+                return pages.map((page, index) => {
+                  if (page === 'ellipsis-start' || page === 'ellipsis-end') {
+                    return (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => paginate(page)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === page
+                          ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                });
+              })()}
+              
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+              >
+                <span className="sr-only">Next</span>
+                <FontAwesomeIcon icon={faAngleRight} className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -314,7 +467,7 @@ export default function DataDonasi() {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                      <td colSpan="6" className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                         Tidak ada data donasi ditemukan
                       </td>
                     </tr>
@@ -324,71 +477,7 @@ export default function DataDonasi() {
             </div>
             
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
-                <div className="flex-1 flex justify-between sm:hidden">
-                  <button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-                  >
-                    Sebelumnya
-                  </button>
-                  <button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-                  >
-                    Berikutnya
-                  </button>
-                </div>
-                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-gray-700">
-                      Menampilkan <span className="font-medium">{indexOfFirstItem + 1}</span> sampai <span className="font-medium">{Math.min(indexOfLastItem, filteredDonations.length)}</span> dari <span className="font-medium">{filteredDonations.length}</span> data
-                    </p>
-                  </div>
-                  <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                      <button
-                        onClick={() => paginate(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-                      >
-                        <span className="sr-only">Previous</span>
-                        &larr;
-                      </button>
-                      
-                      {[...Array(totalPages)].map((_, index) => {
-                        const pageNumber = index + 1;
-                        return (
-                          <button
-                            key={pageNumber}
-                            onClick={() => paginate(pageNumber)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                              currentPage === pageNumber
-                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                            }`}
-                          >
-                            {pageNumber}
-                          </button>
-                        );
-                      })}
-                      
-                      <button
-                        onClick={() => paginate(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
-                      >
-                        <span className="sr-only">Next</span>
-                        &rarr;
-                      </button>
-                    </nav>
-                  </div>
-                </div>
-              </div>
-            )}
+            {renderPagination()}
           </>
         )}
       </div>

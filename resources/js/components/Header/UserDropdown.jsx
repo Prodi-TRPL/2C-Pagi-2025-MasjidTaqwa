@@ -3,7 +3,7 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHome, faUserEdit, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { faUserEdit, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 
 export default function UserDropdown() {
@@ -122,17 +122,6 @@ export default function UserDropdown() {
             >
               <FontAwesomeIcon icon={faUserEdit} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
               Profile
-            </DropdownItem>
-          </li>
-          <li>
-            <DropdownItem
-              onItemClick={closeDropdown}
-              tag="a"
-              to="/"
-              className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-            >
-              <FontAwesomeIcon icon={faHome} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-              Ke Beranda
             </DropdownItem>
           </li>
           <li>

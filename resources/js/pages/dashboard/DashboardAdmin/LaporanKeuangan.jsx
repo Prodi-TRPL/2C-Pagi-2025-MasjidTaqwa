@@ -12,7 +12,9 @@ import {
   faFileExcel,
   faInfoCircle,
   faSearch,
-  faClock
+  faClock,
+  faAngleLeft,
+  faAngleRight
 } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from 'xlsx';
 import DatePicker from 'react-datepicker';
@@ -38,6 +40,9 @@ const LaporanKeuangan = () => {
     startDate: null,
     endDate: null
   });
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Filter options
   const filterOptions = [
@@ -45,6 +50,9 @@ const LaporanKeuangan = () => {
     { value: "bulanan", label: "Bulanan" },
     { value: "tahunan", label: "Tahunan" },
   ];
+
+  // Data limit options
+  const limitOptions = [10, 20, 50, 100];
 
   // Helper functions for formatting
   // Format date for API requests
@@ -162,6 +170,8 @@ const LaporanKeuangan = () => {
       
       setTransactions(combined);
       applyTransactionFilters(combined);
+      // Reset to page 1 whenever we fetch new data
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching transactions:", error);
     } finally {
@@ -180,6 +190,11 @@ const LaporanKeuangan = () => {
   useEffect(() => {
     applyTransactionFilters(transactions);
   }, [searchTerm, transactions]);
+
+  // Reset to page 1 when itemsPerPage changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   const handleFilterChange = (selectedFilter) => {
     setFilter(selectedFilter);
@@ -212,6 +227,8 @@ const LaporanKeuangan = () => {
     );
     
     setFilteredTransactions(filtered);
+    // Reset to page 1 when filter changes
+    setCurrentPage(1);
   };
 
   // Get title based on filter
@@ -373,6 +390,22 @@ const LaporanKeuangan = () => {
     });
   };
 
+  // Handle items per page change
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(Number(e.target.value));
+  };
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredTransactions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   // Render summary cards
   const renderSummary = () => {
     return (
@@ -407,7 +440,7 @@ const LaporanKeuangan = () => {
     let runningBalance = summary.total_saldo;
     
     // Sort transactions by date (newest first for display)
-    const sortedTransactions = [...filteredTransactions].sort((a, b) => b.tanggal - a.tanggal);
+    const sortedTransactions = [...currentItems].sort((a, b) => b.tanggal - a.tanggal);
     
     return (
       <div className="overflow-x-auto bg-white dark:bg-slate-800 rounded-lg shadow-md">
@@ -482,6 +515,131 @@ const LaporanKeuangan = () => {
     );
   };
 
+  // Render pagination controls
+  const renderPagination = () => {
+    if (filteredTransactions.length <= itemsPerPage) return null;
+
+    return (
+      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow-md">
+        <div className="flex flex-1 justify-between sm:hidden">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${
+              currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+            }`}
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${
+              currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+            }`}
+          >
+            Next
+          </button>
+        </div>
+        
+        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+              <span className="font-medium">
+                {Math.min(indexOfLastItem, filteredTransactions.length)}
+              </span>{" "}
+              of <span className="font-medium">{filteredTransactions.length}</span> results
+            </p>
+          </div>
+          
+          <div className="flex items-center">
+            <div className="mr-4">
+              <label htmlFor="itemsPerPage" className="mr-2 text-sm text-gray-600">Show:</label>
+              <select
+                id="itemsPerPage"
+                value={itemsPerPage}
+                onChange={handleItemsPerPageChange}
+                className="rounded border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {limitOptions.map(option => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ${
+                  currentPage === 1 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                }`}
+              >
+                <span className="sr-only">Previous</span>
+                <FontAwesomeIcon icon={faAngleLeft} className="h-5 w-5" aria-hidden="true" />
+              </button>
+              
+              {/* Page numbers */}
+              {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                // Logic to show pages around current page
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = idx + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = idx + 1;
+                  if (idx === 4) pageNum = totalPages;
+                  if (idx === 3 && totalPages > 5) pageNum = "...";
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + idx;
+                } else {
+                  pageNum = currentPage - 2 + idx;
+                  if (idx === 0) pageNum = 1;
+                  if (idx === 1 && currentPage > 3) pageNum = "...";
+                  if (idx === 4 && currentPage < totalPages - 2) pageNum = "...";
+                  if (idx === 4 && currentPage < totalPages - 1) pageNum = totalPages;
+                }
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => typeof pageNum === 'number' && handlePageChange(pageNum)}
+                    className={`relative z-10 inline-flex items-center px-4 py-2 text-sm focus:z-20 
+                      ${typeof pageNum !== 'number' 
+                        ? 'text-gray-700 pointer-events-none'
+                        : currentPage === pageNum
+                          ? 'bg-blue-50 border-blue-500 text-blue-600 border'
+                          : 'text-gray-900 hover:bg-gray-50 border-gray-300 border'
+                      }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ${
+                  currentPage === totalPages 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                }`}
+              >
+                <span className="sr-only">Next</span>
+                <FontAwesomeIcon icon={faAngleRight} className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Page Header */}
@@ -515,7 +673,7 @@ const LaporanKeuangan = () => {
                 className="text-gray-500 mr-2"
               />
               <span className="text-sm text-gray-600">Filter:</span>
-            </div>
+          </div>
             <div className="flex space-x-2">
               {filterOptions.map((option) => (
                 <button
@@ -530,10 +688,10 @@ const LaporanKeuangan = () => {
                   {option.label}
                 </button>
               ))}
-            </div>
           </div>
         </div>
-        
+      </div>
+
         {/* Additional filters and export */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {/* Search Filter */}
@@ -548,8 +706,8 @@ const LaporanKeuangan = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
-          
+            </div>
+
           {/* Date Range Picker */}
           <div className="flex space-x-2">
             <DatePicker
@@ -570,14 +728,14 @@ const LaporanKeuangan = () => {
               minDate={dateRange.startDate}
             />
           </div>
-          
+
           {/* Clear Filter Button */}
-          <button
+              <button 
             className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
             onClick={clearFilters}
-          >
+              >
             Reset Filter
-          </button>
+              </button>
           
           {/* Export Button */}
           <button
@@ -592,19 +750,22 @@ const LaporanKeuangan = () => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 Exporting...
-              </span>
-            ) : (
-              <>
+                              </span>
+                                ) : (
+                                  <>
                 <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
                 Export to Excel
-              </>
-            )}
-          </button>
-        </div>
-
+                                  </>
+                                )}
+                                    </button>
+                                  </div>
+                                  
         {/* Transaction Table */}
         {renderTransactionsTable()}
-      </div>
+        
+        {/* Pagination Controls */}
+        {renderPagination()}
+          </div>
     </div>
   );
 };

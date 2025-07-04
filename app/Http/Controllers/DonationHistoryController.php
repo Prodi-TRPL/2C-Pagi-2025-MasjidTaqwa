@@ -50,7 +50,7 @@ class DonationHistoryController extends Controller
                             $donation->payment_method_name = 'ShopeePay';
                             break;
                         case 'midtrans':
-                            $donation->payment_method_name = 'Midtrans';
+                            $donation->payment_method_name = 'Transfer';
                             break;
                         default:
                             $donation->payment_method_name = ucfirst(str_replace('_', ' ', $donation->payment_type));

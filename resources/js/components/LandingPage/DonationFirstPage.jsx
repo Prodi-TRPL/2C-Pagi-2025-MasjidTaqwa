@@ -8,6 +8,7 @@ const DonationFirstPage = () => {
     name: "",
     email: "",
     amount: "",
+    is_anonymous: false
   });
 
   // Display value for the amount (formatted)
@@ -59,7 +60,8 @@ const DonationFirstPage = () => {
           setFormData(prevData => ({
             ...prevData,
             name: response.data.nama || "",
-            email: response.data.email || ""
+            email: response.data.email || "",
+            is_anonymous: false
           }));
         }
       } catch (error) {
@@ -92,7 +94,7 @@ const DonationFirstPage = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     
     if (name === "amount") {
       // For amount field, we need to format it
@@ -109,10 +111,18 @@ const DonationFirstPage = () => {
       
       // Reset active button when manually changing
       setActiveAmount(null);
+    } else if (type === "checkbox") {
+      // For checkbox inputs, use the checked property
+      setFormData({...formData, [name]: checked});
     } else {
       // For other fields, just update normally
       setFormData({...formData, [name]: value});
     }
+  };
+
+  // Handle anonymous checkbox toggle for authenticated users
+  const handleAnonymousToggle = (e) => {
+    setFormData({...formData, is_anonymous: e.target.checked});
   };
 
   const handleQuickAmountSelect = (amount) => {
@@ -204,9 +214,10 @@ const DonationFirstPage = () => {
 
     // Prepare donation data
     const donationData = {
-      name: formData.name,
+      name: formData.is_anonymous ? "Donatur Anonim" : formData.name,
       email: formData.email,
-      amount: formData.amount
+      amount: formData.amount,
+      is_anonymous: formData.is_anonymous
     };
     
     // If user is authenticated, include user_id
@@ -275,7 +286,8 @@ const DonationFirstPage = () => {
             setFormData({
               name: isAuthenticated ? user?.nama || "" : "",
               email: isAuthenticated ? user?.email || "" : "",
-              amount: ""
+              amount: "",
+              is_anonymous: false
             });
             
             // Also reset the display amount
@@ -432,18 +444,61 @@ const DonationFirstPage = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              disabled={isAuthenticated}
-              className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#59B997] transition ${isAuthenticated ? 'bg-gray-100 text-gray-700 cursor-not-allowed' : ''}`}
-              placeholder="Masukkan nama lengkap Anda"
-            />
-            {isAuthenticated && (
-              <p className="text-xs text-gray-500 mt-1">Nama diambil dari akun Anda</p>
+            {isAuthenticated ? (
+              <div>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  disabled={true}
+                  className="w-full px-4 py-2 border rounded-lg shadow-sm bg-gray-100 text-gray-700 cursor-not-allowed"
+                />
+                <div className="mt-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_anonymous"
+                    name="is_anonymous"
+                    checked={formData.is_anonymous}
+                    onChange={handleAnonymousToggle}
+                    className="h-4 w-4 text-[#59B997] focus:ring-[#59B997] border-gray-300 rounded"
+                  />
+                  <label htmlFor="is_anonymous" className="ml-2 block text-sm text-gray-700">
+                    Tampilkan sebagai "Donatur Anonim"
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.is_anonymous 
+                    ? "Nama Anda akan disembunyikan dalam publikasi donasi" 
+                    : "Nama diambil dari akun Anda"}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#59B997] transition"
+                  placeholder="Masukkan nama lengkap atau 'Donatur Anonim'"
+                />
+                <div className="mt-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_anonymous"
+                    name="is_anonymous"
+                    checked={formData.is_anonymous}
+                    onChange={handleAnonymousToggle}
+                    className="h-4 w-4 text-[#59B997] focus:ring-[#59B997] border-gray-300 rounded"
+                  />
+                  <label htmlFor="is_anonymous" className="ml-2 block text-sm text-gray-700">
+                    Saya ingin berdonasi sebagai "Donatur Anonim"
+                  </label>
+                </div>
+              </div>
             )}
           </div>
 
