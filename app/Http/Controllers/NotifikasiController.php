@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notifikasi;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class NotifikasiController extends Controller
 {
@@ -180,5 +181,58 @@ class NotifikasiController extends Controller
             Log::error('Error checking for new notifications: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to check for new notifications'], 500);
         }
+    }
+
+    /**
+     * STRUKTUR DATA: QUEUE IMPLEMENTATION
+     * Implementasi antrian notifikasi menggunakan prinsip FIFO (First In, First Out)
+     * Notifikasi yang masuk lebih dulu akan diproses lebih dulu
+     */
+    public function queueNotification($userId, $title, $message, $priority = 'normal')
+    {
+        // Membuat objek notifikasi
+        $notification = new Notifikasi();
+        $notification->notifikasi_id = (string) Str::uuid();
+        $notification->pengguna_id = $userId;
+        $notification->judul = $title;
+        $notification->pesan = $message;
+        $notification->status = 'terkirim';
+        $notification->priority = $priority;
+        $notification->processed = false; // Tandai belum diproses
+        $notification->created_at = now();
+        $notification->save();
+        
+        // Memproses antrian notifikasi
+        $this->processNotificationQueue();
+        
+        return $notification->notifikasi_id;
+    }
+
+    /**
+     * STRUKTUR DATA: QUEUE PROCESSING
+     * Memproses antrian notifikasi berdasarkan prioritas dan waktu masuk
+     * Mengikuti prinsip FIFO untuk notifikasi dengan prioritas yang sama
+     */
+    public function processNotificationQueue($limit = 50)
+    {
+        $notifications = Notifikasi::where('processed', false)
+            ->orderBy('priority', 'desc')  // Prioritas tinggi diproses lebih dulu
+            ->orderBy('created_at', 'asc') // FIFO untuk prioritas yang sama
+            ->limit($limit)
+            ->get();
+        
+        foreach ($notifications as $notification) {
+            $this->sendNotification($notification);
+            
+            $notification->processed = true;
+            $notification->save();
+        }
+        
+        return count($notifications);
+    }
+
+    private function sendNotification($notification)
+    {
+        return true;
     }
 }

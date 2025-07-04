@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiTrash2, FiRefreshCw, FiSend, FiUsers, FiCheck, FiX, FiAlertCircle } from "react-icons/fi";
+import { FiTrash2, FiRefreshCw, FiSend, FiUsers, FiCheck, FiX, FiAlertCircle, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,6 +13,11 @@ const Notifikasi = () => {
     total_unread: 0,
     read_percentage: 0
   });
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   
   // State for notification popup
   const [notification, setNotification] = useState({
@@ -48,15 +53,46 @@ const Notifikasi = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        showNotification("Token tidak ditemukan. Silakan login kembali.", "error");
+        setLoading(false);
+        return;
+      }
+      
       const response = await axios.get("/api/admin/notifikasi", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setNotifikasiList(response.data);
+      
+      // Calculate total pages
+      setTotalPages(Math.ceil(response.data.length / entriesPerPage));
+      
+      // Reset to first page when data changes
+      setCurrentPage(1);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
-      showNotification("Gagal memuat notifikasi", "error");
+      
+      // Tampilkan pesan error yang lebih spesifik
+      if (error.response) {
+        // Server merespons dengan status code di luar range 2xx
+        if (error.response.status === 401) {
+          showNotification("Sesi Anda telah berakhir. Silakan login kembali.", "error");
+        } else if (error.response.status === 403) {
+          showNotification("Anda tidak memiliki akses ke halaman ini.", "error");
+        } else if (error.response.status === 500) {
+          showNotification("Terjadi kesalahan pada server. Silakan coba lagi nanti.", "error");
+        } else {
+          showNotification(`Gagal memuat notifikasi: ${error.response.data.message || 'Unknown error'}`, "error");
+        }
+      } else if (error.request) {
+        // Request dibuat tapi tidak ada respons
+        showNotification("Tidak dapat terhubung ke server. Periksa koneksi Anda.", "error");
+      } else {
+        // Kesalahan lainnya
+        showNotification("Gagal memuat notifikasi: " + error.message, "error");
+      }
     } finally {
       setLoading(false);
     }
@@ -66,6 +102,11 @@ const Notifikasi = () => {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found");
+        return;
+      }
+      
       const response = await axios.get("/api/admin/notifikasi/stats", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -74,6 +115,11 @@ const Notifikasi = () => {
       setStats(response.data);
     } catch (error) {
       console.error("Failed to fetch stats:", error);
+      
+      // Tampilkan pesan error yang lebih spesifik untuk statistik
+      if (error.response && error.response.status === 500) {
+        showNotification("Gagal memuat statistik notifikasi. Silakan coba lagi nanti.", "warning");
+      }
     }
   };
 
@@ -81,6 +127,15 @@ const Notifikasi = () => {
     fetchNotifications();
     fetchStats();
   }, []);
+  
+  // Update total pages when entries per page changes
+  useEffect(() => {
+    if (notifikasiList.length > 0) {
+      setTotalPages(Math.ceil(notifikasiList.length / entriesPerPage));
+      // Reset to first page when entries per page changes
+      setCurrentPage(1);
+    }
+  }, [entriesPerPage, notifikasiList]);
 
   const handleTambah = async (e) => {
     e.preventDefault();
@@ -167,6 +222,22 @@ const Notifikasi = () => {
       minute: '2-digit'
     });
   };
+  
+  // Handle entries per page change
+  const handleEntriesChange = (e) => {
+    setEntriesPerPage(Number(e.target.value));
+  };
+  
+  // Handle page change
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+  
+  // Get current notifications for the page
+  const indexOfLastEntry = currentPage * entriesPerPage;
+  const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
+  const currentNotifications = notifikasiList.slice(indexOfFirstEntry, indexOfLastEntry);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -311,10 +382,32 @@ const Notifikasi = () => {
         </button>
       </form>
 
+      {/* Show entries filter */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center">
+          <span className="text-sm text-gray-600 mr-2">Tampilkan</span>
+          <select
+            className="border border-gray-300 rounded px-2 py-1 focus:outline-none text-sm"
+            style={{ outlineColor: "#59B997" }}
+            value={entriesPerPage}
+            onChange={handleEntriesChange}
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <span className="text-sm text-gray-600 ml-2">entri</span>
+        </div>
+        <div className="text-sm text-gray-600">
+          Menampilkan {notifikasiList.length > 0 ? indexOfFirstEntry + 1 : 0} - {Math.min(indexOfLastEntry, notifikasiList.length)} dari {notifikasiList.length} notifikasi
+        </div>
+      </div>
+
       {/* Tabel */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto mb-4">
         <table className="w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-                      <thead style={{ backgroundColor: "#59B997" }} className="text-white">
+          <thead style={{ backgroundColor: "#59B997" }} className="text-white">
             <tr>
               <th className="px-4 py-2 text-left">Jenis</th>
               <th className="px-4 py-2 text-left">Judul</th>
@@ -338,7 +431,7 @@ const Notifikasi = () => {
                 </td>
               </tr>
             ) : (
-              notifikasiList.map((item) => (
+              currentNotifications.map((item) => (
                 <tr
                   key={item.notifikasi_id}
                   className="hover:bg-gray-50 border-t border-gray-200 transition"
@@ -360,7 +453,7 @@ const Notifikasi = () => {
                     {formatDate(item.created_at)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                                          <button
+                    <button
                       onClick={() => openDeleteConfirm(item.notifikasi_id)}
                       className="text-red-500 hover:text-red-700 text-sm p-1 rounded hover:bg-red-50 transition-colors"
                       title="Hapus notifikasi untuk semua donatur"
@@ -374,6 +467,99 @@ const Notifikasi = () => {
           </tbody>
         </table>
       </div>
+      
+      {/* Pagination */}
+      {notifikasiList.length > 0 && (
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            Halaman {currentPage} dari {totalPages}
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded border ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              Pertama
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded border flex items-center ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <FiChevronLeft className="mr-1" />
+              Sebelumnya
+            </button>
+            
+            {/* Page numbers */}
+            <div className="flex space-x-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                // Show pages around current page
+                let pageNum;
+                if (totalPages <= 5) {
+                  // If 5 or fewer pages, show all
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  // If near start, show first 5
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  // If near end, show last 5
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  // Otherwise show current and 2 on each side
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`w-8 h-8 flex items-center justify-center rounded ${
+                      currentPage === pageNum
+                        ? "bg-[#59B997] text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-50 border"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded border flex items-center ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              Berikutnya
+              <FiChevronRight className="ml-1" />
+            </button>
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded border ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              Terakhir
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Confirmation Dialog for Delete */}
       {confirmDelete.show && (

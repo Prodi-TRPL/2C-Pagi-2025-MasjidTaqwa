@@ -16,20 +16,46 @@ class AdminNotifikasiController extends Controller
      */
     public function index()
     {
-        // Cek apakah user adalah admin (sesuaikan dengan sistem role Anda)
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        try {
+            // Cek apakah user adalah admin (sesuaikan dengan sistem role Anda)
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            // Log untuk debugging
+            \Illuminate\Support\Facades\Log::info('Admin notification index accessed by user:', [
+                'user_id' => $user->pengguna_id,
+                'email' => $user->email,
+                'role' => $user->role ?? 'unknown'
+            ]);
+
+            // Periksa apakah user adalah admin
+            if ($user->role !== 'admin') {
+                \Illuminate\Support\Facades\Log::warning('Non-admin user attempted to access admin notifications', [
+                    'user_id' => $user->pengguna_id,
+                    'role' => $user->role ?? 'unknown'
+                ]);
+                return response()->json(['message' => 'Forbidden: Admin access required'], 403);
+            }
+
+            // Ambil notifikasi yang dibuat manual (bukan dari sistem donasi)
+            // Asumsi: notifikasi manual tidak punya donasi_id
+            $notifications = Notifikasi::whereNull('donasi_id')
+                ->select('notifikasi_id', 'tipe', 'judul', 'pesan', 'status', 'created_at')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json($notifications);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error fetching admin notifications: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'message' => 'Gagal mengambil data notifikasi',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Ambil notifikasi yang dibuat manual (bukan dari sistem donasi)
-        // Asumsi: notifikasi manual tidak punya donasi_id
-        $notifications = Notifikasi::whereNull('donasi_id')
-            ->select('notifikasi_id', 'tipe', 'judul', 'pesan', 'created_at')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json($notifications);
     }
 
     /**
@@ -37,26 +63,26 @@ class AdminNotifikasiController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $request->validate([
-            'jenis' => 'required|string|in:Progress Pembangunan,Target Proyek Tercapai',
-            'judul' => 'required|string|max:255',
-            'pesan' => 'required|string',
-        ]);
-
-        // Map frontend types to database types
-        $typeMapping = [
-            'Progress Pembangunan' => 'progres_pembangunan',
-            'Target Proyek Tercapai' => 'target_tercapai'
-        ];
-
-        $tipe = $typeMapping[$request->jenis];
-
         try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $request->validate([
+                'jenis' => 'required|string|in:Progress Pembangunan,Target Proyek Tercapai',
+                'judul' => 'required|string|max:255',
+                'pesan' => 'required|string',
+            ]);
+
+            // Map frontend types to database types
+            $typeMapping = [
+                'Progress Pembangunan' => 'progres_pembangunan',
+                'Target Proyek Tercapai' => 'target_tercapai'
+            ];
+
+            $tipe = $typeMapping[$request->jenis];
+
             // Cari semua user donatur - sesuaikan dengan struktur tabel user Anda
             $users = DB::table('pengguna')
                 ->where('role', 'donatur') // Sesuaikan dengan field role Anda
@@ -71,7 +97,7 @@ class AdminNotifikasiController extends Controller
 
             $notifications = [];
             foreach ($users as $targetUser) {
-                $notification = Notifikasi::create([
+                $notificationData = [
                     'notifikasi_id' => (string) Str::uuid(),
                     'pengguna_id' => $targetUser->pengguna_id,
                     'donasi_id' => null,
@@ -79,8 +105,15 @@ class AdminNotifikasiController extends Controller
                     'judul' => $request->judul,
                     'pesan' => $request->pesan,
                     'status' => 'terkirim',
-                    // created_at and updated_at will be automatically set by Laravel
-                ]);
+                    'processed' => true, // Admin notifications are considered already processed
+                    'priority' => 'normal', // Default priority
+                    'created_at' => now()
+                ];
+                
+                // Log data yang akan disimpan untuk debugging
+                \Illuminate\Support\Facades\Log::info('Creating notification with data:', $notificationData);
+                
+                $notification = Notifikasi::create($notificationData);
                 $notifications[] = $notification;
             }
 
@@ -89,7 +122,16 @@ class AdminNotifikasiController extends Controller
                 'count' => count($notifications),
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('Validation error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error sending notification: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             return response()->json([
                 'message' => 'Gagal mengirim notifikasi',
                 'error' => $e->getMessage(),
@@ -139,29 +181,61 @@ class AdminNotifikasiController extends Controller
      */
     public function getStats()
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
         try {
-            // Hitung statistik notifikasi manual (tanpa donasi_id)
-            $totalSent = Notifikasi::whereNull('donasi_id')->count();
-            $totalRead = Notifikasi::whereNull('donasi_id')
-                ->where('status', 'dibaca')->count();
-            $totalUnread = Notifikasi::whereNull('donasi_id')
-                ->where('status', 'terkirim')->count();
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
 
+            // Log untuk debugging
+            \Illuminate\Support\Facades\Log::info('Admin notification stats accessed by user:', [
+                'user_id' => $user->pengguna_id,
+                'email' => $user->email,
+                'role' => $user->role ?? 'unknown'
+            ]);
+
+            // Periksa apakah user adalah admin
+            if ($user->role !== 'admin') {
+                \Illuminate\Support\Facades\Log::warning('Non-admin user attempted to access admin notification stats', [
+                    'user_id' => $user->pengguna_id,
+                    'role' => $user->role ?? 'unknown'
+                ]);
+                return response()->json(['message' => 'Forbidden: Admin access required'], 403);
+            }
+
+            // Hitung total notifikasi yang terkirim
+            $totalSent = Notifikasi::count();
+            
+            // Hitung total notifikasi yang sudah dibaca
+            $totalRead = Notifikasi::where('status', 'dibaca')->count();
+            
+            // Hitung total notifikasi yang belum dibaca
+            $totalUnread = Notifikasi::where('status', 'terkirim')->count();
+            
+            // Hitung persentase yang sudah dibaca
+            $readPercentage = $totalSent > 0 ? round(($totalRead / $totalSent) * 100) : 0;
+            
+            // Log stats untuk debugging
+            \Illuminate\Support\Facades\Log::info('Notification stats calculated:', [
+                'total_sent' => $totalSent,
+                'total_read' => $totalRead,
+                'total_unread' => $totalUnread,
+                'read_percentage' => $readPercentage
+            ]);
+            
             return response()->json([
                 'total_sent' => $totalSent,
                 'total_read' => $totalRead,
                 'total_unread' => $totalUnread,
-                'read_percentage' => $totalSent > 0 ? round(($totalRead / $totalSent) * 100, 2) : 0
+                'read_percentage' => $readPercentage
             ]);
-
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error fetching notification stats: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             return response()->json([
-                'message' => 'Gagal mengambil statistik: ' . $e->getMessage()
+                'message' => 'Gagal mengambil statistik notifikasi',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

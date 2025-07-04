@@ -8,11 +8,27 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     /**
+     * The Artisan commands provided by your application.
+     *
+     * @var array
+     */
+    protected $commands = [
+        Commands\CheckPendingDonations::class,
+        Commands\FixDonationStatuses::class,
+        Commands\SetupPaymentMethods::class,
+        Commands\UpdateDonationStatus::class,
+        Commands\ProcessNotificationQueue::class,
+    ];
+
+    /**
      * Define the application's command schedule.
      */
     protected function schedule(Schedule $schedule): void
     {
         // $schedule->command('inspire')->hourly();
+        
+        // Process notification queue every 5 minutes
+        $schedule->command('notifications:process')->everyFiveMinutes();
     }
 
     /**

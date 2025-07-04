@@ -304,6 +304,8 @@ class DonasiController extends Controller
             $notification->judul = 'Donasi Anda Berhasil';
             $notification->pesan = "Terima kasih! Donasi Anda sebesar Rp {$formattedAmount} telah berhasil diterima. Semoga kebaikan Anda dibalas berlipat ganda.";
             $notification->status = 'terkirim';
+            $notification->processed = true; // Donasi notifications are considered already processed
+            $notification->priority = 'normal'; // Default priority
             $notification->save();
             
             Log::info('Donation notification created', [

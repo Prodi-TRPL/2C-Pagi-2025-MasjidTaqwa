@@ -3,7 +3,6 @@ import React from 'react';
 import NavbarBaru from '../components/LandingPage/NavbarBaru'; // Pastikan path-nya benar
 import HomeContent from '../components/LandingPage/HomeContent';
 import HomeContentAbout from '../components/LandingPage/HomeContentAbout'; 
-import HomeContentEco from '../components/LandingPage/HomeContentEco';
 import HomeContentAdvantage from '../components/LandingPage/HomeContentAdvantage';
 import HomeContentContact from '../components/LandingPage/HomeContentContact';
 import HomeContentSignUp from '../components/LandingPage/HomeContentSignUp';
@@ -22,9 +21,6 @@ function Beranda() {
       </div>
       <div className="relative z-0">
         <HomeContentAbout />
-      </div>
-      <div className="relative z-0">
-        <HomeContentEco />
       </div>
       <div className="relative z-0">
         <HomeContentAdvantage />

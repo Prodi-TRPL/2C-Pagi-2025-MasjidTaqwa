@@ -7,15 +7,14 @@ import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faCalendarDay, 
-  faCalendarWeek, 
-  faCalendarAlt,
+  faCalendarWeek,
   faSpinner
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function MonthlyReportChart() {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [period, setPeriod] = useState("monthly"); // Options: daily, monthly, yearly
+    const [period, setPeriod] = useState("monthly"); // Options: daily, monthly
     const [incomes, setIncomes] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -41,9 +40,7 @@ export default function MonthlyReportChart() {
             // Add period and date parameters if needed
             const params = { period };
             
-            if (period === 'yearly') {
-                params.year = year;
-            } else if (period === 'monthly') {
+            if (period === 'monthly') {
                 params.year = year;
             } else if (period === 'daily') {
                 params.year = year;
@@ -86,37 +83,6 @@ export default function MonthlyReportChart() {
                     
                     setIncomes(dailyIncomes);
                     setExpenses(dailyExpenses);
-                }
-            } else if (period === 'yearly') {
-                // Yearly data
-                setCategories(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']);
-                
-                if (response.data.incomes && response.data.expenses) {
-                    setIncomes(response.data.incomes);
-                    setExpenses(response.data.expenses);
-                } else {
-                    // Use the raw data if the API doesn't return the processed arrays
-                    const monthlyIncomes = Array(12).fill(0);
-                    const monthlyExpenses = Array(12).fill(0);
-                    
-                    response.data.donations?.forEach(donation => {
-                        const date = new Date(donation.created_at);
-                        if (date.getFullYear() === year) {
-                            const month = date.getMonth();
-                            monthlyIncomes[month] += parseFloat(donation.jumlah || 0);
-                        }
-                    });
-                    
-                    response.data.expenses?.forEach(expense => {
-                        const date = new Date(expense.created_at);
-                        if (date.getFullYear() === year) {
-                            const month = date.getMonth();
-                            monthlyExpenses[month] += parseFloat(expense.jumlah || 0);
-                        }
-                    });
-                    
-                    setIncomes(monthlyIncomes);
-                    setExpenses(monthlyExpenses);
                 }
             } else {
                 // Default: monthly data (last 12 months)
@@ -223,7 +189,7 @@ export default function MonthlyReportChart() {
             axisBorder: { show: false },
             axisTicks: { show: false },
             title: {
-                text: period === 'daily' ? 'Tanggal' : (period === 'monthly' ? 'Bulan' : 'Bulan'),
+                text: period === 'daily' ? 'Tanggal' : 'Bulan',
                 style: {
                     fontSize: '12px',
                     fontWeight: 600
@@ -285,18 +251,21 @@ export default function MonthlyReportChart() {
         { name: "Pengeluaran", data: expenses },
     ];
 
-    // Filter options for periods
+    // Filter options for periods (removed 'yearly')
     const periodOptions = [
         { id: 'daily', label: 'Harian', icon: faCalendarDay },
-        { id: 'monthly', label: 'Bulanan', icon: faCalendarWeek },
-        { id: 'yearly', label: 'Tahunan', icon: faCalendarAlt }
+        { id: 'monthly', label: 'Bulanan', icon: faCalendarWeek }
     ];
 
-    // Year options (last 5 years)
-    const yearOptions = Array.from({ length: 5 }, (_, i) => {
-        const yearValue = new Date().getFullYear() - i;
-        return { id: yearValue, label: yearValue.toString() };
-    });
+    // Year options - dynamically generate from 2025 (start of app) to current year
+    // This will automatically include new years as they come
+    const currentYear = new Date().getFullYear();
+    const startYear = 2025; // App start year
+    const yearOptions = [];
+    
+    for (let y = currentYear; y >= startYear; y--) {
+        yearOptions.push({ id: y, label: y.toString() });
+    }
 
     // Month options
     const monthOptions = [
@@ -348,7 +317,7 @@ export default function MonthlyReportChart() {
                         ))}
                     </div>
                     
-                    {/* Year selector (shown for all periods) */}
+                    {/* Year selector - now shows all years from app start to current */}
                     <select
                         value={year}
                         onChange={(e) => setYear(parseInt(e.target.value))}

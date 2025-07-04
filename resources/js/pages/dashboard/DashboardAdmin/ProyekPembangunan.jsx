@@ -7,6 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 
 const ProyekPembangunan = () => {
+  /**
+   * STRUKTUR DATA: ARRAY IMPLEMENTATION
+   * Array untuk menyimpan daftar proyek, pengeluaran, dan kategori
+   * Memungkinkan penyimpanan, iterasi, dan manipulasi data secara efisien
+   */
   const [proyeks, setProyeks] = useState([]);
   const [selectedProyek, setSelectedProyek] = useState(null);
   const [pengeluarans, setPengeluarans] = useState([]);
@@ -645,7 +650,11 @@ const ProyekPembangunan = () => {
     }
   }, [selectedProyek, filterPengeluaran]);
 
-  // Filter and sort projects based on search term, status filter, and sort option
+  /**
+   * STRUKTUR DATA: ARRAY FILTERING AND SORTING
+   * Implementasi filter dan pengurutan pada array proyeks
+   * Menggunakan metode array seperti filter, sort, dan map untuk manipulasi data
+   */
   useEffect(() => {
     // First, apply search filter
     let filtered = [...proyeks];
@@ -660,7 +669,7 @@ const ProyekPembangunan = () => {
     // Then, apply status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(p => {
-        const progress = hitungProgress(p.dana_terkumpul, p.target_dana);
+        const progress = hitungProgress(p);
         if (statusFilter === 'completed') {
           return progress >= 100;
         } else if (statusFilter === 'in-progress') {
@@ -1246,12 +1255,17 @@ const ProyekPembangunan = () => {
     }
   };
 
+  /**
+   * STRUKTUR DATA: ARRAY PAGINATION
+   * Implementasi pagination pada array proyeks
+   * Menggunakan metode slice untuk mengambil subset data yang akan ditampilkan
+   */
   // Pagination calculation
   const indexOfLastProject = currentPage * projectsPerPage;
   const indexOfFirstProject = indexOfLastProject - projectsPerPage;
   const currentProjects = filteredProyeks.slice(indexOfFirstProject, indexOfLastProject);
   const totalPages = Math.ceil(filteredProyeks.length / projectsPerPage);
-  
+
   // Filter and sort project expenses
   useEffect(() => {
     if (!proyekPengeluarans.length) {
