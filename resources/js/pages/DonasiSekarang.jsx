@@ -16,6 +16,9 @@ const DonasiSekarang = () => {
         message: "",
         icon: "warning"
     });
+    // State for any form errors that bubble up
+    const [formError, setFormError] = useState(null);
+    
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -77,6 +80,11 @@ const DonasiSekarang = () => {
         }
     };
 
+    // Function to handle validation errors from DonationFirstPage
+    const handleValidationError = (error) => {
+        setFormError(error);
+    };
+
     // Function to close the access denial modal
     const closeAccessDeniedModal = () => {
         setAccessDeniedModal({ ...accessDeniedModal, show: false });
@@ -92,7 +100,10 @@ const DonasiSekarang = () => {
         
         // If we're still checking permissions or user is not logged in, show the donation page
         if (!permissionChecked || !localStorage.getItem('token')) {
-            return <DonationFirstPage title="Donasi Sekarang" />;
+            return <DonationFirstPage 
+                title="Donasi Sekarang" 
+                onValidationError={handleValidationError} 
+            />;
         }
         
         // Check if logged in user has permission
@@ -101,7 +112,10 @@ const DonasiSekarang = () => {
         }
         
         // User has permission, show donation page
-        return <DonationFirstPage title="Donasi Sekarang" />;
+        return <DonationFirstPage 
+            title="Donasi Sekarang" 
+            onValidationError={handleValidationError} 
+        />;
     };
 
     return (
@@ -110,6 +124,15 @@ const DonasiSekarang = () => {
             <div className="relative z-20">
                 <NavbarBaru />
             </div>
+            
+            {/* Error from form validation */}
+            {formError && (
+                <div className="relative z-15 max-w-md mx-auto mt-4">
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                        {formError}
+                    </div>
+                </div>
+            )}
             
             {/* Hero Section */}
             <div className="relative z-5">

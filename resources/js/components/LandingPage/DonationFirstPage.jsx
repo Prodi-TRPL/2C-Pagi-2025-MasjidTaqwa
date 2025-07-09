@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import 'aos/dist/aos.css';
 import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 
-const DonationFirstPage = () => {
+const DonationFirstPage = ({ title = "Donasi Sekarang", onValidationError }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -22,6 +22,9 @@ const DonationFirstPage = () => {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [notificationSent, setNotificationSent] = useState(false);
+  const [emailValidating, setEmailValidating] = useState(false);
+  const [emailError, setEmailError] = useState(null);
+  const emailValidationPromise = useRef(null);
 
   // Helper function to safely get item from localStorage
   const safeGetItem = (key) => {
@@ -120,9 +123,18 @@ const DonationFirstPage = () => {
     }
   };
 
-  // Handle anonymous checkbox toggle for authenticated users
+  // Update the handleAnonymousToggle function to also update the name field for non-authenticated users
   const handleAnonymousToggle = (e) => {
-    setFormData({...formData, is_anonymous: e.target.checked});
+    const isChecked = e.target.checked;
+    
+    // Update the is_anonymous state
+    setFormData({
+      ...formData, 
+      is_anonymous: isChecked,
+      // If checked and the user is not authenticated, set the name to "Donatur Anonim"
+      // Otherwise keep the existing name
+      name: isChecked && !isAuthenticated ? "Donatur Anonim" : isChecked ? formData.name : formData.name
+    });
   };
 
   const handleQuickAmountSelect = (amount) => {
@@ -151,25 +163,108 @@ const DonationFirstPage = () => {
     setActiveAmount(null); // Reset active button when using decrement
   };
 
+  // Email validation with regex
+  const validateEmailFormat = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return emailRegex.test(email);
+  };
+
+  // Check MX records of email domain
+  const validateEmailDomain = async (email) => {
+    try {
+      setEmailValidating(true);
+      setEmailError(null);
+      
+      const domain = email.split('@')[1];
+      const response = await axios.post('/api/validate-email-domain', { domain });
+      
+      setEmailValidating(false);
+      return response.data.valid;
+    } catch (error) {
+      console.error("Error validating email domain:", error);
+      setEmailValidating(false);
+      return false;
+    }
+  };
+
+  // Update the handleEmailBlur function to only set emailError and not propagate to the general error display
+  const handleEmailBlur = async (e) => {
+    const email = e.target.value;
+    
+    // Skip validation for authenticated users or empty email
+    if (isAuthenticated || !email) {
+      emailValidationPromise.current = null;
+      return;
+    }
+    
+    // First validate format
+    if (!validateEmailFormat(email)) {
+      const errorMsg = "Email tidak valid, silakan gunakan email aktif.";
+      setEmailError(errorMsg);
+      // Only notify parent, don't set general error
+      if (onValidationError) onValidationError(null);
+      emailValidationPromise.current = null;
+      return;
+    }
+    
+    // Create a promise for MX validation that we can track
+    emailValidationPromise.current = validateEmailDomain(email).then(isValidDomain => {
+      if (!isValidDomain) {
+        const errorMsg = "Email tidak valid, silakan gunakan email aktif.";
+        setEmailError(errorMsg);
+        // Only notify parent, don't set general error
+        if (onValidationError) onValidationError(null);
+      } else {
+        setEmailError(null);
+        if (onValidationError) onValidationError(null);
+      }
+      emailValidationPromise.current = null;
+      return isValidDomain;
+    });
+  };
+
+  // Modify the validateForm function to avoid setting general error for email validation issues
   const validateForm = () => {
     // Basic validation
     if (!formData.name.trim()) {
-      setError("Nama harus diisi");
+      const errorMsg = "Nama harus diisi";
+      setError(errorMsg);
+      if (onValidationError) onValidationError(errorMsg);
       return false;
     }
     
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
-      setError("Email tidak valid");
+    // Email validation - check if empty
+    if (!formData.email.trim()) {
+      const errorMsg = "Email harus diisi";
+      setError(errorMsg);
+      if (onValidationError) onValidationError(errorMsg);
+      return false;
+    }
+
+    // Format validation - only set emailError, not general error
+    if (!validateEmailFormat(formData.email)) {
+      const errorMsg = "Email tidak valid, silakan gunakan email aktif.";
+      setEmailError(errorMsg);
+      // Don't set the general error
+      return false;
+    }
+    
+    // If we have an email error (from MX validation), use it but don't show in general error
+    if (emailError) {
+      // Don't set the general error, the specific field error is enough
       return false;
     }
     
     const numericAmount = parseInt(formData.amount) || 0;
     if (!formData.amount || numericAmount < 10000) {
-      setError("Jumlah donasi minimal Rp10.000");
+      const errorMsg = "Jumlah donasi minimal Rp10.000";
+      setError(errorMsg);
+      if (onValidationError) onValidationError(errorMsg);
       return false;
     }
     
     setError(null);
+    if (onValidationError) onValidationError(null);
     return true;
   };
 
@@ -201,16 +296,67 @@ const DonationFirstPage = () => {
     }
   };
 
+  // Modify handleSubmit to handle email validation without setting general error
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Clear any previous non-email errors
+    if (onValidationError) onValidationError(null);
+    
+    // If email validation is in progress, wait for it
+    if (emailValidating || emailValidationPromise.current) {
+      // Instead of setting a general error, update button text
+      // Don't set setError("Mohon tunggu validasi email selesai...");
+      
+      // If there's an active validation promise, wait for it
+      if (emailValidationPromise.current) {
+        const isValid = await emailValidationPromise.current;
+        if (!isValid) {
+          // If validation failed, don't proceed
+          return;
+        }
+      } else {
+        // If we're still validating but no promise is available, just wait a moment
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (emailValidating) {
+          // Still validating after waiting
+          return;
+        }
+      }
+    }
+    
+    // If we have an email error, don't submit but don't show general error
+    if (emailError) {
+      // Don't set a general error
+      return;
+    }
     
     // Validate form before submission
     if (!validateForm()) {
       return;
     }
     
+    // For non-authenticated users, do a final check of MX records if not already checked
+    if (!isAuthenticated && !emailError && formData.email) {
+      // Set loading state to prevent multiple submissions
+      setLoading(true);
+      
+      // Final validation of email domain
+      const isValidDomain = await validateEmailDomain(formData.email);
+      
+      setLoading(false);
+      
+      if (!isValidDomain) {
+        const errorMsg = "Email tidak valid, silakan gunakan email aktif.";
+        setEmailError(errorMsg);
+        // Don't set general error for email validation
+        return;
+      }
+    }
+    
     setLoading(true);
     setError(null);
+    if (onValidationError) onValidationError(null);
 
     // Prepare donation data
     const donationData = {
@@ -375,11 +521,18 @@ const DonationFirstPage = () => {
     }
   }, []);
 
+  // Determine the button text based on current state
+  const getSubmitButtonText = () => {
+    if (loading) return "Memproses...";
+    if (emailValidating) return "Memvalidasi Email...";
+    return "Donasi Sekarang";
+  };
+
   return (
     <div className="min-h-full flex items-center justify-center bg-gradient-to-b from-white to-gray-100 px-4 py-12">
       <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 transition-all">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-          Donasi Sekarang
+          {title}
         </h2>
 
         {paymentSuccess && (
@@ -483,7 +636,7 @@ const DonationFirstPage = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#59B997] transition"
-                  placeholder="Masukkan nama lengkap atau 'Donatur Anonim'"
+                  placeholder="Masukkan nama lengkap"
                 />
                 <div className="mt-2 flex items-center">
                   <input
@@ -498,6 +651,11 @@ const DonationFirstPage = () => {
                     Saya ingin berdonasi sebagai "Donatur Anonim"
                   </label>
                 </div>
+                {formData.is_anonymous && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Nama otomatis diisi sebagai "Donatur Anonim", tetapi Anda masih bisa mengeditnya jika diperlukan.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -509,11 +667,14 @@ const DonationFirstPage = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleEmailBlur}
               required
               disabled={isAuthenticated}
               className={`w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#59B997] transition ${isAuthenticated ? 'bg-gray-100 text-gray-700 cursor-not-allowed' : ''}`}
               placeholder="Masukkan email aktif Anda"
             />
+            {emailValidating && <p className="text-xs text-blue-500 mt-1">Memvalidasi email...</p>}
+            {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
             {isAuthenticated && (
               <p className="text-xs text-gray-500 mt-1">Email diambil dari akun Anda</p>
             )}
@@ -593,19 +754,27 @@ const DonationFirstPage = () => {
           <div className="pt-6">
             <button
               type="submit"
-              disabled={loading || !formData.amount || parseInt(formData.amount) < 10000}
+              disabled={loading || !formData.amount || parseInt(formData.amount) < 10000 || emailValidating || emailError}
               className="w-full bg-[#59B997] text-white font-semibold py-3 rounded-lg hover:bg-[#47a07f] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Memproses..." : "Donasi Sekarang"}
+              {getSubmitButtonText()}
             </button>
             {parseInt(formData.amount) > 0 && parseInt(formData.amount) < 10000 && (
               <p className="text-xs text-red-500 mt-1 text-center">Minimal donasi Rp10.000</p>
+            )}
+            {emailError && (
+              <p className="text-xs text-red-500 mt-1 text-center">Mohon perbaiki email sebelum melanjutkan</p>
             )}
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+DonationFirstPage.defaultProps = {
+  title: "Donasi Sekarang",
+  onValidationError: null
 };
 
 export default DonationFirstPage;

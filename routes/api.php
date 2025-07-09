@@ -32,6 +32,30 @@ use Illuminate\Support\Facades\Validator;
 |
 */
 
+// Email validation route
+Route::post('/validate-email-domain', function (Request $request) {
+    $domain = $request->input('domain');
+    
+    if (empty($domain)) {
+        return response()->json(['valid' => false, 'message' => 'Domain is required']);
+    }
+    
+    try {
+        // Check if domain has MX records
+        $hasMx = checkdnsrr($domain, 'MX');
+        
+        // If no MX records found, check for A records as fallback
+        if (!$hasMx) {
+            $hasA = checkdnsrr($domain, 'A');
+            return response()->json(['valid' => $hasA, 'message' => $hasA ? 'Domain has A records' : 'Domain has no valid records']);
+        }
+        
+        return response()->json(['valid' => true, 'message' => 'Domain has MX records']);
+    } catch (\Exception $e) {
+        return response()->json(['valid' => false, 'message' => 'Error validating domain: ' . $e->getMessage()]);
+    }
+});
+
 // Donasi routes
 Route::post('/donasi', [DonasiController::class, 'prosesDonasi']);
 Route::post('/donasi/callback', [DonasiController::class, 'handleCallback']);
