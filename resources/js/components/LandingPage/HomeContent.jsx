@@ -400,7 +400,7 @@ const HomeContent = () => {
                             <p className="text-gray-600">Proyek pembangunan masjid yang sedang berjalan</p>
                         </div>
                         <Link 
-                            to="/DistribusiDanaProyek" 
+                            to="/distribusi-dana-proyek" 
                             className="text-[#59B997] hover:text-[#4ca584] font-medium flex items-center group"
                         >
                             Lihat Semua
@@ -517,7 +517,7 @@ const HomeContent = () => {
                     {/* Mobile "See More" button */}
                     <div className="mt-8 text-center md:hidden">
                         <Link 
-                            to="/DistribusiDanaProyek" 
+                            to="/distribusi-dana-proyek" 
                             className="inline-block px-6 py-3 bg-[#59B997] hover:bg-[#4ca584] text-white font-medium rounded-lg transition-colors"
                         >
                             Lihat Semua Proyek

@@ -12,7 +12,7 @@ export const SimpleFooter = () => {
             className="inline-flex items-center"
           >
             <img
-              src="/img/LogoSidontaq.png"
+              src="/img/LogoSidontaq.jpeg"
               alt="SIDONTAQ Logo"
               className="w-20"
               draggable={false}

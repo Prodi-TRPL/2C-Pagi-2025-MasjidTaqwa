@@ -666,7 +666,7 @@ const DonaturUserNotifikasi = () => {
           component="main" 
           sx={{ 
             flexGrow: 1, 
-            mt: 12,
+            mt: 5,
             py: 4, 
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
             backdropFilter: 'blur(10px)',
