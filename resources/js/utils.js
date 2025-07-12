@@ -21,6 +21,11 @@ export const Menus = [
                 link: "/#keunggulan",
                 icon: Star,
             },
+            {
+                name: "Hubungi",
+                link: "/#hubungi",
+                icon: Phone,
+            },
         ],
     },
     {
@@ -43,10 +48,5 @@ export const Menus = [
                 icon: BarChart2,
             },
         ],
-    },
-    {
-        name: "Hubungi",
-        link: "/hubungi",
-        icon: Phone,
     },
 ];

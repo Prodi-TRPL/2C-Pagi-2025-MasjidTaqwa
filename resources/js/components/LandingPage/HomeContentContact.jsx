@@ -13,7 +13,7 @@ function HomeContentContact() {
     }, []);
 
     return (
-        <section className="flex flex-col md:flex-row items-center justify-center gap-10 p-6 md:p-16 bg-white">
+        <section id="hubungi" className="flex flex-col md:flex-row items-center justify-center gap-10 p-6 md:p-16 bg-white">
             <div className="max-w-7xl mx-auto px-4 lg:px-15 w-full flex flex-col md:flex-row items-center justify-center gap-10">
                 {/* Image section with overlapping elements */}
                 <div

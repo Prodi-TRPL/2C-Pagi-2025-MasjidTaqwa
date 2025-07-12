@@ -104,7 +104,7 @@ export const SimpleFooter = () => {
             <ul className="mt-2 space-y-2">
               <li>
                 <a
-                  href="/hubungi"
+                  href="/#hubungi"
                   className="text-gray-600 transition-colors duration-300 hover:text-[#59B997] hover:underline"
                 >
                   Kontak
