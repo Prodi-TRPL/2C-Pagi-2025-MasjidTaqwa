@@ -7,6 +7,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { setupPermissionChecker } from './utils/permissionChecker';
 import { invalidatePermissionsCache } from './utils/permissions';
 import axios from 'axios';
+import { AnimatePresence } from 'framer-motion';
 
 import '../css/app.css'; // Tailwind
 import Beranda from './pages/Beranda';
@@ -229,9 +230,8 @@ const AppRoutes = () => {
     }
   }, []);
 
-  useEffect(() => {
-    // No loader logic needed anymore
-  }, [location]);
+  // Check if current route is login or register
+  const isAuthPage = location.pathname === '/loginbaru' || location.pathname === '/signup';
 
   return (
     <>
@@ -243,51 +243,10 @@ const AppRoutes = () => {
         message="Hak akses Anda telah diubah oleh administrator. Anda akan keluar dari sistem."
       />
       
-      <TransitionGroup>
-        <CSSTransition
-          key={location.key}
-          classNames="slide"
-          timeout={300}
-        >
-          <Routes location={location}>
-            {/* Public routes */}
-            <Route path="/" element={<Beranda />} />
-            <Route path="/hubungi" element={<Hubungi />} />
-            <Route path="/Donasi" element={<DonasiSekarang />} />
-            <Route path="/donasi-sekarang" element={<DonasiSekarang />} />
-            <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
-            <Route path="/rekapandonatur" element={<RekapanDonatur />} />
-            <Route path="/distribusi-dana-proyek" element={<DistribusiDanaProyek />} />
-            
-            {/* User routes with permission checks */}
-            <Route path="/profile" element={<DonaturUserProfile />} />
-            <Route 
-              path="/notifikasi" 
-              element={
-                <PrivateRoute>
-                  <PermissionRoute 
-                    permissionKey="canViewNotification" 
-                    component={DonaturUserNotifikasi} 
-                    redirectTo="/" 
-                  />
-                </PrivateRoute>
-              }
-            />
-            <Route 
-              path="/riwayat-transaksi" 
-              element={
-                <PrivateRoute>
-                  <PermissionRoute 
-                    permissionKey="canViewHistory" 
-                    component={DonaturUserRiwayatTransaksi} 
-                    redirectTo="/" 
-                  />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/pembangunan" element={<DonaturUserPembangunan />} />
-            
-            {/* Authentication routes */}
+      {/* Use AnimatePresence for login/register pages and TransitionGroup for other pages */}
+      {isAuthPage ? (
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
             <Route
               path="/loginbaru"
               element={
@@ -297,52 +256,100 @@ const AppRoutes = () => {
               }
             />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/lupapassword" element={<LupaPassword />} />
-            
-            {/* New auth routes */}
-            <Route path="/verify-email/:id/:token" element={<VerifyEmail />} />
-            <Route path="/reset-password/:id/:token" element={<ResetPassword />} />
-            <Route path="/resend-verification" element={<ResendVerification />} />
-            <Route path="/verification-failed" element={<VerificationFailed />} />
-            <Route path="/verification-error" element={<VerificationError />} />
-
-            {/* Dashboard routes wrapped in layout and protected */}
-            <Route
-              path="/dashboardhome"
-              element={
-                <PrivateRoute>
-                  <AppLayout />
-                </PrivateRoute>
-              }
-            >
-              <Route index element={<DashboardHome />} />
-              {/* Admin Dashboard Routes */}
-              <Route path="datadonasi" element={<DataDonasi />} />
-              <Route path="pengeluaran" element={<Pengeluaran />} />
-              <Route path="kategoripengaluaran" element={<KategoriPengeluaran />} />
-              <Route path="notifikasi" element={<Notifikasi />} />
-              <Route path="laporan-keuangan" element={<LaporanKeuangan />} />
-              <Route path="proyek-pembangunan" element={<ProyekPembangunan />} />
-              <Route path="kelola-akses-donatur" element={<KelolaAksesDonatur />} />
-              <Route path="kelola-notifikasi" element={<Notifikasi />} />
-            </Route>
-            
-            {/* Detail Proyek route */}
-            <Route
-              path="/dashboard/proyek-pembangunan/detail/:id"
-              element={
-                <PrivateRoute>
-                  <DetailProyek />
-                </PrivateRoute>
-              }
-            />
-
-            {/* Diagnostic route */}
-            <Route path="/diagnostic" element={<DiagnosticPage />} />
           </Routes>
-           
-        </CSSTransition>
-      </TransitionGroup>
+        </AnimatePresence>
+      ) : (
+        <TransitionGroup>
+          <CSSTransition
+            key={location.key}
+            classNames="slide"
+            timeout={300}
+          >
+            <Routes location={location}>
+              {/* Public routes */}
+              <Route path="/" element={<Beranda />} />
+              <Route path="/hubungi" element={<Hubungi />} />
+              <Route path="/Donasi" element={<DonasiSekarang />} />
+              <Route path="/donasi-sekarang" element={<DonasiSekarang />} />
+              <Route path="/rekapanbulanan" element={<RekapanBulanan />} />
+              <Route path="/rekapandonatur" element={<RekapanDonatur />} />
+              <Route path="/distribusi-dana-proyek" element={<DistribusiDanaProyek />} />
+              
+              {/* User routes with permission checks */}
+              <Route path="/profile" element={<DonaturUserProfile />} />
+              <Route 
+                path="/notifikasi" 
+                element={
+                  <PrivateRoute>
+                    <PermissionRoute 
+                      permissionKey="canViewNotification" 
+                      component={DonaturUserNotifikasi} 
+                      redirectTo="/" 
+                    />
+                  </PrivateRoute>
+                }
+              />
+              <Route 
+                path="/riwayat-transaksi" 
+                element={
+                  <PrivateRoute>
+                    <PermissionRoute 
+                      permissionKey="canViewHistory" 
+                      component={DonaturUserRiwayatTransaksi} 
+                      redirectTo="/" 
+                    />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="/pembangunan" element={<DonaturUserPembangunan />} />
+              
+              {/* Authentication routes */}
+              <Route path="/lupapassword" element={<LupaPassword />} />
+              
+              {/* New auth routes */}
+              <Route path="/verify-email/:id/:token" element={<VerifyEmail />} />
+              <Route path="/reset-password/:id/:token" element={<ResetPassword />} />
+              <Route path="/resend-verification" element={<ResendVerification />} />
+              <Route path="/verification-failed" element={<VerificationFailed />} />
+              <Route path="/verification-error" element={<VerificationError />} />
+
+              {/* Dashboard routes wrapped in layout and protected */}
+              <Route
+                path="/dashboardhome"
+                element={
+                  <PrivateRoute>
+                    <AppLayout />
+                  </PrivateRoute>
+                }
+              >
+                <Route index element={<DashboardHome />} />
+                {/* Admin Dashboard Routes */}
+                <Route path="datadonasi" element={<DataDonasi />} />
+                <Route path="pengeluaran" element={<Pengeluaran />} />
+                <Route path="kategoripengaluaran" element={<KategoriPengeluaran />} />
+                <Route path="notifikasi" element={<Notifikasi />} />
+                <Route path="laporan-keuangan" element={<LaporanKeuangan />} />
+                <Route path="proyek-pembangunan" element={<ProyekPembangunan />} />
+                <Route path="kelola-akses-donatur" element={<KelolaAksesDonatur />} />
+                <Route path="kelola-notifikasi" element={<Notifikasi />} />
+              </Route>
+              
+              {/* Detail Proyek route */}
+              <Route
+                path="/dashboard/proyek-pembangunan/detail/:id"
+                element={
+                  <PrivateRoute>
+                    <DetailProyek />
+                  </PrivateRoute>
+                }
+              />
+
+              {/* Diagnostic route */}
+              <Route path="/diagnostic" element={<DiagnosticPage />} />
+            </Routes>
+          </CSSTransition>
+        </TransitionGroup>
+      )}
     </>
   );
 };

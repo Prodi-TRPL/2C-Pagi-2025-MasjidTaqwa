@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { motion } from 'framer-motion';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -9,8 +10,8 @@ const SignUp = () => {
     nama: '',
     email: '',
     password: '',
-    password_confirmation: '',
-    nomor_hp: ''
+    password_confirmation: ''
+    // Removed nomor_hp field
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -87,8 +88,8 @@ const SignUp = () => {
       nama: formData.nama,
       email: formData.email,
       password: formData.password,
-      password_confirmation: formData.password_confirmation,
-      nomor_hp: formData.nomor_hp || ''
+      password_confirmation: formData.password_confirmation
+      // Removed nomor_hp field
     };
     
     // Log form data for debugging
@@ -235,270 +236,254 @@ const SignUp = () => {
     }
   };
 
-  // Add a debug function to test the registration
-  const debugRegistration = async () => {
-    console.log('Debugging registration with form data:', formData);
-    
-    try {
-      const response = await axios.post('/api/debug-register', {
-        nama: formData.nama,
-        email: formData.email,
-        password: formData.password,
-        password_confirmation: formData.password_confirmation,
-        nomor_hp: formData.nomor_hp || ''
-      });
-      
-      console.log('Debug response:', response.data);
-      
-      // Show validation errors if any
-      if (Object.keys(response.data.validation).length > 0) {
-        setErrors(response.data.validation);
-        console.log('Debug validation errors:', response.data.validation);
-      } else {
-        console.log('Debug validation passed');
-      }
-    } catch (error) {
-      console.error('Debug registration error:', error);
-    }
-  };
-
   return (
-    <div className="flex h-screen overflow-hidden relative">
-      {/* Back button top right on mobile, top left on desktop */}
-      <a
-        href="/"
-        className="absolute top-4 right-4 lg:left-4 lg:right-auto text-blue-500 hover:text-blue-700 flex items-center space-x-1"
-        aria-label="Back to homepage"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden" 
+      style={{
+        backgroundImage: `url('../img/bg-repeat.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+      
+      {/* Registration Card */}
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="bg-white bg-opacity-90 rounded-xl shadow-2xl overflow-hidden flex flex-col-reverse md:flex-row"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        <span>Kembali</span>
-      </a>
-      {/* Left: Sign Up Form */}
-      <div className="w-full lg:w-1/2 p-6 sm:p-8 md:p-12 bg-gray-100 overflow-auto">
-        <div className="p-6 max-w-md mx-auto">
-          <h1 className="text-2xl font-semibold mb-4">Daftar</h1>
           
-          {registrationSuccess ? (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center justify-center mb-4">
-                <svg className="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+          {/* Left: Form Section */}
+          <motion.div 
+            className="p-8 md:w-2/3 md:p-10"
+            initial={{ x: -50 }}
+            animate={{ x: 0 }}
+            exit={{ x: -100 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="max-w-md mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">Buat Akun Baru</h1>
+                <a
+                  href="/"
+                  className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                  aria-label="Back to homepage"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Kembali</span>
+                </a>
               </div>
               
-              <h2 className="text-xl font-semibold text-center mb-2">Pendaftaran Berhasil!</h2>
+              {registrationSuccess ? (
+                <div className="bg-white bg-opacity-90 p-6 rounded-lg">
+                  <div className="flex items-center justify-center mb-4">
+                    <svg className="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  
+                  <h2 className="text-xl font-semibold text-center mb-2">Pendaftaran Berhasil!</h2>
+                  
+                  <p className="text-gray-600 text-center mb-6">
+                    Kode verifikasi telah dikirim ke email <span className="font-medium">{registeredEmail}</span>.
+                    Silakan masukkan kode 6 digit untuk mengaktifkan akun Anda.
+                  </p>
+                  
+                  <div className="mb-6">
+                    <label htmlFor="verification_code" className="block text-gray-600 mb-2">
+                      Kode Verifikasi
+                    </label>
+                    <input
+                      type="text"
+                      id="verification_code"
+                      name="verification_code"
+                      className={`w-full border ${verificationError ? 'border-red-500' : 'border-gray-300'} rounded-md py-3 px-3 text-center text-lg tracking-widest focus:outline-none focus:border-blue-500`}
+                      value={verificationCode}
+                      onChange={handleVerificationCodeChange}
+                      placeholder="000000"
+                      maxLength={6}
+                    />
+                    {verificationError && <p className="text-red-500 text-sm mt-1">{verificationError}</p>}
+                  </div>
+                  
+                  <div className="flex flex-col space-y-3">
+                    <button 
+                      onClick={handleVerifyCode} 
+                      className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
+                      disabled={verifyingCode || verificationCode.length !== 6}
+                    >
+                      {verifyingCode ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Memverifikasi...
+                        </>
+                      ) : "Verifikasi Sekarang"}
+                    </button>
+                    
+                    <button
+                      onClick={handleResendCode}
+                      className="border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
+                      disabled={verifyingCode}
+                    >
+                      {verifyingCode ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Mengirim...
+                        </>
+                      ) : "Kirim Ulang Kode"}
+                    </button>
+                    
+                    <Link 
+                      to="/loginbaru" 
+                      className="text-gray-500 hover:text-gray-700 text-center text-sm mt-2"
+                    >
+                      Sudah punya akun? Masuk di sini
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Name and Email inputs in one row */}
+                  <div className="flex flex-col md:flex-row md:space-x-4 space-y-5 md:space-y-0">
+                    {/* Nama Input */}
+                    <div className="flex-1">
+                      <label htmlFor="nama" className="block text-gray-700 font-medium mb-1">
+                        Nama Lengkap
+                      </label>
+                      <input
+                        type="text"
+                        id="nama"
+                        name="nama"
+                        className={`w-full border ${errors.nama ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                        value={formData.nama}
+                        onChange={handleChange}
+                      />
+                      {errors.nama && <p className="text-red-500 text-sm mt-1">{errors.nama}</p>}
+                    </div>
+                    
+                    {/* Email Input */}
+                    <div className="flex-1">
+                      <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        className={`w-full border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                        value={formData.email}
+                        onChange={handleChange}
+                      />
+                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                    </div>
+                  </div>
+                  
+                  {/* Password and Confirm Password inputs in one row */}
+                  <div className="flex flex-col md:flex-row md:space-x-4 space-y-5 md:space-y-0">
+                    {/* Password Input */}
+                    <div className="flex-1">
+                      <label htmlFor="password" className="block text-gray-700 font-medium mb-1">
+                        Kata Sandi
+                      </label>
+                      <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        className={`w-full border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                        value={formData.password}
+                        onChange={handleChange}
+                      />
+                      {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                    </div>
+                    
+                    {/* Confirm Password Input */}
+                    <div className="flex-1">
+                      <label htmlFor="password_confirmation" className="block text-gray-700 font-medium mb-1">
+                        Konfirmasi Kata Sandi
+                      </label>
+                      <input
+                        type="password"
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        className={`w-full border ${errors.password_confirmation ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                        value={formData.password_confirmation}
+                        onChange={handleChange}
+                      />
+                      {errors.password_confirmation && <p className="text-red-500 text-sm mt-1">{errors.password_confirmation}</p>}
+                    </div>
+                  </div>
+                  
+                  {/* Sign Up Button */}
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors mt-6"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Mendaftar...
+                      </>
+                    ) : "Daftar"}
+                  </button>
+                  
+                  {/* Login Link */}
+                  <div className="text-center pt-4">
+                    <p className='text-gray-700 mb-1'>Sudah punya akun?</p>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <Link to="/loginbaru" className="text-blue-600 hover:text-blue-800 font-medium">
+                        Masuk Sekarang
+                      </Link>
+                    </motion.div>
+                  </div>
+                </form>
+              )}
               
-              <p className="text-gray-600 text-center mb-6">
-                Kode verifikasi telah dikirim ke email <span className="font-medium">{registeredEmail}</span>.
-                Silakan masukkan kode 6 digit untuk mengaktifkan akun Anda.
-              </p>
-              
-              <div className="mb-6">
-                <label htmlFor="verification_code" className="block text-gray-600 mb-2">
-                  Kode Verifikasi
-                </label>
-                <input
-                  type="text"
-                  id="verification_code"
-                  name="verification_code"
-                  className={`w-full border ${verificationError ? 'border-red-500' : 'border-gray-300'} rounded-md py-3 px-3 text-center text-lg tracking-widest focus:outline-none focus:border-blue-500`}
-                  value={verificationCode}
-                  onChange={handleVerificationCodeChange}
-                  placeholder="000000"
-                  maxLength={6}
-                />
-                {verificationError && <p className="text-red-500 text-sm mt-1">{verificationError}</p>}
-              </div>
-              
-              <div className="flex flex-col space-y-3">
-                <button 
-                  onClick={handleVerifyCode} 
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
-                  disabled={verifyingCode || verificationCode.length !== 6}
-                >
-                  {verifyingCode ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Memverifikasi...
-                    </>
-                  ) : "Verifikasi Sekarang"}
-                </button>
-                
-                <button
-                  onClick={handleResendCode}
-                  className="border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
-                  disabled={verifyingCode}
-                >
-                  {verifyingCode ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Mengirim...
-                    </>
-                  ) : "Kirim Ulang Kode"}
-                </button>
-                
-                <Link 
-                  to="/loginbaru" 
-                  className="text-gray-500 hover:text-gray-700 text-center text-sm mt-2"
-                >
-                  Sudah punya akun? Masuk di sini
-                </Link>
+              {/* Footer */}
+              <div className="mt-8 text-gray-600 text-center text-xs">
+                <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              {/* Nama Input */}
-              <div className="mb-4">
-                <label htmlFor="nama" className="block text-gray-600">
-                  Nama Lengkap
-                </label>
-                <input
-                  type="text"
-                  id="nama"
-                  name="nama"
-                  className={`w-full border ${errors.nama ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
-                  value={formData.nama}
-                  onChange={handleChange}
-                />
-                {errors.nama && <p className="text-red-500 text-sm mt-1">{errors.nama}</p>}
-              </div>
-              
-              {/* Email Input */}
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-gray-600">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  className={`w-full border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-              </div>
-              
-              {/* Password Input */}
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-gray-600">
-                  Kata Sandi
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  className={`w-full border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-              </div>
-              
-              {/* Confirm Password Input */}
-              <div className="mb-4">
-                <label htmlFor="password_confirmation" className="block text-gray-600">
-                  Konfirmasi Kata Sandi
-                </label>
-                <input
-                  type="password"
-                  id="password_confirmation"
-                  name="password_confirmation"
-                  className={`w-full border ${errors.password_confirmation ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
-                  value={formData.password_confirmation}
-                  onChange={handleChange}
-                />
-                {errors.password_confirmation && <p className="text-red-500 text-sm mt-1">{errors.password_confirmation}</p>}
-              </div>
-              
-              {/* No HP Input */}
-              <div className="mb-4">
-                <label htmlFor="nomor_hp" className="block text-gray-600">
-                  Nomor HP (Opsional)
-                </label>
-                <input
-                  type="text"
-                  id="nomor_hp"
-                  name="nomor_hp"
-                  className={`w-full border ${errors.nomor_hp ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
-                  value={formData.nomor_hp}
-                  onChange={handleChange}
-                />
-                {errors.nomor_hp && <p className="text-red-500 text-sm mt-1">{errors.nomor_hp}</p>}
-              </div>
-              
-              {/* Sign Up Button */}
-              <button
-                type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Mendaftar...
-                  </>
-                ) : "Daftar"}
-              </button>
-              
-              {/* Hidden Debug Button - Enable with window.showDebugButton = true in console */}
-              {window.showDebugButton && (
-                <button
-                  type="button"
-                  onClick={debugRegistration}
-                  className="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
-                >
-                  Debug Registration
-                </button>
-              )}
-            </form>
-          )}
+          </motion.div>
           
-          {!registrationSuccess && (
-            <>
-              {/* Login Link */}
-              <div className="mt-6 text-blue-500 text-center">
-                <p className='text-black'>Sudah punya akun?</p>
-                <Link to="/loginbaru" className="hover:underline">
-                  Masuk Sekarang
-                </Link>
-              </div>
-            </>
-          )}
-          
-          {/* Footer */}
-          <div className="mt-6 text-gray-600 text-center">
-            <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
-          </div>
-        </div>
-      </div>
-      
-      {/* Right: Image for desktop */}
-      <div className="hidden lg:block w-1/2">
-        <img
-          src="../img/bg-repeat.png"
-          alt="Background"
-          className="object-cover w-full h-full"
-          style={{ height: '100vh' }}
-        />
+          {/* Right: Logo Section */}
+          <motion.div 
+            className="bg-white p-4 md:p-8 flex flex-col justify-center items-center md:w-1/3"
+            initial={{ x: 50 }}
+            animate={{ x: 0 }}
+            exit={{ x: 100 }}
+            transition={{ duration: 0.5 }}
+          >
+            <img 
+              src="../img/logoSidontaq.jpeg" 
+              alt="Masjid Taqwa Logo" 
+              className="w-32 h-32 md:w-48 md:h-48 object-contain"
+            />
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

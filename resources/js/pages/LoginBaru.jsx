@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import ForcedLogoutAlert from '../components/ui/ForcedLogoutAlert';
+import { motion } from 'framer-motion';
 
 const LoginBaru = () => {
   const [email, setEmail] = useState('');
@@ -215,248 +216,290 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden relative">
-      {/* Back button top right */}
-      <a
-        href="/"
-        className="absolute top-4 right-4 text-blue-500 hover:text-blue-700 flex items-center space-x-1"
-        aria-label="Back to homepage"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden" 
+      style={{
+        backgroundImage: `url('../img/bg-repeat.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+
+      {/* Remove the back button from here */}
+      
+      {/* Login Card */}
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="bg-white bg-opacity-90 rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        <span>Kembali</span>
-      </a>
-      {/* Left: Image for desktop */}
-      <div className="hidden lg:block w-1/2">
-        <img
-          src="../img/bg-repeat.png"
-          alt="Background"
-          className="object-cover w-full h-full"
-          style={{ height: '100vh' }}
-        />
-      </div>
-      {/* Right: Login Form */}
-      <div
-        className="w-full lg:w-1/2 p-6 sm:p-8 md:p-12 bg-gray-100"
-      >
-        <div className="p-6 max-w-md mx-auto">
-          <h1 className="text-2xl font-semibold mb-4">Masuk</h1>
           
-          {/* Forced Logout Alert */}
-          <ForcedLogoutAlert />
-          
-          {verificationSuccess && (
-            <div className="mb-4 bg-green-50 border-l-4 border-green-500 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-700">
-                    Email Anda berhasil diverifikasi. Silakan login untuk melanjutkan.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {verifiedStatus && (
-            <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-700">
-                    Email Anda sudah diverifikasi sebelumnya. Silakan login untuk melanjutkan.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {showVerificationForm ? (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center mb-4">
-                <svg className="h-6 w-6 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <h2 className="text-xl font-semibold">Verifikasi Email</h2>
-              </div>
-              
-              <p className="text-gray-600 mb-4">
-                Email Anda <span className="font-medium">{unverifiedEmail}</span> belum diverifikasi.
-                Silakan masukkan kode verifikasi yang telah dikirim ke email Anda.
-              </p>
-              
-              <form onSubmit={handleVerifyEmail}>
-                <div className="mb-4">
-                  <label htmlFor="verification_code" className="block text-gray-600 mb-2">
-                    Kode Verifikasi
-                  </label>
-                  <input
-                    type="text"
-                    id="verification_code"
-                    name="verification_code"
-                    className={`w-full border ${verificationError ? 'border-red-500' : 'border-gray-300'} rounded-md py-3 px-3 text-center text-lg tracking-widest focus:outline-none focus:border-blue-500`}
-                    value={verificationCode}
-                    onChange={handleVerificationCodeChange}
-                    placeholder="000000"
-                    maxLength={6}
-                  />
-                  {verificationError && <p className="text-red-500 text-sm mt-1">{verificationError}</p>}
-                </div>
-                
-                <div className="flex flex-col space-y-3">
-                  <button 
-                    type="submit"
-                    className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
-                    disabled={verifyingCode || verificationCode.length !== 6}
+          {/* Left: Logo/Image Section */}
+          <motion.div 
+            className="bg-white p-4 md:p-8 flex flex-col justify-center items-center md:w-1/3"
+            initial={{ x: -50 }}
+            animate={{ x: 0 }}
+            exit={{ x: -100 }}
+            transition={{ duration: 0.5 }}
+          >
+            <img 
+              src="../img/logoSidontaq.jpeg" 
+              alt="Masjid Taqwa Logo" 
+              className="w-32 h-32 md:w-48 md:h-48 object-contain"
+            />
+          </motion.div>
+
+
+          {/* Right: Login Form */}
+          <motion.div 
+            className="p-8 md:w-2/3 md:p-10"
+            initial={{ x: 50 }}
+            animate={{ x: 0 }}
+            exit={{ x: 100 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="max-w-md mx-auto">
+              {/* Move the back button here */}
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">Masuk ke Akun Anda</h1>
+                <a
+                  href="/"
+                  className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                  aria-label="Back to homepage"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
                   >
-                    {verifyingCode ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Kembali</span>
+                </a>
+              </div>
+              
+              {/* Forced Logout Alert */}
+              <ForcedLogoutAlert />
+              
+              {verificationSuccess && (
+                <div className="mb-4 bg-green-50 border-l-4 border-green-500 p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-green-700">
+                        Email Anda berhasil diverifikasi. Silakan login untuk melanjutkan.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {verifiedStatus && (
+                <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">
+                        Email Anda sudah diverifikasi sebelumnya. Silakan login untuk melanjutkan.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {showVerificationForm ? (
+                <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow">
+                  <div className="flex items-center mb-4">
+                    <svg className="h-6 w-6 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <h2 className="text-xl font-semibold">Verifikasi Email</h2>
+                  </div>
+                  
+                  <p className="text-gray-600 mb-4">
+                    Email Anda <span className="font-medium">{unverifiedEmail}</span> belum diverifikasi.
+                    Silakan masukkan kode verifikasi yang telah dikirim ke email Anda.
+                  </p>
+                  
+                  <form onSubmit={handleVerifyEmail}>
+                    <div className="mb-4">
+                      <label htmlFor="verification_code" className="block text-gray-600 mb-2">
+                        Kode Verifikasi
+                      </label>
+                      <input
+                        type="text"
+                        id="verification_code"
+                        name="verification_code"
+                        className={`w-full border ${verificationError ? 'border-red-500' : 'border-gray-300'} rounded-md py-3 px-3 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                        value={verificationCode}
+                        onChange={handleVerificationCodeChange}
+                        placeholder="000000"
+                        maxLength={6}
+                      />
+                      {verificationError && <p className="text-red-500 text-sm mt-1">{verificationError}</p>}
+                    </div>
+                    
+                    <div className="flex flex-col space-y-3">
+                      <button 
+                        type="submit"
+                        className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center transition-colors"
+                        disabled={verifyingCode || verificationCode.length !== 6}
+                      >
+                        {verifyingCode ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Memverifikasi...
+                          </>
+                        ) : "Verifikasi Email"}
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={handleResendVerificationCode}
+                        className="border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center transition-colors"
+                        disabled={verifyingCode}
+                      >
+                        {verifyingCode ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Mengirim...
+                          </>
+                        ) : "Kirim Ulang Kode"}
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowVerificationForm(false);
+                          setVerificationCode('');
+                          setVerificationError('');
+                        }}
+                        className="text-gray-500 hover:text-gray-700 text-center text-sm transition-colors"
+                      >
+                        Kembali ke login
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {/* Email Input */}
+                  <div>
+                    <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={handleEmailChange}
+                      className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                      required
+                    />
+                  </div>
+                  
+                  {/* Password Input */}
+                  <div>
+                    <label htmlFor="password" className="block text-gray-700 font-medium mb-1">
+                      Kata Sandi
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={password}
+                      onChange={handlePasswordChange}
+                      className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
+                      required
+                    />
+                  </div>
+                  
+                  {/* Remember Me & Forgot Password */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="remember"
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        checked={remember}
+                        onChange={handleRememberChange}
+                      />
+                      <label htmlFor="remember" className="ml-2 block text-gray-700">
+                        Ingat Saya
+                      </label>
+                    </div>
+                    
+                    <div className="text-sm">
+                      <Link to="/lupapassword" className="text-blue-600 hover:text-blue-800 font-medium">
+                        Lupa Kata Sandi?
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  {/* Error Message */}
+                  {error && (
+                    <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+                      {error}
+                    </div>
+                  )}
+                  
+                  {/* Login Button */}
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors"
+                    disabled={loading}
+                  >
+                    {loading ? (
                       <>
                         <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Memverifikasi...
+                        Masuk...
                       </>
-                    ) : "Verifikasi Email"}
+                    ) : "Masuk"}
                   </button>
                   
-                  <button
-                    type="button"
-                    onClick={handleResendVerificationCode}
-                    className="border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
-                    disabled={verifyingCode}
-                  >
-                    {verifyingCode ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Mengirim...
-                      </>
-                    ) : "Kirim Ulang Kode"}
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowVerificationForm(false);
-                      setVerificationCode('');
-                      setVerificationError('');
-                    }}
-                    className="text-gray-500 hover:text-gray-700 text-center text-sm"
-                  >
-                    Kembali ke login
-                  </button>
-                </div>
-              </form>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              {/* Email Input */}
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-gray-600">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={handleEmailChange}
-                  className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
-                  required
-                />
-              </div>
-              
-              {/* Password Input */}
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-gray-600">
-                  Kata Sandi
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
-                  required
-                />
-              </div>
-              
-              {/* Remember Me Checkbox */}
-              <div className="mb-4 flex items-center">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="mr-2"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                />
-                <label htmlFor="remember" className="text-gray-600">
-                  Ingat Saya
-                </label>
-              </div>
-              
-              {/* Error Message */}
-              {error && (
-                <div className="mb-4 text-red-600 font-semibold">
-                  {error}
-                </div>
+                  {/* Sign up Link */}
+                  <div className="text-center pt-4">
+                    <p className='text-gray-700 mb-1'>Belum punya akun?</p>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <Link to="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
+                        Daftar Sekarang
+                      </Link>
+                    </motion.div>
+                  </div>
+                </form>
               )}
               
-              {/* Forgot Password Link */}
-              <div className="mb-6 text-blue-500">
-                <a href="/lupapassword" className="hover:underline">
-                  Lupa Kata Sandi?
-                </a>
+              {/* Footer */}
+              <div className="mt-8 text-gray-600 text-center text-xs">
+                <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
               </div>
-              
-              {/* Login Button */}
-              <button
-                type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Masuk...
-                  </>
-                ) : "Masuk"}
-              </button>
-            </form>
-          )}
-          {/* Sign up  Link */}
-          <div className="mt-6 text-blue-500 text-center">
-            <p className='text-black'>Belum punya akun?</p>
-            <Link to="/signup" className="hover:underline">
-              Daftar Sekarang
-            </Link>
-          </div>
-          {/* Footer */}
-          <div className="mt-6 text-gray-600 text-center">
-            <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
-          </div>
-        </div>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

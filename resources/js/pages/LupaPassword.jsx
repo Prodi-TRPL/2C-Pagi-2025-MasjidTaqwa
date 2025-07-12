@@ -2,21 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { motion } from 'framer-motion';
 
 const LupaPassword = () => {
   const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fadeIn, setFadeIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: email, 2: verification code, 3: new password
   const [userId, setUserId] = useState(null);
-
-  useEffect(() => {
-    setFadeIn(true);
-  }, []);
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -163,25 +159,32 @@ const LupaPassword = () => {
     switch (step) {
       case 1:
         return (
-          <form onSubmit={handleRequestCode} className="w-full max-w-md">
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-gray-600 mb-2">
+          <form onSubmit={handleRequestCode} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
                 Email Pengguna
               </label>
               <input
                 type="email"
                 id="email"
                 name="email"
-                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
+                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                 value={email}
                 onChange={handleEmailChange}
                 required
+                placeholder="Masukkan email terdaftar"
               />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             </div>
+            
+            {error && (
+              <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+            
             <button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 flex items-center justify-center"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors"
               disabled={loading}
             >
               {loading ? (
@@ -199,31 +202,36 @@ const LupaPassword = () => {
         
       case 2:
         return (
-          <form onSubmit={handleVerifyCode} className="w-full max-w-md">
-            <div className="mb-6">
+          <form onSubmit={handleVerifyCode} className="space-y-5">
+            <div>
               <p className="text-gray-600 mb-4">
                 Kode reset password telah dikirim ke email <span className="font-medium">{email}</span>.
                 Silakan masukkan kode 6 digit untuk melanjutkan.
               </p>
-              <label htmlFor="verification_code" className="block text-gray-600 mb-2">
+              <label htmlFor="verification_code" className="block text-gray-700 font-medium mb-1">
                 Kode Verifikasi
               </label>
               <input
                 type="text"
                 id="verification_code"
                 name="verification_code"
-                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md py-3 px-3 text-center text-lg tracking-widest focus:outline-none focus:border-blue-500`}
+                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-3 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 value={verificationCode}
                 onChange={handleVerificationCodeChange}
                 placeholder="000000"
                 maxLength={6}
               />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             </div>
+            
+            {error && (
+              <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
             
             <button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 flex items-center justify-center"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors"
               disabled={loading || verificationCode.length !== 6}
             >
               {loading ? (
@@ -240,7 +248,7 @@ const LupaPassword = () => {
             <button
               type="button"
               onClick={handleRequestCode}
-              className="w-full mt-3 border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-md py-2 px-4 flex items-center justify-center"
+              className="w-full border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-lg py-3 px-4 flex items-center justify-center transition-colors"
               disabled={loading}
             >
               Kirim Ulang Kode
@@ -250,42 +258,49 @@ const LupaPassword = () => {
         
       case 3:
         return (
-          <form onSubmit={handleResetPassword} className="w-full max-w-md">
-            <div className="mb-4">
-              <label htmlFor="new_password" className="block text-gray-600 mb-2">
+          <form onSubmit={handleResetPassword} className="space-y-5">
+            <div>
+              <label htmlFor="new_password" className="block text-gray-700 font-medium mb-1">
                 Kata Sandi Baru
               </label>
               <input
                 type="password"
                 id="new_password"
                 name="new_password"
-                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
+                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                 value={newPassword}
                 onChange={handleNewPasswordChange}
                 minLength={8}
                 required
+                placeholder="Minimal 8 karakter"
               />
             </div>
             
-            <div className="mb-4">
-              <label htmlFor="confirm_password" className="block text-gray-600 mb-2">
+            <div>
+              <label htmlFor="confirm_password" className="block text-gray-700 font-medium mb-1">
                 Konfirmasi Kata Sandi Baru
               </label>
               <input
                 type="password"
                 id="confirm_password"
                 name="confirm_password"
-                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md py-2 px-3 focus:outline-none focus:border-blue-500`}
+                className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all`}
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}
                 required
+                placeholder="Ulangi kata sandi"
               />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             </div>
+            
+            {error && (
+              <div className="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
             
             <button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 flex items-center justify-center"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors"
               disabled={loading}
             >
               {loading ? (
@@ -320,68 +335,101 @@ const LupaPassword = () => {
   };
 
   return (
-    <div className={`flex h-screen overflow-hidden relative transition-opacity duration-700 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-      {/* Left: Background Image */}
-      <div className="hidden lg:block w-1/2">
-        <img
-          src="../img/bg-repeat.png"
-          alt="Background"
-          className="object-cover w-full h-full"
-          style={{ height: '100vh' }}
-        />
-      </div>
-      {/* Right: Form Layout adjusted */}
-      <div className="w-full lg:w-1/2 p-6 sm:p-8 md:p-12 bg-gray-100 flex flex-col items-center justify-center relative">
-        {/* Back button top right */}
-        <a
-          href="/"
-          className="absolute top-4 right-4 text-blue-500 hover:text-blue-700 flex items-center space-x-1"
-          aria-label="Back to homepage"
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden" 
+      style={{
+        backgroundImage: `url('../img/bg-repeat.png')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+      
+      {/* Card Container */}
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="bg-white bg-opacity-90 rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
+          
+          {/* Left: Logo/Image Section */}
+          <motion.div 
+            className="bg-white p-4 md:p-8 flex flex-col justify-center items-center md:w-1/3"
+            initial={{ x: -50 }}
+            animate={{ x: 0 }}
+            exit={{ x: -100 }}
+            transition={{ duration: 0.5 }}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Kembali</span>
-        </a>
-        
-        <h1 className="text-2xl font-semibold mb-6 text-center">{getStepTitle()}</h1>
-        
-        {/* Step indicators */}
-        <div className="flex justify-center mb-8 w-full max-w-md">
-          <div className="flex items-center w-full">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
-              1
+            <img 
+              src="../img/logoSidontaq.jpeg" 
+              alt="Masjid Taqwa Logo" 
+              className="w-32 h-32 md:w-48 md:h-48 object-contain"
+            />
+          </motion.div>
+          
+          {/* Right: Form Section */}
+          <motion.div 
+            className="p-8 md:w-2/3 md:p-10"
+            initial={{ x: 50 }}
+            animate={{ x: 0 }}
+            exit={{ x: 100 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="max-w-md mx-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-800">{getStepTitle()}</h1>
+                <a
+                  href="/"
+                  className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                  aria-label="Back to homepage"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Kembali</span>
+                </a>
+              </div>
+              
+              {/* Step indicators */}
+              <div className="flex justify-center mb-8">
+                <div className="flex items-center w-full">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
+                    1
+                  </div>
+                  <div className={`flex-1 h-1 mx-2 ${step > 1 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
+                    2
+                  </div>
+                  <div className={`flex-1 h-1 mx-2 ${step > 2 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
+                    3
+                  </div>
+                </div>
+              </div>
+              
+              {renderStepContent()}
+              
+              <div className="mt-6 text-center">
+                <Link to="/loginbaru" className="text-blue-600 hover:text-blue-800 font-medium">
+                  Kembali ke Masuk
+                </Link>
+              </div>
+              
+              {/* Footer */}
+              <div className="mt-8 text-gray-600 text-center text-xs">
+                <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
+              </div>
             </div>
-            <div className={`flex-1 h-1 mx-2 ${step > 1 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
-              2
-            </div>
-            <div className={`flex-1 h-1 mx-2 ${step > 2 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
-              3
-            </div>
-          </div>
-        </div>
-        
-        {renderStepContent()}
-        
-        <div className="mt-6 text-center w-full max-w-md">
-          <Link to="/loginbaru" className="text-blue-500 hover:underline">
-            Kembali ke Masuk
-          </Link>
-        </div>
-        
-        {/* Footer */}
-        <div className="mt-6 text-gray-600 text-center">
-          <p>&copy;Copyright 2025 Masjid Taqwa Muhammadiyah. All rights reserved.</p>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
