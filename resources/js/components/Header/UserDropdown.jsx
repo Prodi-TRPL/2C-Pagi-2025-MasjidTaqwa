@@ -41,7 +41,8 @@ export default function UserDropdown() {
         localStorage.setItem("user", JSON.stringify({
           name: response.data.nama,
           email: response.data.email,
-          role: response.data.role
+          role: response.data.role,
+          phone: response.data.nomor_hp || ""
         }));
       } else {
         // For non-admin users

@@ -18,7 +18,8 @@ export const saveUserData = (userData) => {
   localStorage.setItem("user", JSON.stringify({
     name: userData.nama || userData.name,
     email: userData.email,
-    role: userData.role
+    role: userData.role,
+    phone: userData.nomor_hp || ""
   }));
 };
 

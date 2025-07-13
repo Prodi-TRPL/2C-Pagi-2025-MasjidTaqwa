@@ -333,6 +333,30 @@ Route::get('/public/admin-profile-test', function() {
     ]);
 });
 
+// Add a public endpoint to get admin contact information
+Route::get('/public/admin-contact', function() {
+    try {
+        // Get the admin user (assuming there's only one or getting the first one)
+        $admin = \App\Models\Pengguna::where('role', 'admin')->first();
+        
+        if (!$admin) {
+            return response()->json([
+                'message' => 'Admin not found',
+                'phone' => '895-3712-88838' // Default fallback
+            ]);
+        }
+        
+        return response()->json([
+            'phone' => $admin->nomor_hp ?? '895-3712-88838'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Error fetching admin contact',
+            'phone' => '895-3712-88838' // Default fallback
+        ]);
+    }
+});
+
 // Add a temporary route to test both admin middlewares
 Route::middleware(['auth:sanctum', 'admin', \App\Http\Middleware\CheckAdmin::class])->get('/test-both-admin-middlewares', function() {
     return response()->json([

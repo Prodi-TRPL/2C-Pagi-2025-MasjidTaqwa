@@ -223,10 +223,28 @@ const ProfileAdmin = () => {
   // Handle edit value changes
   const handleEditChange = (e, field) => {
     const { value } = e.target;
-    setEditValues(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    
+    // Add validation for phone number
+    if (field === "nomor_hp") {
+      // Only allow digits
+      const digitsOnly = value.replace(/\D/g, '');
+      
+      // Ensure it starts with '0'
+      const validatedValue = digitsOnly.startsWith('0') ? digitsOnly : `0${digitsOnly}`;
+      
+      // Limit to 13 characters max (0 + 12 digits)
+      const trimmedValue = validatedValue.slice(0, 13);
+      
+      setEditValues(prev => ({
+        ...prev,
+        [field]: trimmedValue
+      }));
+    } else {
+      setEditValues(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
   
   // Submit profile changes
@@ -241,6 +259,21 @@ const ProfileAdmin = () => {
           text: "Token tidak ditemukan. Silakan login kembali."
         });
         return;
+      }
+      
+      // Validate phone number before saving
+      if (field === "nomor_hp") {
+        const phoneNumber = editValues[field];
+        
+        // Check if phone number starts with 0 and has 10-13 digits total (9-12 after the 0)
+        if (!/^0\d{9,12}$/.test(phoneNumber)) {
+          Swal.fire({
+            icon: "error",
+            title: "Format Nomor HP Tidak Valid",
+            text: "Nomor HP harus diawali dengan '0' dan memiliki 10-13 digit angka."
+          });
+          return;
+        }
       }
       
       const updateData = { [field]: editValues[field] };
@@ -264,7 +297,8 @@ const ProfileAdmin = () => {
           const parsedUser = JSON.parse(userData);
           const updatedUser = {
             ...parsedUser,
-            name: field === 'nama' ? editValues[field] : parsedUser.name
+            name: field === 'nama' ? editValues[field] : parsedUser.name,
+            phone: field === 'nomor_hp' ? editValues[field] : parsedUser.phone
           };
           localStorage.setItem("user", JSON.stringify(updatedUser));
         } catch (error) {
