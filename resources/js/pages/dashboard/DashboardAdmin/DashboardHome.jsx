@@ -11,11 +11,12 @@ import WelcomeCard from "../../../components/ecommerce/WelcomeCard";
 import MonthlyReportChart from "../../../components/ecommerce/MonthlyReportChart";
 import { Spinner } from "@material-tailwind/react";
 
+// Custom color for consistency with other pages
+const customGreen = "#59B997";
+
 export default function DashboardHome() {
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
-  const [donationsLoading, setDonationsLoading] = useState(true);
-  const [expensesLoading, setExpensesLoading] = useState(true);
   const [stats, setStats] = useState({
     totalDonations: 0,
     totalExpenses: 0,
@@ -61,102 +62,48 @@ export default function DashboardHome() {
     return new Intl.DateTimeFormat('id-ID', options).format(utcDate);
   };
 
-  // Handle refresh data
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchDashboardData();
-    await fetchDonations();
-    await fetchExpenses();
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  // Fetch donation data from the API
-  const fetchDonations = async () => {
+  // Fetch all dashboard data in a single function
+  const fetchAllDashboardData = async () => {
+    setLoading(true);
+    
     try {
-      setDonationsLoading(true);
+      // Fetch data in parallel using Promise.all
+      const [dashboardResponse, donationsResponse, expensesResponse] = await Promise.all([
+        axios.get('/api/dashboard-summary'),
+        axios.get('/api/donations'),
+        axios.get('/api/Pengeluaran')
+      ]);
       
-      // Fetch real donation data from the API
-      const response = await axios.get('/api/donations');
-      console.log("Fetched donations for dashboard:", response.data);
-      
-      // Process the donation data
-      if (response.data && response.data.length > 0) {
-        // Calculate total donation amount
-        const totalAmount = response.data.reduce((sum, donation) => sum + parseFloat(donation.jumlah), 0);
-        
-        // Update stats with real donation data
+      // Process dashboard summary data
+      if (dashboardResponse.data) {
         setStats(prevStats => ({
           ...prevStats,
-          totalDonations: totalAmount,
-          donorCount: response.data.length
+          totalDonations: dashboardResponse.data.totalDonations || 0,
+          totalExpenses: dashboardResponse.data.totalExpenses || 0,
+          balance: dashboardResponse.data.balance || 0,
+          donorCount: dashboardResponse.data.donorCount || 0
         }));
-        
+      }
+      
+      // Process donations data
+      if (donationsResponse.data && donationsResponse.data.length > 0) {
         // Set recent donations (latest 5)
-        const sortedDonations = [...response.data].sort((a, b) => 
+        const sortedDonations = [...donationsResponse.data].sort((a, b) => 
           new Date(b.created_at) - new Date(a.created_at)
         ).slice(0, 5);
         
         setRecentDonations(sortedDonations);
       }
-    } catch (error) {
-      console.error("Error fetching donation data:", error);
-    } finally {
-      setDonationsLoading(false);
-    }
-  };
-
-  // Fetch expense data from the API
-  const fetchExpenses = async () => {
-    try {
-      setExpensesLoading(true);
       
-      // Fetch real expense data from the API
-      const response = await axios.get('/api/Pengeluaran');
-      console.log("Fetched expenses for dashboard:", response.data);
-      
-      // Process the expense data
-      const expenses = response.data.data || response.data || [];
-      
+      // Process expenses data
+      const expenses = expensesResponse.data.data || expensesResponse.data || [];
       if (expenses.length > 0) {
-        // Calculate total expense amount
-        const totalAmount = expenses.reduce((sum, expense) => sum + parseFloat(expense.jumlah || 0), 0);
-        
-        // Update stats with real expense data
-        setStats(prevStats => ({
-          ...prevStats,
-          totalExpenses: totalAmount,
-          balance: prevStats.totalDonations - totalAmount
-        }));
-        
         // Set recent expenses (latest 5)
         const sortedExpenses = [...expenses].sort((a, b) => 
           new Date(b.created_at) - new Date(a.created_at)
         ).slice(0, 5);
         
         setRecentExpenses(sortedExpenses);
-      }
-    } catch (error) {
-      console.error("Error fetching expense data:", error);
-    } finally {
-      setExpensesLoading(false);
-    }
-  };
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      
-      // Use our new dashboard summary endpoint
-      const response = await axios.get('/api/dashboard-summary');
-      
-      if (response.data) {
-        setStats(prevStats => ({
-          ...prevStats,
-          totalDonations: response.data.totalDonations || 0,
-          totalExpenses: response.data.totalExpenses || 0,
-          balance: response.data.balance || 0,
-          donorCount: response.data.donorCount || 0
-        }));
       }
       
     } catch (error) {
@@ -166,12 +113,17 @@ export default function DashboardHome() {
     }
   };
 
+  // Handle refresh data
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAllDashboardData();
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setUserName(user.name || "Admin");
-    fetchDonations();
-    fetchExpenses();
-    fetchDashboardData();
+    fetchAllDashboardData();
   }, []);
 
   // Stat card component with trend indicator
@@ -197,15 +149,6 @@ export default function DashboardHome() {
             )}
           </div>
         </div>
-        {trend !== 0 && !isLoading && (
-          <div className="mt-2 flex items-center">
-            <div className={`text-xs font-medium ${trend > 0 ? 'text-green-500' : 'text-red-500'} flex items-center`}>
-              <FontAwesomeIcon icon={trend > 0 ? faArrowUp : faArrowDown} className="mr-1" />
-              {Math.abs(trend)}%
-            </div>
-            <span className="text-xs text-gray-500 ml-1">dibanding bulan lalu</span>
-          </div>
-        )}
       </div>
     </motion.div>
   );
@@ -363,7 +306,7 @@ export default function DashboardHome() {
             value={formatRupiah(stats.totalDonations)} 
             trend={stats.trends.donations}
             color="border-l-4 border-green-500"
-            isLoading={donationsLoading}
+            isLoading={loading}
           />
           <StatCard 
             icon={faMoneyBillWave} 
@@ -371,7 +314,7 @@ export default function DashboardHome() {
             value={formatRupiah(stats.totalExpenses)} 
             trend={stats.trends.expenses}
             color="border-l-4 border-red-500"
-            isLoading={expensesLoading}
+            isLoading={loading}
           />
           <StatCard 
             icon={faMosque} 
@@ -379,7 +322,7 @@ export default function DashboardHome() {
             value={formatRupiah(stats.balance)} 
             trend={stats.trends.balance}
             color="border-l-4 border-blue-500"
-            isLoading={loading || donationsLoading || expensesLoading}
+            isLoading={loading}
           />
           <StatCard 
             icon={faBuilding} 
@@ -387,24 +330,26 @@ export default function DashboardHome() {
             value={stats.donorCount} 
             trend={stats.trends.donors}
             color="border-l-4 border-amber-500"
-            isLoading={donationsLoading}
+            isLoading={loading}
           />
         </div>
 
-        {/* Financial Chart - Now full width */}
+        {/* Financial Chart - Now with custom green gradient */}
         <div className="grid grid-cols-1 gap-6">
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+            <div className="p-4" style={{ 
+              background: `linear-gradient(120deg, ${customGreen} 0%, #4da583 100%)` 
+            }}>
               <h3 className="text-lg font-semibold text-white flex items-center">
                 <FontAwesomeIcon icon={faChartLine} className="mr-2" />
                 Grafik Keuangan Masjid Taqwa Muhammadiyah
               </h3>
-              <p className="text-blue-100 text-sm mt-1">Visualisasi data pemasukan dan pengeluaran masjid</p>
+              <p className="text-white/80 text-sm mt-1">Visualisasi data pemasukan dan pengeluaran masjid</p>
             </div>
             <div className="p-4">
               {loading ? (
                 <div className="flex justify-center items-center h-80">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2" style={{ borderColor: customGreen }}></div>
                 </div>
               ) : (
                 <MonthlyReportChart />
@@ -427,7 +372,7 @@ export default function DashboardHome() {
               Donasi Terbaru
             </h3>
             <div className="space-y-2">
-              {donationsLoading ? (
+              {loading ? (
                 [...Array(5)].map((_, i) => (
                   <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 animate-pulse">
                     <div className="flex items-center">
@@ -455,7 +400,8 @@ export default function DashboardHome() {
             </div>
             <button 
               onClick={() => window.location.href = '/dashboardhome/datadonasi'}
-              className="mt-6 w-full py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+              className="mt-6 w-full py-2 rounded-lg hover:bg-opacity-90 transition-colors text-sm font-medium text-white"
+              style={{ backgroundColor: customGreen }}
             >
               Lihat Semua Donasi
             </button>
@@ -473,7 +419,7 @@ export default function DashboardHome() {
               Pengeluaran Terbaru
             </h3>
             <div className="space-y-2">
-              {expensesLoading ? (
+              {loading ? (
                 [...Array(5)].map((_, i) => (
                   <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 animate-pulse">
                     <div className="flex items-center">
