@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserEdit, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
+import axios from "axios"; // Added axios import
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,25 +44,74 @@ export default function UserDropdown() {
   }
 
   async function handleLogout() {
-    localStorage.removeItem('token');
-    const result = await Swal.fire({
-        icon: 'success',
-        title: 'Logout berhasil!',
-        text: 'Anda telah keluar dari platform.',
-        timer: 2000,
-        showConfirmButton: false,
-        timerProgressBar: true,
-        position: 'center',
-        allowOutsideClick: true,
-        customClass: {
-          container: 'z-[100000]', // increased z-index
-          popup: 'z-[100000]',
-          backdrop: 'bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full'
+    try {
+      // Get token before removing it
+      const token = localStorage.getItem('token');
+      
+      // Get user data to determine if they're an admin
+      const userData = localStorage.getItem('user');
+      let user = null;
+      if (userData) {
+        try {
+          user = JSON.parse(userData);
+        } catch (error) {
+          console.error('Failed to parse user data from localStorage', error);
         }
-      });
-    if (result.isDismissed) {
+      }
+      
+      // Send logout request to server if token exists
+      if (token) {
+        console.log('Sending logout request with token:', token);
+        try {
+          // First, if user is admin, log the logout activity using our dedicated endpoint
+          if (user && user.role === 'admin') {
+            console.log('Logging admin logout activity');
+            await axios.post('/api/log-admin-logout', {
+              name: user.name || user.nama || 'Unknown',
+              email: user.email || 'unknown@example.com'
+            });
+          }
+          
+          // Then send the normal logout request
+          const response = await axios.post('/api/logout', {}, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log('Logout response:', response.data);
+        } catch (error) {
+          console.error('Error during logout process:', error);
+          // Continue with logout even if the request fails
+        }
+      } else {
+        console.warn('No token found for logout request');
+      }
+      
+      // Remove token after sending logout request
+      localStorage.removeItem('token');
+      
+      const result = await Swal.fire({
+          icon: 'success',
+          title: 'Logout berhasil!',
+          text: 'Anda telah keluar dari platform.',
+          timer: 2000,
+          showConfirmButton: false,
+          timerProgressBar: true,
+          position: 'center',
+          allowOutsideClick: true,
+          customClass: {
+            container: 'z-[100000]', // increased z-index
+            popup: 'z-[100000]',
+            backdrop: 'bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full'
+          }
+        });
+      
+      // Navigate to home page after logout
       navigate('/', { replace: true });
-    } else {
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Still remove token and redirect even if the logout request fails
+      localStorage.removeItem('token');
       navigate('/', { replace: true });
     }
   }

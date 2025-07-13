@@ -8,9 +8,12 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use App\Traits\LogsActivity;
 
 class ProyekPembangunanController extends Controller
 {
+    use LogsActivity;
+    
     public function index()
     {
         $proyeks = ProyekPembangunan::all();
@@ -23,27 +26,43 @@ class ProyekPembangunanController extends Controller
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'required|string',
             'target_dana' => 'required|numeric|min:0',
-            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1024', // 1MB max
+            'gambar' => 'nullable|image|max:2048', // max 2MB
         ]);
 
-        $proyek = new ProyekPembangunan();
-        $proyek->proyek_id = (string) Str::uuid();
-        $proyek->admin_id = $request->user()->id ?? null; // sesuaikan jika ada admin login
-        $proyek->nama_item = $request->nama_item;
-        $proyek->deskripsi = $request->deskripsi;
-        $proyek->target_dana = $request->target_dana;
-        $proyek->dana_terkumpul = 0;
-        $proyek->created_at = now();
-        
-        // Handle image upload if present
-        if ($request->hasFile('gambar') && $request->file('gambar')->isValid()) {
-            $imagePath = $this->processImage($request->file('gambar'));
-            $proyek->gambar = $imagePath;
+        try {
+            $proyek = new ProyekPembangunan();
+            $proyek->nama_item = $request->nama_item;
+            $proyek->deskripsi = $request->deskripsi;
+            $proyek->target_dana = $request->target_dana;
+            
+            // Handle image upload if provided
+            if ($request->hasFile('gambar')) {
+                $image = $request->file('gambar');
+                $imageName = Str::slug($request->nama_item) . '-' . time() . '.' . $image->getClientOriginalExtension();
+                
+                // Create image manager with GD driver
+                $manager = new ImageManager(new Driver());
+                
+                // Process the image (resize and compress)
+                $img = $manager->read($image);
+                $img->cover(800, 600);
+                
+                // Save the processed image
+                $path = 'proyek/' . $imageName;
+                Storage::disk('public')->put($path, $img->toJpeg(80));
+                
+                $proyek->gambar = $path;
+            }
+            
+            $proyek->save();
+            
+            // Log activity
+            $this->logActivity('tambah_proyek', 'Menambahkan proyek pembangunan baru: ' . $proyek->nama_item);
+            
+            return response()->json($proyek);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
-        
-        $proyek->save();
-
-        return response()->json($proyek, 201);
     }
 
     public function show($id)
@@ -57,52 +76,76 @@ class ProyekPembangunanController extends Controller
 
     public function update(Request $request, $id)
     {
-        $proyek = ProyekPembangunan::find($id);
-        if (!$proyek) {
-            return response()->json(['message' => 'Proyek tidak ditemukan'], 404);
-        }
-
         $request->validate([
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'required|string',
             'target_dana' => 'required|numeric|min:0',
-            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:1024', // 1MB max
+            'gambar' => 'nullable|image|max:2048', // max 2MB
         ]);
 
-        $proyek->nama_item = $request->nama_item;
-        $proyek->deskripsi = $request->deskripsi;
-        $proyek->target_dana = $request->target_dana;
-        
-        // Handle image upload if present
-        if ($request->hasFile('gambar') && $request->file('gambar')->isValid()) {
-            // Delete old image if it exists
-            if ($proyek->gambar) {
-                Storage::disk('public')->delete($proyek->gambar);
+        try {
+            $proyek = ProyekPembangunan::findOrFail($id);
+            $oldName = $proyek->nama_item;
+            
+            $proyek->nama_item = $request->nama_item;
+            $proyek->deskripsi = $request->deskripsi;
+            $proyek->target_dana = $request->target_dana;
+            
+            // Handle image upload if provided
+            if ($request->hasFile('gambar')) {
+                // Delete old image if exists
+                if ($proyek->gambar) {
+                    Storage::disk('public')->delete($proyek->gambar);
+                }
+                
+                $image = $request->file('gambar');
+                $imageName = Str::slug($request->nama_item) . '-' . time() . '.' . $image->getClientOriginalExtension();
+                
+                // Create image manager with GD driver
+                $manager = new ImageManager(new Driver());
+                
+                // Process the image (resize and compress)
+                $img = $manager->read($image);
+                $img->cover(800, 600);
+                
+                // Save the processed image
+                $path = 'proyek/' . $imageName;
+                Storage::disk('public')->put($path, $img->toJpeg(80));
+                
+                $proyek->gambar = $path;
             }
             
-            $imagePath = $this->processImage($request->file('gambar'));
-            $proyek->gambar = $imagePath;
+            $proyek->save();
+            
+            // Log activity
+            $this->logActivity('edit_proyek', 'Mengubah proyek pembangunan: ' . $oldName . ' menjadi ' . $proyek->nama_item);
+            
+            return response()->json($proyek);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
-        
-        $proyek->save();
-
-        return response()->json($proyek);
     }
 
     public function destroy($id)
     {
-        $proyek = ProyekPembangunan::find($id);
-        if (!$proyek) {
-            return response()->json(['message' => 'Proyek tidak ditemukan'], 404);
+        try {
+            $proyek = ProyekPembangunan::findOrFail($id);
+            $proyekName = $proyek->nama_item;
+            
+            // Delete image if exists
+            if ($proyek->gambar) {
+                Storage::disk('public')->delete($proyek->gambar);
+            }
+            
+            $proyek->delete();
+            
+            // Log activity
+            $this->logActivity('hapus_proyek', 'Menghapus proyek pembangunan: ' . $proyekName);
+            
+            return response()->json(['message' => 'Proyek berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
-        
-        // Delete image if it exists
-        if ($proyek->gambar) {
-            Storage::disk('public')->delete($proyek->gambar);
-        }
-        
-        $proyek->delete();
-        return response()->json(['message' => 'Proyek berhasil dihapus']);
     }
     
     /**

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Pengguna;
+use App\Models\LogAktivitas;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\QueryException;
 use PDOException;
@@ -353,6 +354,19 @@ public function register(Request $request)
             // Use the createToken method from HasApiTokens trait which is properly used in the Pengguna model
             $token = $user->createToken('authToken')->plainTextToken;
 
+            // Log successful login activity only for admin users
+            if ($user->role === 'admin') {
+                try {
+                    LogAktivitas::log(
+                        'login',
+                        "Admin {$user->nama} ({$user->email}) berhasil login"
+                    );
+                } catch (\Exception $e) {
+                    // Just log the error but don't interrupt the login process
+                    Log::error('Error logging login activity: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'message' => 'Login berhasil',
                 'user' => $user,
@@ -369,6 +383,22 @@ public function register(Request $request)
      */
     public function logout(Request $request)
     {
+        // Get the user before logging them out
+        $user = Auth::guard('web')->user();
+        
+        // Log logout activity only if user is an admin
+        if ($user && $user->role === 'admin') {
+            try {
+                LogAktivitas::log(
+                    'logout',
+                    "Admin {$user->nama} ({$user->email}) logout dari sistem"
+                );
+            } catch (\Exception $e) {
+                // Just log the error but don't interrupt the logout process
+                Log::error('Error logging logout activity: ' . $e->getMessage());
+            }
+        }
+        
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

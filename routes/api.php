@@ -18,6 +18,7 @@ use App\Http\Controllers\ProyekPembangunanController;
 use App\Http\Controllers\DonorPermissionsController;
 use App\Http\Controllers\DonationSettingsController;
 use App\Http\Controllers\DonationSummaryController;
+use App\Http\Controllers\LogAktivitasController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Validator;
 
@@ -146,8 +147,18 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     
     // Validate donation using stored procedure
     Route::post('/donations/{id}/validate-procedure', [DonasiController::class, 'validateDonationUsingProcedure']);
+    
+    // Log Aktivitas routes
+    Route::get('/log-aktivitas', [LogAktivitasController::class, 'index']);
+    Route::post('/log-aktivitas', [LogAktivitasController::class, 'store']);
 });
 
+// TEMPORARY: Public log-aktivitas route for testing the component without authentication
+// TODO: REMOVE THIS ROUTE AFTER FIXING AUTHENTICATION
+Route::get('/public/log-aktivitas', [LogAktivitasController::class, 'index']);
+
+// Add a dedicated endpoint for logging admin logout
+Route::post('/log-admin-logout', [LogAktivitasController::class, 'logAdminLogout']);
 
 // PENGELUARAN - SEMENTARA TANPA LOGIN AGAR BISA TESTING
 Route::post('/pengeluaran', [PengeluaranController::class, 'store']); // Simpan pengeluaran
@@ -269,6 +280,28 @@ Route::get('/test-mail', function () {
     $kode = rand(100000, 999999);
     $user->notify(new EmailVerificationNotification($kode, $user->nama));
     return 'Email test terkirim';
+});
+
+// Test route for manually logging admin logout
+Route::get('/test-log-admin-logout', function () {
+    try {
+        $logEntry = \App\Models\LogAktivitas::create([
+            'aktivitas' => 'logout',
+            'detail' => "Admin Test User (test@example.com) logout dari sistem",
+            'created_at' => now(),
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin logout logged successfully',
+            'log_id' => $logEntry->id
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error logging admin logout: ' . $e->getMessage()
+        ], 500);
+    }
 });
 
 

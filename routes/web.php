@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\PengeluaranController;
+use App\Models\LogAktivitas;
 
 /*
 |--------------------------------------------------------------------------
@@ -188,4 +189,18 @@ Route::get('/check-midtrans', function () {
 // Midtrans setup guide
 Route::get('/midtrans-setup', function() {
     return File::get(public_path('midtrans-setup.html'));
+});
+
+// Test route for log aktivitas
+Route::get('/test-log-aktivitas', function () {
+    $log = LogAktivitas::log(
+        'test_aktivitas', 
+        'Ini adalah test untuk mencatat aktivitas di tabel log_aktivitas'
+    );
+    
+    return [
+        'success' => true,
+        'message' => 'Log aktivitas berhasil dibuat',
+        'data' => $log
+    ];
 });

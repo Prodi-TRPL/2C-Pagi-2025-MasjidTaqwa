@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         Commands\SetupPaymentMethods::class,
         Commands\UpdateDonationStatus::class,
         Commands\ProcessNotificationQueue::class,
+        Commands\CleanupOldLogs::class,
     ];
 
     /**
@@ -29,6 +30,10 @@ class Kernel extends ConsoleKernel
         
         // Process notification queue every 5 minutes
         $schedule->command('notifications:process')->everyFiveMinutes();
+        
+        // Run log cleanup at midnight every day
+        // It will check for and remove logs older than 6 months
+        $schedule->command('logs:cleanup')->daily();
     }
 
     /**

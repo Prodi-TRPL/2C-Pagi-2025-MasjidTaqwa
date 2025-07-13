@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pengguna;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Pengguna;
 use Illuminate\Support\Facades\Log;
+use App\Traits\LogsActivity;
 
 class DonorPermissionsController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Get all donors with their permissions
      *
@@ -40,67 +42,64 @@ class DonorPermissionsController extends Controller
     }
 
     /**
-     * Update permissions for a donor
+     * Update user permissions.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
      */
     public function updatePermissions(Request $request, $id)
     {
-        // Validate request
-        $request->validate([
-            'can_donate' => 'required|boolean',
-            'can_view_history' => 'required|boolean',
-            'can_view_notification' => 'required|boolean',
-        ]);
-        
-        // Helper function to convert value to boolean
-        $toBool = function($value) {
-            if (is_bool($value)) return $value ? 1 : 0;
-            if (is_numeric($value)) return (int)$value === 1 ? 1 : 0;
-            if (is_string($value)) {
-                $lower = strtolower($value);
-                return ($lower === '1' || $lower === 'true' || $lower === 'yes') ? 1 : 0;
-            }
-            return (bool)$value ? 1 : 0;
-        };
-
         try {
-            // Find the donor
-            $donor = Pengguna::where('pengguna_id', $id)
-                ->where('role', 'donatur')
-                ->firstOrFail();
-            
-            // Log the old permissions
-            Log::info("Updating permissions for donor {$id}", [
-                'old_can_donate' => $donor->can_donate,
-                'old_can_view_history' => $donor->can_view_history,
-                'old_can_view_notification' => $donor->can_view_notification,
-                'new_can_donate' => $request->can_donate,
-                'new_can_view_history' => $request->can_view_history,
-                'new_can_view_notification' => $request->can_view_notification,
-            ]);
-            
-            // Update permissions - explicitly convert to 1/0
-            $donor->can_donate = $toBool($request->can_donate);
-            $donor->can_view_history = $toBool($request->can_view_history);
-            $donor->can_view_notification = $toBool($request->can_view_notification);
-            $donor->save();
-            
-            // Log the updated permissions
-            Log::info("Updated permissions for donor {$id}", [
+            $donor = Pengguna::findOrFail($id);
+
+            // Get original permission values for logging
+            $originalPermissions = [
                 'can_donate' => $donor->can_donate,
                 'can_view_history' => $donor->can_view_history,
-                'can_view_notification' => $donor->can_view_notification,
+                'can_view_notification' => $donor->can_view_notification
+            ];
+            
+            // Validate request
+            $validated = $request->validate([
+                'can_donate' => 'required|boolean',
+                'can_view_history' => 'required|boolean',
+                'can_view_notification' => 'required|boolean',
             ]);
             
-            return response()->json([
-                'message' => 'Permissions updated successfully',
-                'donor' => $donor
-            ]);
+            // Update permissions
+            $donor->can_donate = $validated['can_donate'];
+            $donor->can_view_history = $validated['can_view_history'];
+            $donor->can_view_notification = $validated['can_view_notification'];
+            $donor->save();
+            
+            // Prepare log message with changed permissions
+            $changedPermissions = [];
+            if ($originalPermissions['can_donate'] !== $validated['can_donate']) {
+                $status = $validated['can_donate'] ? 'diizinkan' : 'ditolak';
+                $changedPermissions[] = "hak donasi: $status";
+            }
+            if ($originalPermissions['can_view_history'] !== $validated['can_view_history']) {
+                $status = $validated['can_view_history'] ? 'diizinkan' : 'ditolak';
+                $changedPermissions[] = "hak lihat riwayat: $status";
+            }
+            if ($originalPermissions['can_view_notification'] !== $validated['can_view_notification']) {
+                $status = $validated['can_view_notification'] ? 'diizinkan' : 'ditolak';
+                $changedPermissions[] = "hak lihat notifikasi: $status";
+            }
+            
+            // Log the permission changes
+            if (!empty($changedPermissions)) {
+                $this->logActivity(
+                    'ubah_hak_akses',
+                    "Mengubah hak akses donatur {$donor->nama} ({$donor->email}): " . implode(", ", $changedPermissions)
+                );
+            }
+            
+            return response()->json(['message' => 'Permissions updated successfully']);
         } catch (\Exception $e) {
-            Log::error("Error updating permissions for donor {$id}: " . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to update permissions',
-                'error' => $e->getMessage()
-            ], 500);
+            Log::error('Error updating donor permissions: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update permissions'], 500);
         }
     }
 

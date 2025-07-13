@@ -32,6 +32,7 @@ import LaporanKeuangan from './pages/dashboard/DashboardAdmin/LaporanKeuangan';
 import ProyekPembangunan from './pages/dashboard/DashboardAdmin/ProyekPembangunan';
 import DetailProyek from './pages/dashboard/DashboardAdmin/DetailProyek';
 import KelolaAksesDonatur from './pages/dashboard/DashboardAdmin/KelolaAksesDonatur';
+import LogAktivitas from './pages/dashboard/DashboardAdmin/LogAktivitas';
 
 // Import new auth components
 import VerifyEmail from './pages/auth/VerifyEmail';
@@ -231,6 +232,9 @@ const AppRoutes = () => {
 
   // Check if current route is login or register
   const isAuthPage = location.pathname === '/loginbaru' || location.pathname === '/signup';
+  
+  // Check if current route is dashboard admin
+  const isDashboardRoute = location.pathname.startsWith('/dashboardhome') || location.pathname.startsWith('/dashboard/');
 
   return (
     <>
@@ -242,7 +246,7 @@ const AppRoutes = () => {
         message="Hak akses Anda telah diubah oleh administrator. Anda akan keluar dari sistem."
       />
       
-      {/* Use AnimatePresence for login/register pages and TransitionGroup for other pages */}
+      {/* Use AnimatePresence for login/register pages */}
       {isAuthPage ? (
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
@@ -257,7 +261,43 @@ const AppRoutes = () => {
             <Route path="/signup" element={<SignUp />} />
           </Routes>
         </AnimatePresence>
+      ) : isDashboardRoute ? (
+        /* No transition for dashboard routes */
+        <Routes>
+          {/* Dashboard routes wrapped in layout and protected */}
+          <Route
+            path="/dashboardhome"
+            element={
+              <PrivateRoute>
+                <AppLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<DashboardHome />} />
+            {/* Admin Dashboard Routes */}
+            <Route path="datadonasi" element={<DataDonasi />} />
+            <Route path="pengeluaran" element={<Pengeluaran />} />
+            <Route path="kategoripengaluaran" element={<KategoriPengeluaran />} />
+            <Route path="notifikasi" element={<Notifikasi />} />
+            <Route path="laporan-keuangan" element={<LaporanKeuangan />} />
+            <Route path="proyek-pembangunan" element={<ProyekPembangunan />} />
+            <Route path="kelola-akses-donatur" element={<KelolaAksesDonatur />} />
+            <Route path="kelola-notifikasi" element={<Notifikasi />} />
+            <Route path="log-aktivitas" element={<LogAktivitas />} />
+          </Route>
+          
+          {/* Detail Proyek route */}
+          <Route
+            path="/dashboard/proyek-pembangunan/detail/:id"
+            element={
+              <PrivateRoute>
+                <DetailProyek />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
       ) : (
+      /* Transitions only for non-dashboard, non-auth routes */
       <TransitionGroup>
         <CSSTransition
           key={location.key}
@@ -312,37 +352,6 @@ const AppRoutes = () => {
             <Route path="/resend-verification" element={<ResendVerification />} />
             <Route path="/verification-failed" element={<VerificationFailed />} />
             <Route path="/verification-error" element={<VerificationError />} />
-
-            {/* Dashboard routes wrapped in layout and protected */}
-            <Route
-              path="/dashboardhome"
-              element={
-                <PrivateRoute>
-                  <AppLayout />
-                </PrivateRoute>
-              }
-            >
-              <Route index element={<DashboardHome />} />
-              {/* Admin Dashboard Routes */}
-              <Route path="datadonasi" element={<DataDonasi />} />
-              <Route path="pengeluaran" element={<Pengeluaran />} />
-              <Route path="kategoripengaluaran" element={<KategoriPengeluaran />} />
-              <Route path="notifikasi" element={<Notifikasi />} />
-              <Route path="laporan-keuangan" element={<LaporanKeuangan />} />
-              <Route path="proyek-pembangunan" element={<ProyekPembangunan />} />
-              <Route path="kelola-akses-donatur" element={<KelolaAksesDonatur />} />
-              <Route path="kelola-notifikasi" element={<Notifikasi />} />
-            </Route>
-            
-            {/* Detail Proyek route */}
-            <Route
-              path="/dashboard/proyek-pembangunan/detail/:id"
-              element={
-                <PrivateRoute>
-                  <DetailProyek />
-                </PrivateRoute>
-              }
-            />
 
             {/* Diagnostic route */}
             <Route path="/diagnostic" element={<DiagnosticPage />} />

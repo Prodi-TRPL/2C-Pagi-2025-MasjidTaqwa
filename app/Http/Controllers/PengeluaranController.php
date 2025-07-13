@@ -6,9 +6,12 @@ use App\Models\Pengeluaran;
 use App\Models\ProyekPembangunan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\LogsActivity;
 
 class PengeluaranController extends Controller
 {
+    use LogsActivity;
+    
     // List pengeluaran dengan filter dan relasi
     public function index(Request $request)
     {
@@ -111,6 +114,16 @@ class PengeluaranController extends Controller
             
             $pengeluaran->save();
             
+            // Get related project name for the log
+            $proyekName = '';
+            $proyek = ProyekPembangunan::find($validated['proyek_id']);
+            if ($proyek) {
+                $proyekName = $proyek->nama_item;
+            }
+            
+            // Log activity
+            $this->logActivity('tambah_pengeluaran', "Menambahkan pengeluaran baru: {$pengeluaran->nama_pengeluaran} (Rp. {$pengeluaran->jumlah}) untuk proyek {$proyekName}", true);
+            
             // Commit transaction
             DB::commit();
             
@@ -150,7 +163,25 @@ class PengeluaranController extends Controller
             // Begin transaction
             DB::beginTransaction();
             
+            // Store old values for logging
+            $oldNama = $pengeluaran->nama_pengeluaran;
+            $oldJumlah = $pengeluaran->jumlah;
+            
+            // Get project name
+            $proyekName = '';
+            $proyek = ProyekPembangunan::find($pengeluaran->proyek_id);
+            if ($proyek) {
+                $proyekName = $proyek->nama_item;
+            }
+            
             $pengeluaran->update($validated);
+            
+            // Log activity
+            $this->logActivity(
+                'ubah_pengeluaran', 
+                "Mengubah pengeluaran: {$oldNama} (Rp. {$oldJumlah}) menjadi {$pengeluaran->nama_pengeluaran} (Rp. {$pengeluaran->jumlah}) pada proyek {$proyekName}",
+                true
+            );
             
             // Commit transaction
             DB::commit();
@@ -172,6 +203,20 @@ class PengeluaranController extends Controller
     {
         try {
             $pengeluaran = Pengeluaran::findOrFail($id);
+            
+            // Get project name for logging
+            $proyekName = '';
+            $proyek = ProyekPembangunan::find($pengeluaran->proyek_id);
+            if ($proyek) {
+                $proyekName = $proyek->nama_item;
+            }
+            
+            // Log info before deletion
+            $this->logActivity(
+                'hapus_pengeluaran', 
+                "Menghapus pengeluaran: {$pengeluaran->nama_pengeluaran} (Rp. {$pengeluaran->jumlah}) dari proyek {$proyekName}"
+            );
+            
             $pengeluaran->delete();
             
             return response()->json(null, 204);

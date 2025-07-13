@@ -7,6 +7,7 @@ import { faTachometerAlt, faUser, faHistory, faRightFromBracket, faBell } from "
 import Swal from "sweetalert2";
 import { getUserPermissions, hasPermission, getPermissionDeniedMessage } from "../../utils/permissions";
 import AccessDeniedModal from "../ui/AccessDeniedModal";
+import axios from "axios"; // Added axios import
 
 export default function NavbarUserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -111,26 +112,70 @@ export default function NavbarUserDropdown() {
   }
 
   async function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
+    try {
+      // Get token before removing it
+      const token = localStorage.getItem("token");
+      
+      // Get user role to determine if they're an admin
+      const userRole = localStorage.getItem("role");
+      const isAdmin = userRole === "admin";
+      
+      // Send logout request to server if token exists
+      if (token) {
+        console.log('Sending logout request with token:', token);
+        try {
+          // First, if user is admin, log the logout activity using our dedicated endpoint
+          if (isAdmin) {
+            console.log('Logging admin logout activity');
+            await axios.post('/api/log-admin-logout', {
+              // Use the user state variable that's already defined in the component
+              name: user.name,
+              email: user.email
+            });
+          }
+          
+          // Then send the normal logout request
+          const response = await axios.post('/api/logout', {}, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log('Logout response:', response.data);
+        } catch (error) {
+          console.error('Error during logout process:', error);
+          // Continue with logout even if the request fails
+        }
+      } else {
+        console.warn('No token found for logout request');
+      }
+      
+      // Remove token after sending logout request
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
 
-    const result = await Swal.fire({
-      icon: "success",
-      title: "Logout berhasil!",
-      text: "Anda telah keluar dari platform.",
-      timer: 2000,
-      showConfirmButton: false,
-      timerProgressBar: true,
-      position: "center",
-      allowOutsideClick: true,
-      customClass: {
-        container: "z-[100000]",
-        popup: "z-[100000]",
-        backdrop: "bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full",
-      },
-    });
+      const result = await Swal.fire({
+        icon: "success",
+        title: "Logout berhasil!",
+        text: "Anda telah keluar dari platform.",
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true,
+        position: "center",
+        allowOutsideClick: true,
+        customClass: {
+          container: "z-[100000]",
+          popup: "z-[100000]",
+          backdrop: "bg-black bg-opacity-50 z-[99999] fixed top-0 left-0 w-full h-full",
+        },
+      });
 
-    if (result.isDismissed || result.isConfirmed) {
+      // Navigate to home page after logout
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Still remove token and redirect even if the request fails
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
       navigate("/", { replace: true });
     }
   }

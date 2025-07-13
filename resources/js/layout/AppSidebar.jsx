@@ -10,7 +10,8 @@ import {
     MdCategory,
     MdMoreHoriz,
     MdNotifications,
-    MdSecurity
+    MdSecurity,
+    MdHistory
 } from "react-icons/md";
 import { 
     FaHandHoldingHeart, 
@@ -60,6 +61,11 @@ const navItems = [
         icon: <FaUsersCog className="w-5 h-5" />,
         name: "Kelola Akses Donatur",
         path: "/dashboardhome/kelola-akses-donatur",
+    },
+    {
+        icon: <MdHistory className="w-5 h-5" />,
+        name: "Log Aktivitas",
+        path: "/dashboardhome/log-aktivitas",
     },
 ];
 
