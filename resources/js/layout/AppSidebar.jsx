@@ -11,7 +11,8 @@ import {
     MdMoreHoriz,
     MdNotifications,
     MdSecurity,
-    MdHistory
+    MdHistory,
+    MdPerson
 } from "react-icons/md";
 import { 
     FaHandHoldingHeart, 
@@ -26,6 +27,11 @@ const navItems = [
         icon: <MdDashboard className="w-5 h-5" />,
         name: "Dashboard Utama",
         path: "/dashboardhome",
+    },
+    {
+        icon: <MdPerson className="w-5 h-5" />,
+        name: "Profil Admin",
+        path: "/dashboardhome/profil-admin",
     },
     {
         icon: <FaHandHoldingHeart className="w-5 h-5" />,

@@ -33,6 +33,7 @@ import ProyekPembangunan from './pages/dashboard/DashboardAdmin/ProyekPembanguna
 import DetailProyek from './pages/dashboard/DashboardAdmin/DetailProyek';
 import KelolaAksesDonatur from './pages/dashboard/DashboardAdmin/KelolaAksesDonatur';
 import LogAktivitas from './pages/dashboard/DashboardAdmin/LogAktivitas';
+import ProfileAdmin from './pages/dashboard/DashboardAdmin/ProfileAdmin';
 
 // Import new auth components
 import VerifyEmail from './pages/auth/VerifyEmail';
@@ -284,6 +285,7 @@ const AppRoutes = () => {
             <Route path="kelola-akses-donatur" element={<KelolaAksesDonatur />} />
             <Route path="kelola-notifikasi" element={<Notifikasi />} />
             <Route path="log-aktivitas" element={<LogAktivitas />} />
+            <Route path="profil-admin" element={<ProfileAdmin />} />
           </Route>
           
           {/* Detail Proyek route */}

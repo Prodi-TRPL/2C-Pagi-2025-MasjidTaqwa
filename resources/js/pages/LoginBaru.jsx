@@ -4,6 +4,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import ForcedLogoutAlert from '../components/ui/ForcedLogoutAlert';
 import { motion } from 'framer-motion';
+import { saveUserData, isLoggedIn, getCurrentUser } from '../utils/auth';
 
 const LoginBaru = () => {
   const [email, setEmail] = useState('');
@@ -23,15 +24,12 @@ const LoginBaru = () => {
   const location = useLocation();
 
 useEffect(() => {
-  const token = localStorage.getItem('token');
-  const storedUser = localStorage.getItem('user');
-
-  if (token && storedUser) {
-    const user = JSON.parse(storedUser);
-
-    if (user.role === 'admin') {
+  if (isLoggedIn()) {
+    const user = getCurrentUser();
+    
+    if (user && user.role === 'admin') {
       navigate('/dashboardhome', { replace: true });
-    } else if (user.role === 'donatur') {
+    } else if (user && user.role === 'donatur') {
       navigate('/', { replace: true });
     }
   }
@@ -91,12 +89,7 @@ useEffect(() => {
       
       // If we get here, login was successful
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        name: user.nama || '',
-        email: user.email || '',
-        role: user.role || '',
-      }));
-      localStorage.setItem('role', user.role || '');
+      saveUserData(user);
       
       await Swal.fire({
         icon: 'success',

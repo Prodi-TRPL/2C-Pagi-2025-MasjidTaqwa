@@ -134,11 +134,23 @@ Route::get('/donation-status', [DonationSettingsController::class, 'checkDonatio
 Route::get('/donation-summary/monthly', [DonationSummaryController::class, 'getMonthlyDonationSummary']);
 Route::get('/donation-summary/chart', [DonationSummaryController::class, 'getDonationChartData']);
 
+// Admin routes - requires auth and admin role
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    // Donation validation route
+    Route::post('/donations/{id}/validate', [DonasiController::class, 'validateDonation']);
+});
+
+// Admin routes - requires auth and admin role
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/notifikasi', [AdminNotifikasiController::class, 'index']);
     Route::post('/notifikasi', [AdminNotifikasiController::class, 'store']);
     Route::delete('/notifikasi/{id}', [AdminNotifikasiController::class, 'destroy']);
     Route::get('/notifikasi/stats', [AdminNotifikasiController::class, 'getStats']);
+    
+    // Admin profile routes
+    Route::get('/profile', [ProfileController::class, 'getProfile']);
+    Route::post('/change-password', [ProfileController::class, 'updatePassword']);
+    Route::put('/profile', [ProfileController::class, 'update']);
     
     // Donor permissions management routes (kept for backward compatibility)
     Route::get('/donors', [DonorPermissionsController::class, 'index']);
@@ -173,12 +185,6 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::post('/ProyekPembangunan', [ProyekPembangunanController::class, 'store']);
     Route::put('/ProyekPembangunan/{id}', [ProyekPembangunanController::class, 'update']);
     Route::delete('/ProyekPembangunan/{id}', [ProyekPembangunanController::class, 'destroy']);
-});
-
-// Admin routes - requires auth and admin role
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
-    // Donation validation route
-    Route::post('/donations/{id}/validate', [DonasiController::class, 'validateDonation']);
 });
 
 // Public donation history for dashboard display
@@ -302,6 +308,52 @@ Route::get('/test-log-admin-logout', function () {
             'message' => 'Error logging admin logout: ' . $e->getMessage()
         ], 500);
     }
+});
+
+// Add a temporary debug route for admin authentication
+Route::middleware(['auth:sanctum'])->get('/debug-auth', function (Request $request) {
+    $user = $request->user();
+    
+    return response()->json([
+        'authenticated' => true,
+        'user_id' => $user->pengguna_id,
+        'name' => $user->nama,
+        'email' => $user->email,
+        'role' => $user->role,
+        'is_admin' => $user->role === 'admin'
+    ]);
+});
+
+// Add a temporary public route to test the admin profile endpoint
+Route::get('/public/admin-profile-test', function() {
+    return response()->json([
+        'message' => 'This route is working',
+        'admin_profile_route' => '/api/admin/profile',
+        'middleware' => ['auth:sanctum', 'admin']
+    ]);
+});
+
+// Add a temporary route to test both admin middlewares
+Route::middleware(['auth:sanctum', 'admin', \App\Http\Middleware\CheckAdmin::class])->get('/test-both-admin-middlewares', function() {
+    return response()->json([
+        'success' => true,
+        'message' => 'Both admin middlewares are working correctly'
+    ]);
+});
+
+// Add a temporary route to test the admin middleware directly
+Route::middleware(['auth:sanctum', 'admin'])->get('/test-admin-middleware', function() {
+    return response()->json([
+        'success' => true,
+        'message' => 'Admin middleware is working correctly'
+    ]);
+});
+
+// Admin profile routes with explicit CheckAdmin middleware
+Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckAdmin::class])->prefix('admin-profile')->group(function () {
+    Route::get('/', [ProfileController::class, 'getProfile']);
+    Route::post('/change-password', [ProfileController::class, 'updatePassword']);
+    Route::put('/update', [ProfileController::class, 'update']);
 });
 
 

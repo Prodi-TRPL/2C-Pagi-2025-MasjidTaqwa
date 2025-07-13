@@ -7,18 +7,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\log;
 use Illuminate\Validation\ValidationException;
+use App\Models\LogAktivitas;
 
 class ProfileController extends Controller
 {
     /**
-     * Menampilkan data profil donatur yang sedang login.
+     * Menampilkan data profil pengguna yang sedang login.
      */
     public function getProfile(Request $request)
     {
         $user = $request->user();
         
-        if (!$user || $user->role !== 'donatur') {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         // Helper function to convert value to boolean
@@ -35,52 +36,52 @@ class ProfileController extends Controller
         // Debug logging
         Log::debug('User permissions from database:', [
             'user_id' => $user->pengguna_id,
-            'can_donate_raw' => $user->can_donate,
-            'can_view_history_raw' => $user->can_view_history,
-            'can_view_notification_raw' => $user->can_view_notification,
-            'can_donate_type' => gettype($user->can_donate),
-            'can_view_history_type' => gettype($user->can_view_history),
-            'can_view_notification_type' => gettype($user->can_view_notification)
+            'role' => $user->role,
+            'can_donate_raw' => $user->can_donate ?? null,
+            'can_view_history_raw' => $user->can_view_history ?? null,
+            'can_view_notification_raw' => $user->can_view_notification ?? null,
         ]);
 
-        // Ensure all permission values are properly converted to boolean
-        $canDonate = $toBool($user->can_donate);
-        $canViewHistory = $toBool($user->can_view_history);
-        $canViewNotification = $toBool($user->can_view_notification);
+        // Ensure all permission values are properly converted to boolean for donatur users
+        $canDonate = $user->role === 'donatur' ? $toBool($user->can_donate) : null;
+        $canViewHistory = $user->role === 'donatur' ? $toBool($user->can_view_history) : null;
+        $canViewNotification = $user->role === 'donatur' ? $toBool($user->can_view_notification) : null;
         
-        // Debug logging after conversion
-        Log::debug('User permissions after boolean conversion:', [
-            'user_id' => $user->pengguna_id,
-            'can_donate' => $canDonate,
-            'can_view_history' => $canViewHistory,
-            'can_view_notification' => $canViewNotification
-        ]);
-
-        return response()->json([
+        // Prepare response data
+        $responseData = [
             'pengguna_id' => $user->pengguna_id,
             'nama' => $user->nama,
             'email' => $user->email,
             'role' => $user->role,
-            'can_donate' => $canDonate,
-            'can_view_history' => $canViewHistory,
-            'can_view_notification' => $canViewNotification
-        ]);
+            'nomor_hp' => $user->nomor_hp,
+            'created_at' => $user->created_at,
+            'email_verified_at' => $user->email_verified_at
+        ];
+        
+        // Add permission fields only for donatur users
+        if ($user->role === 'donatur') {
+            $responseData['can_donate'] = $canDonate;
+            $responseData['can_view_history'] = $canViewHistory;
+            $responseData['can_view_notification'] = $canViewNotification;
+        }
+
+        return response()->json($responseData);
     }
 
     /**
-     * Memperbarui password donatur.
+     * Memperbarui password pengguna.
      */
     public function updatePassword(Request $request)
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'donatur') {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $request->validate([
             'current_password' => 'required',
-            'new_password' => 'required|min:8|confirmed',
+            'password' => 'required|min:8|confirmed',
         ]);
 
         if (!Hash::check($request->current_password, $user->password)) {
@@ -89,35 +90,77 @@ class ProfileController extends Controller
             ]);
         }
 
-        $user->password = Hash::make($request->new_password);
+        $user->password = Hash::make($request->password);
         $user->save();
+
+        // Log activity for admin users
+        if ($user->role === 'admin') {
+            try {
+                LogAktivitas::log(
+                    'ubah',
+                    "Admin {$user->nama} mengubah password"
+                );
+            } catch (\Exception $e) {
+                Log::error('Error logging password change: ' . $e->getMessage());
+            }
+        }
 
         return response()->json(['message' => 'Password berhasil diubah']);
     }
 
     /**
-     * Memperbarui nama donatur.
+     * Memperbarui profil pengguna.
      */
     public function update(Request $request)
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'donatur') {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $validated = $request->validate([
-            'nama' => 'required|string|min:3|max:255',
-        ]);
-
-        $user->nama = $validated['nama'];
+        $rules = [];
+        $updateFields = [];
+        
+        // Validate and update nama if provided
+        if ($request->has('nama')) {
+            $rules['nama'] = 'required|string|min:3|max:255';
+            $updateFields[] = 'nama';
+        }
+        
+        // Validate and update nomor_hp if provided
+        if ($request->has('nomor_hp')) {
+            $rules['nomor_hp'] = 'nullable|string|max:15';
+            $updateFields[] = 'nomor_hp';
+        }
+        
+        $validated = $request->validate($rules);
+        
+        // Update user fields
+        foreach ($updateFields as $field) {
+            $user->{$field} = $validated[$field];
+        }
+        
         $user->save();
+        
+        // Log activity for admin users
+        if ($user->role === 'admin' && !empty($updateFields)) {
+            try {
+                LogAktivitas::log(
+                    'ubah',
+                    "Admin {$user->nama} mengubah profil: " . implode(', ', $updateFields)
+                );
+            } catch (\Exception $e) {
+                Log::error('Error logging profile update: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'Profil berhasil diperbarui',
             'user' => [
                 'nama' => $user->nama,
                 'email' => $user->email,
+                'nomor_hp' => $user->nomor_hp,
             ],
         ]);
     }

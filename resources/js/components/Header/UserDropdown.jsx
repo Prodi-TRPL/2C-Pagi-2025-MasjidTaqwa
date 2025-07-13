@@ -6,6 +6,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserEdit, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import axios from "axios"; // Added axios import
+import { clearUserData, getCurrentUser, isLoggedIn } from "../../utils/auth";
+
+// Create a custom event for profile updates
+export const PROFILE_UPDATED_EVENT = "profileUpdated";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,19 +17,68 @@ export default function UserDropdown() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser({
-          name: parsedUser.name || "",
-          email: parsedUser.email || "",
+  // Function to fetch current user data from API
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      
+      // Try to get user role to determine which endpoint to use
+      const userRole = localStorage.getItem("role");
+      
+      if (userRole === "admin") {
+        const response = await axios.get("/api/admin-profile", {
+          headers: { Authorization: `Bearer ${token}` }
         });
-      } catch (error) {
-        console.error("Failed to parse user data from localStorage", error);
+        
+        // Update local state
+        setUser({
+          name: response.data.nama || "",
+          email: response.data.email || ""
+        });
+        
+        // Update localStorage
+        localStorage.setItem("user", JSON.stringify({
+          name: response.data.nama,
+          email: response.data.email,
+          role: response.data.role
+        }));
+      } else {
+        // For non-admin users
+        const userData = localStorage.getItem("user");
+        if (userData) {
+          try {
+            const parsedUser = JSON.parse(userData);
+            setUser({
+              name: parsedUser.name || "",
+              email: parsedUser.email || "",
+            });
+          } catch (error) {
+            console.error("Failed to parse user data from localStorage", error);
+          }
+        }
       }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
     }
+  };
+
+  // Initial load of user data
+  useEffect(() => {
+    fetchUserData();
+    
+    // Add event listener for profile updates
+    const handleProfileUpdate = () => {
+      console.log("Profile update detected, refreshing user data");
+      fetchUserData();
+    };
+    
+    window.addEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -49,15 +102,7 @@ export default function UserDropdown() {
       const token = localStorage.getItem('token');
       
       // Get user data to determine if they're an admin
-      const userData = localStorage.getItem('user');
-      let user = null;
-      if (userData) {
-        try {
-          user = JSON.parse(userData);
-        } catch (error) {
-          console.error('Failed to parse user data from localStorage', error);
-        }
-      }
+      const user = getCurrentUser();
       
       // Send logout request to server if token exists
       if (token) {
@@ -67,7 +112,7 @@ export default function UserDropdown() {
           if (user && user.role === 'admin') {
             console.log('Logging admin logout activity');
             await axios.post('/api/log-admin-logout', {
-              name: user.name || user.nama || 'Unknown',
+              name: user.name || 'Unknown',
               email: user.email || 'unknown@example.com'
             });
           }
@@ -87,8 +132,8 @@ export default function UserDropdown() {
         console.warn('No token found for logout request');
       }
       
-      // Remove token after sending logout request
-      localStorage.removeItem('token');
+      // Clear user data
+      clearUserData();
       
       const result = await Swal.fire({
           icon: 'success',
@@ -110,8 +155,8 @@ export default function UserDropdown() {
       navigate('/', { replace: true });
     } catch (error) {
       console.error('Error during logout:', error);
-      // Still remove token and redirect even if the logout request fails
-      localStorage.removeItem('token');
+      // Still clear user data and redirect even if the logout request fails
+      clearUserData();
       navigate('/', { replace: true });
     }
   }
@@ -167,11 +212,11 @@ export default function UserDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
-              to="/dashboardhome"
+              to="/dashboardhome/profil-admin"
               className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
               <FontAwesomeIcon icon={faUserEdit} className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-              Profile
+              Profil Admin
             </DropdownItem>
           </li>
           <li>
