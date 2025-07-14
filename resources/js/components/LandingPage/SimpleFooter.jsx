@@ -121,7 +121,7 @@ export const SimpleFooter = () => {
         <div className="flex items-center mt-4 space-x-4 sm:mt-0">
           {/* Icon Instagram */}
           <a
-            href="/"
+            href="https://www.instagram.com/sidontaq/"
             className="text-gray-500 transition-colors duration-300 hover:text-[#59B997]"
           >
             <svg viewBox="0 0 30 30" fill="currentColor" className="h-6">

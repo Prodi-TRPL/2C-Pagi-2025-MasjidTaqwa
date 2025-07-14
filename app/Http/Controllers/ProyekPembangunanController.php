@@ -31,6 +31,8 @@ class ProyekPembangunanController extends Controller
 
         try {
             $proyek = new ProyekPembangunan();
+            // Generate UUID for proyek_id
+            $proyek->proyek_id = (string) Str::uuid();
             $proyek->nama_item = $request->nama_item;
             $proyek->deskripsi = $request->deskripsi;
             $proyek->target_dana = $request->target_dana;

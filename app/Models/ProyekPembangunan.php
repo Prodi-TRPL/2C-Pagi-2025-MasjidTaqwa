@@ -14,7 +14,23 @@ class ProyekPembangunan extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = null;
 
-    protected $fillable = ['admin_id', 'nama_item', 'deskripsi', 'target_dana', 'dana_terkumpul', 'created_at', 'gambar'];
+    protected $fillable = ['proyek_id', 'admin_id', 'nama_item', 'deskripsi', 'target_dana', 'dana_terkumpul', 'created_at', 'gambar'];
+    
+    /**
+     * The "booting" method of the model.
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (!$model->proyek_id) {
+                $model->proyek_id = (string) \Illuminate\Support\Str::uuid();
+            }
+        });
+    }
 
     public function admin()
     {

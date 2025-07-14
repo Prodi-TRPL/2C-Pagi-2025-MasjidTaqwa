@@ -144,4 +144,32 @@ class Pengguna extends Authenticatable
     {
         return $this->hasMany(Notifikasi::class, 'pengguna_id');
     }
+
+    /**
+     * Get the anonymous donor records linked to this user.
+     */
+    public function anonymousDonors()
+    {
+        return $this->hasMany(AnonymousDonor::class, 'pengguna_id', 'pengguna_id');
+    }
+
+    /**
+     * Get all donations made by this user, including those made as anonymous donor
+     * before the user account was created.
+     */
+    public function allDonations()
+    {
+        // Get direct donations (made when logged in)
+        $directDonations = $this->donasi();
+
+        // Get donations made as anonymous donor before registration
+        $anonymousDonations = Donasi::whereIn('anonymous_donor_id', function($query) {
+            $query->select('anonymous_donor_id')
+                  ->from('anonymous_donors')
+                  ->where('pengguna_id', $this->pengguna_id);
+        });
+
+        // Combine the results using a union
+        return $directDonations->union($anonymousDonations);
+    }
 }

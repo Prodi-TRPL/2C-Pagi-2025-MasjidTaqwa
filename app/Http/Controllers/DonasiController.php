@@ -102,6 +102,7 @@ class DonasiController extends Controller
             // Always store name and email regardless of authentication status
             $donation->name = $isAnonymous ? 'Donatur Anonim' : $request->name;
             $donation->email = $request->email;
+            $donation->is_anonymous = $isAnonymous;
             
             // Set user ID if authenticated or provided
             if (Auth::check()) {
@@ -127,10 +128,51 @@ class DonasiController extends Controller
                     'is_anonymous' => $isAnonymous
                 ]);
             } else {
-                Log::info('Setting donor info', [
-                    'name' => $donation->name,
-                    'is_anonymous' => $isAnonymous
-                ]);
+                // User is not logged in - create or update an anonymous donor record
+                // First check if the anonymous_donors table exists
+                $anonymousDonorsTableExists = false;
+                $anonymousDonorIdColumnExists = false;
+                
+                try {
+                    $anonymousDonorsTableExists = DB::getSchemaBuilder()->hasTable('anonymous_donors');
+                    if ($anonymousDonorsTableExists) {
+                        $anonymousDonorIdColumnExists = DB::getSchemaBuilder()->hasColumn('donasi', 'anonymous_donor_id');
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error checking anonymous_donors table existence: ' . $e->getMessage());
+                }
+                
+                // Only create anonymous donor record if the table exists
+                if ($anonymousDonorsTableExists && $anonymousDonorIdColumnExists) {
+                    try {
+                        $anonymousDonor = \App\Models\AnonymousDonor::firstOrCreate(
+                            ['email' => $request->email],
+                            [
+                                'nama' => $isAnonymous ? 'Donatur Anonim' : $request->name,
+                                'is_linked_to_account' => false
+                            ]
+                        );
+                        
+                        // Associate the anonymous donor with this donation
+                        $donation->anonymous_donor_id = $anonymousDonor->anonymous_donor_id;
+                        
+                        Log::info('Created anonymous donor record', [
+                            'anonymous_donor_id' => $anonymousDonor->anonymous_donor_id,
+                            'email' => $anonymousDonor->email,
+                            'name' => $anonymousDonor->nama,
+                            'is_anonymous' => $isAnonymous
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::warning('Error creating anonymous donor record: ' . $e->getMessage());
+                        // Continue without anonymous donor association
+                    }
+                } else {
+                    Log::info('Anonymous donor table does not exist, storing donor info directly', [
+                        'name' => $donation->name,
+                        'email' => $donation->email,
+                        'is_anonymous' => $isAnonymous
+                    ]);
+                }
             }
             
             $donation->save();
@@ -173,20 +215,76 @@ class DonasiController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // Hitung total jumlah donasi
-        $totalCount = Donasi::where('pengguna_id', $user->pengguna_id)
-            ->where('status', 'Diterima')
-            ->count();
+        try {
+            // Get donations directly made by this user
+            $directDonations = Donasi::where('pengguna_id', $user->pengguna_id)
+                ->where('status', 'Diterima');
 
-        // Hitung total nominal donasi
-        $totalAmount = Donasi::where('pengguna_id', $user->pengguna_id)
-            ->where('status', 'Diterima')
-            ->sum('jumlah');
+            // Hitung total jumlah donasi langsung
+            $totalDirectCount = $directDonations->count();
 
-        return response()->json([
-            'total_count' => $totalCount,
-            'total_amount' => $totalAmount,
-        ]);
+            // Hitung total nominal donasi langsung
+            $totalDirectAmount = $directDonations->sum('jumlah');
+            
+            // Initialize anonymous donation stats
+            $totalAnonymousCount = 0;
+            $totalAnonymousAmount = 0;
+            
+            // Check if anonymous_donors table exists before trying to query it
+            $anonymousDonorsTableExists = false;
+            $anonymousDonorIdColumnExists = false;
+            
+            try {
+                // Check if the anonymous_donors table exists
+                $anonymousDonorsTableExists = DB::getSchemaBuilder()->hasTable('anonymous_donors');
+                
+                // Check if the anonymous_donor_id column exists in the donasi table
+                if ($anonymousDonorsTableExists) {
+                    $anonymousDonorIdColumnExists = DB::getSchemaBuilder()->hasColumn('donasi', 'anonymous_donor_id');
+                }
+            } catch (\Exception $e) {
+                // Log the error but continue with direct donations only
+                Log::warning('Error checking anonymous_donors table existence in stats: ' . $e->getMessage());
+            }
+            
+            // Only query anonymous donations if the necessary tables/columns exist
+            if ($anonymousDonorsTableExists && $anonymousDonorIdColumnExists) {
+                try {
+                    // Get donations made as anonymous donor before registration
+                    $anonymousDonationsQuery = Donasi::whereIn('anonymous_donor_id', function($query) use ($user) {
+                        $query->select('anonymous_donor_id')
+                            ->from('anonymous_donors')
+                            ->where('email', $user->email)
+                            ->orWhere('pengguna_id', $user->pengguna_id);
+                    })->where('status', 'Diterima');
+                    
+                    // Hitung total jumlah donasi anonim
+                    $totalAnonymousCount = $anonymousDonationsQuery->count();
+                    
+                    // Hitung total nominal donasi anonim
+                    $totalAnonymousAmount = $anonymousDonationsQuery->sum('jumlah');
+                } catch (\Exception $e) {
+                    // Log error but continue with direct donations
+                    Log::warning('Error fetching anonymous donations stats: ' . $e->getMessage());
+                }
+            }
+            
+            // Calculate totals
+            $totalCount = $totalDirectCount + $totalAnonymousCount;
+            $totalAmount = $totalDirectAmount + $totalAnonymousAmount;
+
+            return response()->json([
+                'total_count' => $totalCount,
+                'total_amount' => $totalAmount,
+                'direct_count' => $totalDirectCount,
+                'anonymous_count' => $totalAnonymousCount,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting donation stats: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to get donation stats: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function handleCallback(Request $request)
@@ -339,49 +437,88 @@ class DonasiController extends Controller
     
     public function userDonations(Request $request)
     {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        
         try {
-            // Ambil donasi untuk user yang sedang login
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['message' => 'Unauthorized'], 401);
-            }
+            // Get donations directly made by this user
+            $directDonations = Donasi::where('pengguna_id', $user->pengguna_id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+                
+            // Check if anonymous_donors table exists before trying to query it
+            $anonymousDonorsTableExists = false;
+            $anonymousDonorIdColumnExists = false;
             
-            $donations = Donation::where('pengguna_id', $user->pengguna_id)
-                        ->orderBy('created_at', 'desc')
-                        ->get();
-            
-            // Process donations to ensure amounts are correct integers
-            $processedDonations = $donations->map(function ($donation) {
-                // Make sure jumlah is a correct integer without modifications
-                if (is_numeric($donation->jumlah)) {
-                    // Explicitly convert to integer to ensure no string formatting issues
-                    $donation->jumlah = (int) $donation->jumlah;
+            try {
+                // Check if the anonymous_donors table exists
+                $anonymousDonorsTableExists = DB::getSchemaBuilder()->hasTable('anonymous_donors');
+                
+                // Check if the anonymous_donor_id column exists in the donasi table
+                if ($anonymousDonorsTableExists) {
+                    $anonymousDonorIdColumnExists = DB::getSchemaBuilder()->hasColumn('donasi', 'anonymous_donor_id');
                 }
                 
-                // Log donation amount for debugging
-                Log::info('User donation amount', [
-                    'donation_id' => $donation->donasi_id,
-                    'original_amount' => $donation->getOriginal('jumlah'),
-                    'processed_amount' => $donation->jumlah
+                Log::info('Database schema check for anonymous donors', [
+                    'anonymousDonorsTableExists' => $anonymousDonorsTableExists,
+                    'anonymousDonorIdColumnExists' => $anonymousDonorIdColumnExists
                 ]);
-                
-                return $donation;
-            });
+            } catch (\Exception $e) {
+                // Log the error but continue with direct donations only
+                Log::warning('Error checking anonymous_donors table existence: ' . $e->getMessage());
+            }
             
-            Log::info('User donations retrieved', [
+            // Initialize anonymous donations collection
+            $anonymousDonations = collect([]);
+                
+            // Only query anonymous donations if the necessary tables/columns exist
+            if ($anonymousDonorsTableExists && $anonymousDonorIdColumnExists) {
+                try {
+                    // Get donations made as anonymous donor before registration (by email)
+                    $anonymousDonations = Donasi::whereIn('anonymous_donor_id', function($query) use ($user) {
+                        $query->select('anonymous_donor_id')
+                              ->from('anonymous_donors')
+                              ->where('email', $user->email)
+                              ->orWhere('pengguna_id', $user->pengguna_id);
+                    })
+                    ->whereNull('pengguna_id') // Ensure we don't double-count
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                    
+                    // After retrieving donations, link any anonymous donors that aren't already linked
+                    if ($anonymousDonations->isNotEmpty()) {
+                        \App\Models\AnonymousDonor::where('email', $user->email)
+                            ->where('is_linked_to_account', false)
+                            ->update([
+                                'pengguna_id' => $user->pengguna_id,
+                                'is_linked_to_account' => true
+                            ]);
+                    }
+                } catch (\Exception $e) {
+                    // Log error but continue with direct donations
+                    Log::warning('Error fetching anonymous donations: ' . $e->getMessage());
+                }
+            }
+            
+            // Merge the collections (even if anonymous_donations is empty)
+            $allDonations = $directDonations->merge($anonymousDonations)
+                ->sortByDesc('created_at')
+                ->values(); // Reindex array after sorting
+            
+            return response()->json($allDonations);
+        } catch (\Exception $e) {
+            Log::error('Error fetching user donations', [
                 'user_id' => $user->pengguna_id,
-                'count' => $processedDonations->count()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
-                'donations' => $processedDonations
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error retrieving user donations', [
-                'message' => $e->getMessage(),
-                'user_id' => $request->user() ? $request->user()->pengguna_id : null
-            ]);
-            return response()->json(['error' => 'Failed to retrieve donations'], 500);
+                'message' => 'Failed to fetch donations: ' . $e->getMessage()
+            ], 500);
         }
     }
     

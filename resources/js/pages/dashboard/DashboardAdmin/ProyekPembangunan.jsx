@@ -1970,7 +1970,7 @@ const ProyekPembangunan = () => {
                     >
                       <option value="all">Semua</option>
                       <option value="completed">Tercapai</option>
-                      <option value="in-progress">Dalam Progress</option>
+                      <option value="in-progress">Dalam Proses</option>
                     </select>
                   </div>
                   

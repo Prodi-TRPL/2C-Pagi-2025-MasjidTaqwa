@@ -23,6 +23,7 @@ class Donasi extends Model
         'name',
         'email',
         'is_anonymous',
+        'anonymous_donor_id',
         'created_at',
         'updated_at'
     ];
@@ -40,5 +41,13 @@ class Donasi extends Model
     public function laporanKeuangan()
     {
         return $this->belongsTo(LaporanKeuangan::class, 'laporan_keuangan_id');
+    }
+
+    /**
+     * Get the anonymous donor associated with this donation.
+     */
+    public function anonymousDonor()
+    {
+        return $this->belongsTo(AnonymousDonor::class, 'anonymous_donor_id', 'anonymous_donor_id');
     }
 }

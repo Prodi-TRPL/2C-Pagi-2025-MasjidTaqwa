@@ -15,6 +15,10 @@ use App\Notifications\EmailVerificationNotification;
 use App\Notifications\ResetPasswordNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use App\Models\AnonymousDonor;
+use App\Models\Donasi;
+use App\Models\Notifikasi;
 
 class AuthController extends Controller
 {
@@ -56,6 +60,10 @@ public function register(Request $request)
 
         try {
             $pengguna->save();
+            
+            // Link any anonymous donations made with this email address
+            $this->linkAnonymousDonationsToUser($pengguna);
+            
         } catch (\Exception $e) {
             Log::error('Database error during registration: ' . $e->getMessage());
             return response()->json(['message' => 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.'], 500);
@@ -351,6 +359,10 @@ public function register(Request $request)
             }
 
             $user = Auth::guard('web')->user();
+            
+            // Link any anonymous donations made with this email address
+            $this->linkAnonymousDonationsToUser($user);
+            
             // Use the createToken method from HasApiTokens trait which is properly used in the Pengguna model
             $token = $user->createToken('authToken')->plainTextToken;
 
@@ -406,5 +418,120 @@ public function register(Request $request)
         $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Logged out successfully']);
+    }
+
+    /**
+     * Helper method to link anonymous donations to a registered user.
+     */
+    protected function linkAnonymousDonationsToUser($user)
+    {
+        try {
+            // First check if the anonymous_donors table exists
+            $anonymousDonorsTableExists = false;
+            
+            try {
+                $anonymousDonorsTableExists = DB::getSchemaBuilder()->hasTable('anonymous_donors');
+                if (!$anonymousDonorsTableExists) {
+                    // Table doesn't exist yet, nothing to link
+                    return;
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error checking anonymous_donors table existence: ' . $e->getMessage());
+                return;
+            }
+            
+            // Find all anonymous donors with the same email
+            $anonymousDonors = AnonymousDonor::where('email', $user->email)
+                ->where(function($query) use ($user) {
+                    $query->where('is_linked_to_account', false)
+                        ->orWhereNull('pengguna_id');
+                })
+                ->get();
+            
+            if ($anonymousDonors->isEmpty()) {
+                // No anonymous donations to link
+                return;
+            }
+            
+            Log::info('Found ' . $anonymousDonors->count() . ' anonymous donors to link to user ' . $user->email);
+            
+            foreach ($anonymousDonors as $anonymousDonor) {
+                // Update the anonymous donor record to mark it as linked
+                $anonymousDonor->pengguna_id = $user->pengguna_id;
+                $anonymousDonor->is_linked_to_account = true;
+                $anonymousDonor->save();
+                
+                // Find all donations by this anonymous donor
+                $donations = \App\Models\Donasi::where('anonymous_donor_id', $anonymousDonor->anonymous_donor_id)
+                                ->where('status', 'Diterima')  // Only link successful donations
+                                ->get();
+                
+                foreach ($donations as $donation) {
+                    // Update the donation to link it to the user
+                    $donation->pengguna_id = $user->pengguna_id;
+                    $donation->save();
+                    
+                    // Create notification for each linked donation
+                    $this->createDonationNotification($donation, $user->pengguna_id);
+                    
+                    Log::info('Linked donation ID ' . $donation->donasi_id . ' to user ' . $user->email);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error linking anonymous donations: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Helper method to create notification for linked donations.
+     */
+    protected function createDonationNotification($donation, $userId)
+    {
+        try {
+            // Format the donation amount
+            $formattedAmount = number_format($donation->jumlah, 0, ',', '.');
+            
+            // Create a unique notification ID
+            $notificationId = Str::uuid();
+            
+            // Check if a notification already exists for this donation and user
+            $existingNotification = \App\Models\Notifikasi::where('pengguna_id', $userId)
+                ->where('donasi_id', $donation->donasi_id)
+                ->first();
+                
+            if ($existingNotification) {
+                Log::info('Notification already exists for donation', [
+                    'donation_id' => $donation->donasi_id,
+                    'user_id' => $userId
+                ]);
+                return;
+            }
+            
+            // Create donation notification
+            $notifikasi = new \App\Models\Notifikasi();
+            $notifikasi->notifikasi_id = $notificationId;
+            $notifikasi->pengguna_id = $userId;
+            $notifikasi->donasi_id = $donation->donasi_id;
+            $notifikasi->tipe = 'donasi_diterima';
+            $notifikasi->judul = 'Donasi Anda Berhasil';
+            $notifikasi->pesan = "Terima kasih! Donasi Anda sebesar Rp {$formattedAmount} telah berhasil diterima. Semoga kebaikan Anda dibalas berlipat ganda.";
+            $notifikasi->is_read = false;
+            $notifikasi->created_at = now();
+            $notifikasi->updated_at = now();
+            $notifikasi->processed = true;
+            $notifikasi->priority = 'normal';
+            $notifikasi->save();
+            
+            Log::info('Created notification for linked donation', [
+                'donation_id' => $donation->donasi_id,
+                'user_id' => $userId,
+                'notification_id' => $notifikasi->notifikasi_id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error creating notification for linked donation: ' . $e->getMessage(), [
+                'donation_id' => $donation->donasi_id,
+                'user_id' => $userId
+            ]);
+        }
     }
 }

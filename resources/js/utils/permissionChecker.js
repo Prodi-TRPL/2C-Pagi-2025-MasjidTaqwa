@@ -185,21 +185,21 @@ export const setupPermissionChecker = (onPermissionRevoked = null, intervalMs = 
     }
   };
   
-  // Handle database access revocation
-  const handleDatabaseAccessRevoked = (callback) => {
-    // Create a changes object with a special flag for database access revoked
-    const changes = {
-      databaseAccessRevoked: true
-    };
+  // // Handle database access revocation
+  // const handleDatabaseAccessRevoked = (callback) => {
+  //   // Create a changes object with a special flag for database access revoked
+  //   const changes = {
+  //     databaseAccessRevoked: true
+  //   };
     
-    // Call the callback if provided
-    if (typeof callback === 'function') {
-      callback(changes);
-    } else {
-      // Default behavior: store info and force logout
-      logoutUserWithMessage('Akses database telah dicabut. Silahkan hubungi administrator.');
-    }
-  };
+  //   // Call the callback if provided
+  //   if (typeof callback === 'function') {
+  //     callback(changes);
+  //   } else {
+  //     // Default behavior: store info and force logout
+  //     logoutUserWithMessage('Akses database telah dicabut. Silahkan hubungi administrator.');
+  //   }
+  // };
   
   // Handle permission revocation
   const handlePermissionRevoked = (changedPermissions, callback) => {

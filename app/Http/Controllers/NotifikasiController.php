@@ -28,9 +28,14 @@ class NotifikasiController extends Controller
                 $query->where('tipe', $request->input('tipe'));
             }
 
-            // Eager load donasi info if donasi_id present
+            // Eager load donasi info with necessary relationships
             $notifications = $query->with(['donasi' => function ($q) {
-                $q->select('donasi_id', 'jumlah', 'status', 'created_at');
+                $q->select('donasi_id', 'jumlah', 'status', 'created_at', 'pengguna_id', 'anonymous_donor_id');
+                
+                // Also eager load the anonymous donor if there is one
+                $q->with(['anonymousDonor' => function($q2) {
+                    $q2->select('anonymous_donor_id', 'email', 'nama', 'pengguna_id');
+                }]);
             }])->orderBy('created_at', 'desc')->get();
 
             // Map notifications to include short donasi info and ensure judul field exists
@@ -57,11 +62,22 @@ class NotifikasiController extends Controller
                 }
                 
                 if ($notif->donasi) {
-                    $notifArray['donasi_info'] = [
+                    // Extract donation info, including whether it was from a linked anonymous donor
+                    $donationInfo = [
                         'jumlah' => $notif->donasi->jumlah,
                         'status' => $notif->donasi->status,
                         'tanggal_donasi' => $notif->donasi->created_at,
                     ];
+                    
+                    // Check if this was originally an anonymous donation that's been linked
+                    if ($notif->donasi->anonymous_donor_id && $notif->donasi->anonymousDonor) {
+                        $donationInfo['was_anonymous'] = true;
+                        $donationInfo['original_email'] = $notif->donasi->anonymousDonor->email;
+                        $donationInfo['original_name'] = $notif->donasi->anonymousDonor->nama;
+                        $donationInfo['linked_to_account'] = $notif->donasi->anonymousDonor->is_linked_to_account ?? false;
+                    }
+                    
+                    $notifArray['donasi_info'] = $donationInfo;
                 } else {
                     $notifArray['donasi_info'] = null;
                 }

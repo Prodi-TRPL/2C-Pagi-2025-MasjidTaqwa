@@ -173,7 +173,7 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
       // Ensure jumlah is a number
       const numericAmount = typeof donation.jumlah === 'number' 
         ? donation.jumlah 
-        : parseInt(String(donation.jumlah).replace(/[^\d]/g, ''), 10) || 0;
+        : parseFloat(String(donation.jumlah).replace(/[^\d.-]/g, '')) || 0;
       
       return (
         <Grid item xs={12} key={donation.donasi_id || index}>
@@ -213,7 +213,12 @@ const MobileCardView = ({ donations, handleOpenDialog }) => (
                 
                 <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                   <AttachMoneyIcon sx={{ mr: 1, color: '#59B997' }} />
-                  Rp {numericAmount.toLocaleString('id-ID')}
+                  {new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(numericAmount)}
                 </Typography>
                 
                 <Divider sx={{ my: 1 }} />
@@ -405,20 +410,22 @@ function DonaturUserRiwayatTransaksi() {
               // Process jumlah correctly based on data type
               let amount = donation.jumlah;
               
-              // Use toString() to ensure we're working with a string, then remove non-digits
+              // Handle different data types properly
               if (amount !== undefined && amount !== null) {
-                // Convert to string first for consistent handling
-                const amountStr = String(amount);
+                // Convert to number if it's a string
+                if (typeof amount === 'string') {
+                  // Remove any non-numeric characters except decimal point
+                  // This will handle both "50000.00" and "Rp 50.000,00" formats
+                  const cleanAmount = amount.replace(/[^\d.-]/g, '');
+                  amount = parseFloat(cleanAmount);
+                } else if (typeof amount === 'number') {
+                  // Already a number, no conversion needed
+                  amount = amount;
+                }
                 
-                // Check if the string already contains digits only
-                const isCleanDigits = /^\d+$/.test(amountStr);
-                
-                if (isCleanDigits) {
-                  // If it's already clean digits, parse it directly
-                  amount = parseInt(amountStr, 10);
-                } else {
-                  // Otherwise, remove non-digits and then parse
-                  amount = parseInt(amountStr.replace(/[^\d]/g, ''), 10);
+                // Make sure we have a valid number
+                if (isNaN(amount)) {
+                  amount = 0;
                 }
                 
                 console.log(`Processed amount (after parsing): ${amount}`);
@@ -533,10 +540,16 @@ function DonaturUserRiwayatTransaksi() {
     console.log(`After conversion to number: ${numericAmount}`);
     
     try {
-      return `Rp ${numericAmount.toLocaleString('id-ID')}`;
+      // Format the number without any decimal places
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(numericAmount);
     } catch (error) {
       console.error('Error formatting currency:', error);
-      return `Rp ${amount}`;
+      return `Rp ${numericAmount}`;
     }
   };
 

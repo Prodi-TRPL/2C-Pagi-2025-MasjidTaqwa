@@ -376,7 +376,7 @@ export default function KategoriPengeluaran() {
                           type="text"
                           value={namaKategori}
                           onChange={(e) => setNamaKategori(e.target.value)}
-                          placeholder="Contoh: Material Bangunan, Upah Pekerja, dll"
+                          placeholder="Contoh: Material Bangunan, Perlengkapan Masjid, dll"
                           className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#59B997] focus:border-[#59B997] focus:outline-none transition-all duration-200 bg-white"
                           required
                           autoFocus
