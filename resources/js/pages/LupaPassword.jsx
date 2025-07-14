@@ -184,7 +184,17 @@ const LupaPassword = () => {
             
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors"
+              className="text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors duration-300"
+              style={{
+                backgroundColor: loading ? '#4DA987' : '#59B997', 
+                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.30)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#4DA987';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#59B997';
+              }}
               disabled={loading}
             >
               {loading ? (
@@ -231,7 +241,17 @@ const LupaPassword = () => {
             
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors"
+              className="text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors duration-300"
+              style={{
+                backgroundColor: loading ? '#4DA987' : '#59B997', 
+                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.30)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#4DA987';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#59B997';
+              }}
               disabled={loading || verificationCode.length !== 6}
             >
               {loading ? (
@@ -248,7 +268,7 @@ const LupaPassword = () => {
             <button
               type="button"
               onClick={handleRequestCode}
-              className="w-full border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-lg py-3 px-4 flex items-center justify-center transition-colors"
+              className="w-full border border-[#59B997] text-[#479479] hover:bg-[#59B997]/10 font-semibold rounded-lg py-3 px-4 flex items-center justify-center transition-colors"
               disabled={loading}
             >
               Kirim Ulang Kode
@@ -300,7 +320,17 @@ const LupaPassword = () => {
             
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors"
+              className="text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors duration-300"
+              style={{
+                backgroundColor: loading ? '#4DA987' : '#59B997', 
+                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.30)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#4DA987';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#59B997';
+              }}
               disabled={loading}
             >
               {loading ? (
@@ -343,8 +373,16 @@ const LupaPassword = () => {
         backgroundRepeat: 'no-repeat'
       }}>
       
+      {/* Overlay background utama halaman */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: `linear-gradient(to top, rgba(0, 0, 0, 0.4), rgba(89, 185, 151, 20))`,
+        }}
+      ></div>
+      
       {/* Card Container */}
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <motion.div 
           className="bg-white bg-opacity-90 rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
           initial={{ opacity: 0 }}
@@ -353,24 +391,53 @@ const LupaPassword = () => {
           transition={{ duration: 0.3 }}
         >
           
-          {/* Left: Logo/Image Section */}
+          {/* Left: Image with Overlay Section */}
           <motion.div 
-            className="bg-white p-4 md:p-8 flex flex-col justify-center items-center md:w-1/3"
+            className="relative md:w-2/5 flex flex-col"
             initial={{ x: -50 }}
             animate={{ x: 0 }}
             exit={{ x: -100 }}
             transition={{ duration: 0.5 }}
+            style={{
+              backgroundImage: `url('/img/masjid-hero.jpg')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
           >
-            <img 
-              src="../img/logoSidontaq.jpeg" 
-              alt="Masjid Taqwa Logo" 
-              className="w-32 h-32 md:w-48 md:h-48 object-contain"
-            />
+            {/* Dark overlay */}
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                background: `linear-gradient(to bottom right, rgba(89, 185, 151, 0.5), rgba(0, 0, 0, 0.4))`,
+              }}
+            ></div>
+            
+            {/* Content container divided into two sections with more balanced spacing */}
+            <div className="relative flex flex-col justify-evenly h-full py-10 px-4 text-white z-10">
+              {/* Top section with logo */}
+              <div className="flex justify-center items-center">
+                <div className="bg-white p-4 rounded-full shadow-lg">
+                  <img 
+                    src="../img/logoSidontaq.jpeg" 
+                    alt="Masjid Taqwa Logo" 
+                    className="w-24 h-24 md:w-28 md:h-28 object-contain rounded-full"
+                  />
+                </div>
+              </div>
+              
+              {/* Bottom section with welcome text */}
+              <div className="text-center mt-8 mb-6">
+                <h2 className="text-2xl font-bold mb-2">Atur Ulang Kata Sandi</h2>
+                <p className="text-sm md:text-base opacity-90">
+                  Sistem Informasi Donasi dan Pengelolaan Keuangan Masjid Taqwa Muhammadiyah
+                </p>
+              </div>
+            </div>
           </motion.div>
           
           {/* Right: Form Section */}
           <motion.div 
-            className="p-8 md:w-2/3 md:p-10"
+            className="p-8 md:w-3/5 md:p-10"
             initial={{ x: 50 }}
             animate={{ x: 0 }}
             exit={{ x: 100 }}
@@ -381,7 +448,7 @@ const LupaPassword = () => {
                 <h1 className="text-2xl font-bold text-gray-800">{getStepTitle()}</h1>
                 <a
                   href="/"
-                  className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                  className="flex items-center space-x-1 text-[#479479] hover:text-[#59B997] transition-colors duration-300 relative group"
                   aria-label="Back to homepage"
                 >
                   <svg
@@ -394,22 +461,27 @@ const LupaPassword = () => {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
-                  <span>Kembali</span>
+                  <span className="relative">
+                    Kembali
+                    <span
+                      className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#4DA987] transition-all duration-300 group-hover:w-full"
+                    ></span>
+                  </span>
                 </a>
               </div>
               
               {/* Step indicators */}
               <div className="flex justify-center mb-8">
                 <div className="flex items-center w-full">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-[#59B997] text-white' : 'bg-gray-300 text-gray-500'}`}>
                     1
                   </div>
-                  <div className={`flex-1 h-1 mx-2 ${step > 1 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
+                  <div className={`flex-1 h-1 mx-2 ${step > 1 ? 'bg-[#59B997]' : 'bg-gray-300'}`}></div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-[#59B997] text-white' : 'bg-gray-300 text-gray-500'}`}>
                     2
                   </div>
-                  <div className={`flex-1 h-1 mx-2 ${step > 2 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-500'}`}>
+                  <div className={`flex-1 h-1 mx-2 ${step > 2 ? 'bg-[#59B997]' : 'bg-gray-300'}`}></div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-[#59B997] text-white' : 'bg-gray-300 text-gray-500'}`}>
                     3
                   </div>
                 </div>
@@ -418,8 +490,16 @@ const LupaPassword = () => {
               {renderStepContent()}
               
               <div className="mt-6 text-center">
-                <Link to="/loginbaru" className="text-blue-600 hover:text-blue-800 font-medium">
-                  Kembali ke Masuk
+                <Link 
+                  to="/loginbaru"
+                  className="text-[#479479] hover:text-[#59B997] font-medium transition-colors duration-300 relative group"
+                >
+                  <span className="relative">
+                    Kembali ke Masuk
+                    <span
+                      className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#4DA987] transition-all duration-300 group-hover:w-full"
+                    ></span>
+                  </span>
                 </Link>
               </div>
               

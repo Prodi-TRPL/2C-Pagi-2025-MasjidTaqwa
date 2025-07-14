@@ -245,8 +245,16 @@ const SignUp = () => {
         backgroundRepeat: 'no-repeat'
       }}>
       
+      {/* Overlay background utama halaman */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: `linear-gradient(to top, rgba(0, 0, 0, 0.4), rgba(89, 185, 151, 20))`,
+        }}
+      ></div>
+      
       {/* Registration Card */}
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         <motion.div 
           className="bg-white bg-opacity-90 rounded-xl shadow-2xl overflow-hidden flex flex-col-reverse md:flex-row"
           initial={{ opacity: 0 }}
@@ -257,7 +265,7 @@ const SignUp = () => {
           
           {/* Left: Form Section */}
           <motion.div 
-            className="p-8 md:w-2/3 md:p-10"
+            className="p-8 md:w-3/5 md:p-10"
             initial={{ x: -50 }}
             animate={{ x: 0 }}
             exit={{ x: -100 }}
@@ -268,7 +276,7 @@ const SignUp = () => {
                 <h1 className="text-2xl font-bold text-gray-800">Buat Akun Baru</h1>
                 <a
                   href="/"
-                  className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                  className="flex items-center space-x-1 text-[#479479] hover:text-[#59B997] transition-colors duration-300 relative group"
                   aria-label="Back to homepage"
                 >
                   <svg
@@ -281,7 +289,12 @@ const SignUp = () => {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
-                  <span>Kembali</span>
+                  <span className="relative">
+                    Kembali
+                    <span
+                      className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#4DA987] transition-all duration-300 group-hover:w-full"
+                    ></span>
+                  </span>
                 </a>
               </div>
               
@@ -320,7 +333,17 @@ const SignUp = () => {
                   <div className="flex flex-col space-y-3">
                     <button 
                       onClick={handleVerifyCode} 
-                      className="bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
+                      className="text-white font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center transition-colors duration-300"
+                      style={{
+                        backgroundColor: verifyingCode ? '#4DA987' : '#59B997', 
+                        boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.30)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#4DA987';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#59B997';
+                      }}
                       disabled={verifyingCode || verificationCode.length !== 6}
                     >
                       {verifyingCode ? (
@@ -336,12 +359,12 @@ const SignUp = () => {
                     
                     <button
                       onClick={handleResendCode}
-                      className="border border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center"
+                      className="border border-[#59B997] text-[#479479] hover:bg-[#59B997]/10 font-semibold rounded-md py-2 px-4 w-full flex items-center justify-center transition-colors"
                       disabled={verifyingCode}
                     >
                       {verifyingCode ? (
                         <>
-                          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-[#479479]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
@@ -352,9 +375,14 @@ const SignUp = () => {
                     
                     <Link 
                       to="/loginbaru" 
-                      className="text-gray-500 hover:text-gray-700 text-center text-sm mt-2"
+                      className="text-[#479479] hover:text-[#59B997] text-center text-sm mt-2 transition-colors duration-300 relative group"
                     >
-                      Sudah punya akun? Masuk di sini
+                      <span className="relative">
+                        Sudah punya akun? Masuk di sini
+                        <span
+                          className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#4DA987] transition-all duration-300 group-hover:w-full"
+                        ></span>
+                      </span>
                     </Link>
                   </div>
                 </div>
@@ -433,7 +461,17 @@ const SignUp = () => {
                   {/* Sign Up Button */}
                   <button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors mt-6"
+                    className="text-white font-semibold rounded-lg py-3 px-4 w-full flex items-center justify-center transition-colors duration-300 mt-6"
+                    style={{
+                      backgroundColor: loading ? '#4DA987' : '#59B997', 
+                      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.30)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#4DA987';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#59B997';
+                    }}
                     disabled={loading}
                   >
                     {loading ? (
@@ -449,13 +487,21 @@ const SignUp = () => {
                   
                   {/* Login Link */}
                   <div className="text-center pt-4">
-                    <p className='text-gray-700 mb-1'>Sudah punya akun?</p>
+                    <p className="text-gray-700 mb-1">Sudah punya akun?</p>
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       transition={{ type: "spring", stiffness: 300 }}
                     >
-                      <Link to="/loginbaru" className="text-blue-600 hover:text-blue-800 font-medium">
-                        Masuk Sekarang
+                      <Link 
+                        to="/loginbaru" 
+                        className="text-[#479479] hover:text-[#59B997] font-medium transition-colors duration-300 relative group"
+                      >
+                        <span className="relative">
+                          Masuk Sekarang
+                          <span
+                            className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#4DA987] transition-all duration-300 group-hover:w-full"
+                          ></span>
+                        </span>
                       </Link>
                     </motion.div>
                   </div>
@@ -469,19 +515,48 @@ const SignUp = () => {
             </div>
           </motion.div>
           
-          {/* Right: Logo Section */}
+          {/* Right: Image with Overlay Section */}
           <motion.div 
-            className="bg-white p-4 md:p-8 flex flex-col justify-center items-center md:w-1/3"
+            className="relative md:w-2/5 flex flex-col"
             initial={{ x: 50 }}
             animate={{ x: 0 }}
             exit={{ x: 100 }}
             transition={{ duration: 0.5 }}
+            style={{
+              backgroundImage: `url('/img/masjid-hero.jpg')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
           >
-            <img 
-              src="../img/logoSidontaq.jpeg" 
-              alt="Masjid Taqwa Logo" 
-              className="w-32 h-32 md:w-48 md:h-48 object-contain"
-            />
+            {/* Dark overlay */}
+            <div
+              className="absolute inset-0 z-10"
+              style={{
+                background: `linear-gradient(to bottom right, rgba(89, 185, 151, 0.5), rgba(0, 0, 0, 0.4))`,
+              }}
+            ></div>
+            
+            {/* Content container divided into two sections with more balanced spacing */}
+            <div className="relative flex flex-col justify-evenly h-full py-10 px-4 text-white z-10">
+              {/* Top section with logo */}
+              <div className="flex justify-center items-center">
+                <div className="bg-white p-4 rounded-full shadow-lg">
+                  <img 
+                    src="../img/logoSidontaq.jpeg" 
+                    alt="Masjid Taqwa Logo" 
+                    className="w-24 h-24 md:w-28 md:h-28 object-contain rounded-full"
+                  />
+                </div>
+              </div>
+              
+              {/* Bottom section with welcome text */}
+              <div className="text-center mt-8 mb-6">
+                <h2 className="text-2xl font-bold mb-2">Daftar Akun</h2>
+                <p className="text-sm md:text-base opacity-90">
+                  Sistem Informasi Donasi dan Pengelolaan Keuangan Masjid Taqwa Muhammadiyah
+                </p>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
       </div>
