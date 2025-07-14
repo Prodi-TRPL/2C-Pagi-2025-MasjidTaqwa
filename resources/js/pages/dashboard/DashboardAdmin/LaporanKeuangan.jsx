@@ -37,19 +37,29 @@ const LaporanKeuangan = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredReports, setFilteredReports] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // Date range filter
   const [dateRange, setDateRange] = useState({
     startDate: null,
     endDate: null
   });
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // Transaction type filter
+  const [transactionType, setTransactionType] = useState("semua"); // "semua", "pemasukan", "pengeluaran"
 
   // Filter options
   const filterOptions = [
     { value: "harian", label: "Harian" },
     { value: "bulanan", label: "Bulanan" },
     { value: "tahunan", label: "Tahunan" },
+  ];
+
+  // Transaction type options
+  const transactionTypeOptions = [
+    { value: "semua", label: "Semua" },
+    { value: "pemasukan", label: "Pemasukan" },
+    { value: "pengeluaran", label: "Pengeluaran" },
   ];
 
   // Data limit options
@@ -109,12 +119,6 @@ const LaporanKeuangan = () => {
     try {
       setLoading(true);
       let params = { filter: selectedFilter };
-      
-      // Add date range if available
-      if (dateRange.startDate && dateRange.endDate) {
-        params.start_date = formatDateForAPI(dateRange.startDate);
-        params.end_date = formatDateForAPI(dateRange.endDate);
-      }
       
       const response = await axios.get(`/api/laporan-keuangan`, { params });
       setReports(response.data.data);
@@ -182,7 +186,7 @@ const LaporanKeuangan = () => {
 
   useEffect(() => {
     fetchReports(filter);
-  }, [filter, dateRange.startDate, dateRange.endDate]);
+  }, [filter]);
   
   useEffect(() => {
     applyFilters(reports);
@@ -190,7 +194,7 @@ const LaporanKeuangan = () => {
 
   useEffect(() => {
     applyTransactionFilters(transactions);
-  }, [searchTerm, transactions]);
+  }, [searchTerm, transactionType, dateRange.startDate, dateRange.endDate, transactions]);
 
   // Reset to page 1 when itemsPerPage changes
   useEffect(() => {
@@ -215,20 +219,34 @@ const LaporanKeuangan = () => {
     setFilteredReports(filtered);
   };
 
-  // Apply search filter to transactions
+  // Apply filters to transactions
   const applyTransactionFilters = (data) => {
-    if (!searchTerm) {
-      setFilteredTransactions(data);
-      return;
+    let filtered = [...data];
+    
+    // Apply date range filter
+    if (dateRange.startDate && dateRange.endDate) {
+      filtered = filtered.filter(transaction => {
+        const transactionDate = new Date(transaction.tanggal);
+        return transactionDate >= dateRange.startDate && 
+               transactionDate <= new Date(dateRange.endDate.setHours(23, 59, 59, 999));
+      });
     }
     
-    const filtered = data.filter(transaction => 
-      transaction.tanggal_formatted.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.keterangan.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Apply transaction type filter
+    if (transactionType !== "semua") {
+      filtered = filtered.filter(transaction => transaction.tipe === transactionType);
+    }
+    
+    // Apply search term filter (for description/keterangan)
+    if (searchTerm) {
+      filtered = filtered.filter(transaction => 
+        transaction.keterangan.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.tanggal_formatted.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
     
     setFilteredTransactions(filtered);
-    // Reset to page 1 when filter changes
+    // Reset to page 1 when filters change
     setCurrentPage(1);
   };
 
@@ -272,20 +290,21 @@ const LaporanKeuangan = () => {
         
         // Format period based on filter
         let periodText = '';
+        switch (filter) {
+          case 'harian':
+            periodText = 'Harian';
+            break;
+          case 'bulanan':
+            periodText = 'Bulanan';
+            break;
+          case 'tahunan':
+            periodText = 'Tahunan';
+            break;
+        }
+        
+        // Add date range to period text if available
         if (dateRange.startDate && dateRange.endDate) {
-          periodText = `${formatDateForAPI(dateRange.startDate)} - ${formatDateForAPI(dateRange.endDate)}`;
-        } else {
-          switch (filter) {
-            case 'harian':
-              periodText = 'Harian';
-              break;
-            case 'bulanan':
-              periodText = 'Bulanan';
-              break;
-            case 'tahunan':
-              periodText = 'Tahunan';
-              break;
-          }
+          periodText += ` (${formatDate(dateRange.startDate)} - ${formatDate(dateRange.endDate)})`;
         }
         
         // Add title and header
@@ -295,16 +314,23 @@ const LaporanKeuangan = () => {
         doc.setFontSize(12);
         doc.text(`Periode: ${periodText}`, 14, 22);
         
+        // Add filter information
+        if (transactionType !== "semua") {
+          const typeText = transactionType === "pemasukan" ? "Pemasukan" : "Pengeluaran";
+          doc.text(`Jenis Transaksi: ${typeText}`, 14, 28);
+        }
+        
         // Add summary section
+        const yPos = transactionType !== "semua" ? 34 : 28;
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Total Pemasukan: ${formatCurrency(summary.total_pemasukan)}`, 14, 30);
-        doc.text(`Total Pengeluaran: ${formatCurrency(summary.total_pengeluaran)}`, 14, 36);
-        doc.text(`Saldo Akhir: ${formatCurrency(summary.total_saldo)}`, 14, 42);
+        doc.text(`Total Pemasukan: ${formatCurrency(summary.total_pemasukan)}`, 14, yPos);
+        doc.text(`Total Pengeluaran: ${formatCurrency(summary.total_pengeluaran)}`, 14, yPos + 6);
+        doc.text(`Saldo Akhir: ${formatCurrency(summary.total_saldo)}`, 14, yPos + 12);
         
         // Draw horizontal line
         doc.setLineWidth(0.5);
-        doc.line(14, 45, 280, 45);
+        doc.line(14, yPos + 15, 280, yPos + 15);
         
         // Sort transactions by date (oldest first for calculation)
         const sortedTransactions = [...filteredTransactions].sort((a, b) => a.tanggal - b.tanggal);
@@ -355,7 +381,7 @@ const LaporanKeuangan = () => {
         
         // Add table to PDF
         doc.autoTable({
-          startY: 50,
+          startY: yPos + 20,
           head: [['Tanggal & Waktu', 'Keterangan', 'Nominal', 'Saldo']],
           body: tableData,
           headStyles: {
@@ -402,7 +428,8 @@ const LaporanKeuangan = () => {
         });
         
         // Save the PDF
-        doc.save(`buku_kas_${filter}_${new Date().toISOString().split('T')[0]}.pdf`);
+        const typeText = transactionType !== "semua" ? `_${transactionType}` : '';
+        doc.save(`buku_kas_${filter}${typeText}_${new Date().toISOString().split('T')[0]}.pdf`);
       } catch (error) {
         console.error("Error exporting to PDF:", error);
       } finally {
@@ -420,6 +447,11 @@ const LaporanKeuangan = () => {
     setDateRange(prev => ({ ...prev, endDate: date }));
   };
 
+  // Handle transaction type change
+  const handleTransactionTypeChange = (type) => {
+    setTransactionType(type);
+  };
+
   // Clear all filters
   const clearFilters = () => {
     setSearchTerm('');
@@ -427,6 +459,7 @@ const LaporanKeuangan = () => {
       startDate: null,
       endDate: null
     });
+    setTransactionType('semua');
   };
 
   // Handle items per page change
@@ -768,29 +801,46 @@ const LaporanKeuangan = () => {
             />
           </div>
 
-          {/* Clear Filter and PDF Export Buttons in one row */}
-          <div className="flex items-center space-x-2">
-            <button 
-              className="flex-1 px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-              onClick={clearFilters}
-            >
-              Reset Filter
-            </button>
-            
-            {/* PDF Export Button */}
-            <button
-              className="flex-1 px-4 py-2 flex items-center justify-center text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400"
-              onClick={() => exportToPDF(filteredTransactions)}
-              disabled={exportLoading || loading || filteredTransactions.length === 0}
-            >
-              {exportLoading ? (
-                <span className="inline-block animate-spin mr-2">&#9696;</span>
-              ) : (
-                <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
-              )}
-              Export PDF
-            </button>
+          {/* Transaction Type Filter */}
+          <div className="flex space-x-2">
+            {transactionTypeOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleTransactionTypeChange(option.value)}
+                className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors ${
+                  transactionType === option.value
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
+        </div>
+
+        {/* Clear Filter and PDF Export Buttons */}
+        <div className="mb-6 flex items-center space-x-2">
+          <button 
+            className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            onClick={clearFilters}
+          >
+            Reset Filter
+          </button>
+          
+          {/* PDF Export Button */}
+          <button
+            className="px-4 py-2 flex items-center justify-center text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400"
+            onClick={() => exportToPDF(filteredTransactions)}
+            disabled={exportLoading || loading || filteredTransactions.length === 0}
+          >
+            {exportLoading ? (
+              <span className="inline-block animate-spin mr-2">&#9696;</span>
+            ) : (
+              <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+            )}
+            Export PDF
+          </button>
         </div>
         
         {/* Transaction Table */}
