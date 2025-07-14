@@ -45,6 +45,8 @@
         "datatables.net-react": "^1.0.1",
         "date-fns": "^4.1.0",
         "framer-motion": "^12.9.4",
+        "jspdf": "^2.5.2",
+        "jspdf-autotable": "^3.8.4",
         "lucide-react": "^0.507.0",
         "primeicons": "^7.0.0",
         "primereact": "^10.9.5",

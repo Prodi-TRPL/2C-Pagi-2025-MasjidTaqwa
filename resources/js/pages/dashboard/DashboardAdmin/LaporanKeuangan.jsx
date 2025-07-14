@@ -9,14 +9,15 @@ import {
   faExchangeAlt,
   faChartLine,
   faFilter,
-  faFileExcel,
+  faFilePdf,
   faInfoCircle,
   faSearch,
   faClock,
   faAngleLeft,
   faAngleRight
 } from "@fortawesome/free-solid-svg-icons";
-import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { motion } from "framer-motion";
@@ -99,7 +100,7 @@ const LaporanKeuangan = () => {
     }).format(amount);
   };
 
-  // Format number without currency symbol for Excel
+  // Format number without currency symbol (used for PDF export)
   const formatNumberNoCurrency = (amount) => {
     return new Intl.NumberFormat("id-ID").format(amount);
   };
@@ -255,121 +256,159 @@ const LaporanKeuangan = () => {
     }
   };
 
-  // Export to Excel - updated to match the image format
-  const exportToExcel = (data, filename = 'laporan_keuangan') => {
+  // Export to PDF
+  const exportToPDF = (data, filename = 'laporan_keuangan') => {
     setExportLoading(true);
     
-    try {
-      // Prepare the workbook
-      const workbook = XLSX.utils.book_new();
-      
-      // Format period based on filter
-      let periodText = '';
-      if (dateRange.startDate && dateRange.endDate) {
-        periodText = `${formatDateForAPI(dateRange.startDate)} - ${formatDateForAPI(dateRange.endDate)}`;
-      } else {
-        switch (filter) {
-          case 'harian':
-            periodText = 'Harian';
-            break;
-          case 'bulanan':
-            periodText = 'Bulanan';
-            break;
-          case 'tahunan':
-            periodText = 'Tahunan';
-            break;
-        }
-      }
-      
-      // Create header with mosque information instead of personal banking details
-      const header = [
-        ['MASJID TAQWA', '', '', 'LAPORAN KEUANGAN'],
-        ['', '', '', `Periode: ${periodText}`],
-        [''],
-        ['Total Pemasukan', 'Total Pengeluaran', 'Saldo Akhir'],
-        [`${formatNumberNoCurrency(summary.total_pemasukan)}`, `${formatNumberNoCurrency(summary.total_pengeluaran)}`, formatNumberNoCurrency(summary.total_saldo)],
-        [''],
-        ['Tanggal & Waktu', 'Rincian Transaksi', '', 'Nominal (IDR)', 'Saldo (IDR)']
-      ];
-      
-      // Running balance calculation - start with total saldo
-      let runningBalance = summary.total_saldo;
-      
-      // Sort transactions by date (oldest first)
-      const sortedTransactions = [...filteredTransactions].sort((a, b) => a.tanggal - b.tanggal);
-      
-      // Add transaction rows
-      const transactionRows = sortedTransactions.map(transaction => {
-        // Format date parts
-        const date = transaction.tanggal;
-        const dayFormatted = date.getDate().toString().padStart(2, '0') + ' ' +
-                             ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()] + ' ' +
-                             date.getFullYear();
-        const timeFormatted = date.getHours().toString().padStart(2, '0') + ':' + 
-                              date.getMinutes().toString().padStart(2, '0') + ':' + 
-                              date.getSeconds().toString().padStart(2, '0') + ' WIB';
+    // Use setTimeout to allow the UI to update with loading state
+    setTimeout(() => {
+      try {
+        // Create PDF document with landscape orientation
+        const doc = new jsPDF('l', 'mm', 'a4');
         
-        // Calculate running balance for this row
-        if (transaction.tipe === "pengeluaran") {
-          runningBalance += transaction.jumlah; // Add back the expense to get previous balance
+        // Set font styles
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        
+        // Format period based on filter
+        let periodText = '';
+        if (dateRange.startDate && dateRange.endDate) {
+          periodText = `${formatDateForAPI(dateRange.startDate)} - ${formatDateForAPI(dateRange.endDate)}`;
         } else {
-          runningBalance -= transaction.jumlah; // Subtract income to get previous balance
+          switch (filter) {
+            case 'harian':
+              periodText = 'Harian';
+              break;
+            case 'bulanan':
+              periodText = 'Bulanan';
+              break;
+            case 'tahunan':
+              periodText = 'Tahunan';
+              break;
+          }
         }
         
-        const amount = transaction.tipe === "pemasukan" ? 
-          `+${formatNumberNoCurrency(transaction.jumlah)}` : 
-          `-${formatNumberNoCurrency(transaction.jumlah)}`;
+        // Add title and header
+        doc.text('MASJID TAQWA', 14, 15);
+        doc.text('BUKU KAS', 240, 15, { align: 'right' });
         
-        // Calculate balance after this transaction
-        const balanceAfter = transaction.tipe === "pemasukan" ? 
-          runningBalance + transaction.jumlah : 
-          runningBalance - transaction.jumlah;
+        doc.setFontSize(12);
+        doc.text(`Periode: ${periodText}`, 14, 22);
         
-        // Update running balance for next iteration
-        runningBalance = balanceAfter;
+        // Add summary section
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Total Pemasukan: ${formatCurrency(summary.total_pemasukan)}`, 14, 30);
+        doc.text(`Total Pengeluaran: ${formatCurrency(summary.total_pengeluaran)}`, 14, 36);
+        doc.text(`Saldo Akhir: ${formatCurrency(summary.total_saldo)}`, 14, 42);
         
-        return [
-          `${dayFormatted}\n${timeFormatted}`, // Date and time
-          transaction.keterangan, // Transaction description
-          '', // Empty column
-          amount, // Amount with + or - sign
-          formatNumberNoCurrency(balanceAfter) // Running balance
-        ];
-      });
-      
-      // Combine all rows
-      const allRows = [...header, ...transactionRows];
-      
-      // Create worksheet
-      const worksheet = XLSX.utils.aoa_to_sheet(allRows);
-      
-      // Set column widths
-      const colWidths = [
-        { wch: 20 }, // Date & Time
-        { wch: 40 }, // Transaction Details
-        { wch: 10 }, // Empty
-        { wch: 15 }, // Amount
-        { wch: 15 }, // Balance
-      ];
-      
-      worksheet['!cols'] = colWidths;
-      
-      // Merge cells for header
-      worksheet['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }, // MASJID TAQWA
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }, // Period row
-      ];
-      
-      // Add the worksheet to the workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Keuangan");
-      
-      // Save the workbook
-      XLSX.writeFile(workbook, `${filename}_${filter}_${new Date().toISOString().split('T')[0]}.xlsx`);
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-    } finally {
-      setExportLoading(false);
-    }
+        // Draw horizontal line
+        doc.setLineWidth(0.5);
+        doc.line(14, 45, 280, 45);
+        
+        // Sort transactions by date (oldest first for calculation)
+        const sortedTransactions = [...filteredTransactions].sort((a, b) => a.tanggal - b.tanggal);
+        
+        // Calculate initial balance
+        const totalIncome = sortedTransactions
+          .filter(t => t.tipe === "pemasukan")
+          .reduce((sum, t) => sum + parseFloat(t.jumlah || 0), 0);
+        
+        const totalExpense = sortedTransactions
+          .filter(t => t.tipe === "pengeluaran")
+          .reduce((sum, t) => sum + parseFloat(t.jumlah || 0), 0);
+        
+        // Initial balance is the final balance minus all incomes plus all expenses
+        let runningBalance = summary.total_saldo - totalIncome + totalExpense;
+        
+        // Prepare table data with running balance
+        const tableData = [];
+        
+        // Add each transaction with updated running balance
+        sortedTransactions.forEach(transaction => {
+          // Format date
+          const date = new Date(transaction.tanggal);
+          const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+          
+          // Get transaction amount as number
+          const amount = parseFloat(transaction.jumlah || 0);
+          
+          // Update running balance based on transaction type
+          if (transaction.tipe === "pemasukan") {
+            runningBalance += amount;
+            tableData.push([
+              formattedDate,
+              transaction.keterangan,
+              `+${formatNumberNoCurrency(amount)}`,
+              formatNumberNoCurrency(runningBalance)
+            ]);
+          } else {
+            runningBalance -= amount;
+            tableData.push([
+              formattedDate,
+              transaction.keterangan,
+              `-${formatNumberNoCurrency(amount)}`,
+              formatNumberNoCurrency(runningBalance)
+            ]);
+          }
+        });
+        
+        // Add table to PDF
+        doc.autoTable({
+          startY: 50,
+          head: [['Tanggal & Waktu', 'Keterangan', 'Nominal', 'Saldo']],
+          body: tableData,
+          headStyles: {
+            fillColor: [89, 185, 151], // #59B997
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            halign: 'center'
+          },
+          columnStyles: {
+            0: { cellWidth: 40 }, // Date & Time
+            1: { cellWidth: 120 }, // Description
+            2: { cellWidth: 40, halign: 'right' }, // Amount
+            3: { cellWidth: 40, halign: 'right' } // Balance
+          },
+          alternateRowStyles: {
+            fillColor: [240, 248, 245] // Light green tint for alternate rows
+          },
+          bodyStyles: {
+            lineWidth: 0.1,
+            lineColor: [200, 200, 200]
+          },
+          theme: 'grid',
+          styles: {
+            font: 'helvetica',
+            fontSize: 10
+          },
+          didDrawPage: function (data) {
+            // Add page number at the bottom
+            doc.setFontSize(8);
+            doc.text(
+              `Halaman ${doc.internal.getNumberOfPages()}`,
+              data.settings.margin.left,
+              doc.internal.pageSize.height - 10
+            );
+            
+            // Add footer with date
+            doc.text(
+              `Dicetak pada: ${new Date().toLocaleString('id-ID')}`,
+              doc.internal.pageSize.width - data.settings.margin.right,
+              doc.internal.pageSize.height - 10,
+              { align: 'right' }
+            );
+          }
+        });
+        
+        // Save the PDF
+        doc.save(`buku_kas_${filter}_${new Date().toISOString().split('T')[0]}.pdf`);
+      } catch (error) {
+        console.error("Error exporting to PDF:", error);
+      } finally {
+        setExportLoading(false);
+      }
+    }, 100); // Small delay to allow UI update
   };
 
   // Handle date range changes
@@ -693,7 +732,7 @@ const LaporanKeuangan = () => {
       </div>
 
         {/* Additional filters and export */}
-        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search Filter */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -706,7 +745,7 @@ const LaporanKeuangan = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            </div>
+          </div>
 
           {/* Date Range Picker */}
           <div className="flex space-x-2">
@@ -729,37 +768,31 @@ const LaporanKeuangan = () => {
             />
           </div>
 
-          {/* Clear Filter Button */}
-              <button 
-            className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-            onClick={clearFilters}
-              >
-            Reset Filter
-              </button>
-          
-          {/* Export Button */}
-          <button
-            className="px-4 py-2 flex items-center justify-center text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400"
-            onClick={() => exportToExcel(filteredReports)}
-            disabled={exportLoading || loading || filteredReports.length === 0}
-          >
-            {exportLoading ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Exporting...
-                              </span>
-                                ) : (
-                                  <>
-                <FontAwesomeIcon icon={faFileExcel} className="mr-2" />
-                Export to Excel
-                                  </>
-                                )}
-                                    </button>
-                                  </div>
-                                  
+          {/* Clear Filter and PDF Export Buttons in one row */}
+          <div className="flex items-center space-x-2">
+            <button 
+              className="flex-1 px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+              onClick={clearFilters}
+            >
+              Reset Filter
+            </button>
+            
+            {/* PDF Export Button */}
+            <button
+              className="flex-1 px-4 py-2 flex items-center justify-center text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:bg-gray-400"
+              onClick={() => exportToPDF(filteredTransactions)}
+              disabled={exportLoading || loading || filteredTransactions.length === 0}
+            >
+              {exportLoading ? (
+                <span className="inline-block animate-spin mr-2">&#9696;</span>
+              ) : (
+                <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+              )}
+              Export PDF
+            </button>
+          </div>
+        </div>
+        
         {/* Transaction Table */}
         {renderTransactionsTable()}
         
