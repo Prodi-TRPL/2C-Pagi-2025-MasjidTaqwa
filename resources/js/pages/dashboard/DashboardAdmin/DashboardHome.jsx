@@ -398,10 +398,23 @@ export default function DashboardHome() {
                 </div>
               )}
             </div>
-            <button 
+            <button
               onClick={() => window.location.href = '/dashboardhome/datadonasi'}
-              className="mt-6 w-full py-2 rounded-lg hover:bg-opacity-90 transition-colors text-sm font-medium text-white"
-              style={{ backgroundColor: customGreen }}
+              className="mt-6 w-full py-2 rounded-lg transition-colors text-sm font-medium"
+              style={{
+                backgroundColor: customGreen,
+                color: 'white',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'white';
+                e.currentTarget.style.color = customGreen;
+                e.currentTarget.style.border = `1px solid ${customGreen}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = customGreen;
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.border = 'none';
+              }}
             >
               Lihat Semua Donasi
             </button>
@@ -446,9 +459,23 @@ export default function DashboardHome() {
                 </div>
               )}
             </div>
-            <button 
-              onClick={() => window.location.href = '/admin/pengeluaran'}
-              className="mt-6 w-full py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+            <button
+              onClick={() => window.location.href = '/dashboardhome/pengeluaran'}
+              className="mt-6 w-full py-2 rounded-lg transition-colors text-sm font-medium"
+              style={{
+                backgroundColor: '#EF4444', // contoh custom red, Anda bisa ganti dengan variabel jika ada
+                color: 'white',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'white';
+                e.currentTarget.style.color = '#EF4444';
+                e.currentTarget.style.border = '1px solid #EF4444';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#EF4444';
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.border = 'none';
+              }}
             >
               Lihat Semua Pengeluaran
             </button>
