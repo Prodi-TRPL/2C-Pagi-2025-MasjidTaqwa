@@ -81,18 +81,27 @@ const HomeContentSignUp = () => {
 
             {/* Bottom green layout with fade-left animation */}
             <section
-                className="py-0 md:py-4 lg:py-8 px-0 md:px-3 lg:px-6 z-10 relative"
-                style={{ background: '#5ABF9A'}}
+                className="py-0 md:py-4 lg:py-8 px-0 md:px-3 lg:px-6 z-10 relative bg-gradient-to-r from-[#59B997] to-[#3a9b7d]"
                 data-aos="fade-right"
             >
                 <div className="max-w-7xl mx-auto px-0 md:px-5 lg:px-15">
                     <div className="flex flex-col md:flex-row items-center justify-between">
-                        {/* Left text */}
                         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0 z-10 p-6 md:p-12">
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-snug">
+                            <h1
+                                className="text-3xl md:text-4xl font-bold text-white mb-4 leading-snug"
+                                style={{
+                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+                                }}
+                            >
                                 Bersama Wujudkan <br /> Masjid yang Lebih Baik
                             </h1>
-                            <p className="text-gray-800 text-base md:text-lg mb-6">
+                            <div className="w-50 h-0.5 bg-white mb-4 mx-auto md:mx-0"></div>
+                            <p
+                                className="text-base md:text-lg mb-6 text-white font-bold"
+                                style={{
+                                textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                                }}
+                            >
                                 Gabung sekarang dan dukung masjid dengan <br className="hidden md:block" />
                                 sistem manajemen yang modern.
                             </p>
@@ -102,7 +111,7 @@ const HomeContentSignUp = () => {
                             >
                                 Daftar Sekarang
                             </Link>
-                        </div>
+                            </div>
 
                         {/* Right spacer */}
                         <div className="md:w-1/2 mt-8 md:mt-0" />
