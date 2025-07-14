@@ -167,6 +167,7 @@ import AppLayout from './layout/AppLayout'; // Dashboard layout component
 import AppSidebar from './layout/AppSidebar';
 import PermissionRoute from './components/ui/PermissionRoute'; // Import our permission route component
 import PermissionRevokedModal from './components/ui/PermissionRevokedModal'; // Import our permission revoked modal
+import { isAdmin } from './utils/auth';
 
 // PrivateRoute component to protect dashboard routes
 const PrivateRoute = ({ children }) => {
@@ -178,12 +179,33 @@ const PrivateRoute = ({ children }) => {
   return children;
 };
 
+// AdminRoute component to protect admin routes
+const AdminRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    // Not logged in, redirect to login
+    return <Navigate to="/loginbaru" replace />;
+  }
+  
+  // Check if user is admin, if not redirect to home
+  if (!isAdmin()) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
+
 // PublicRoute component to redirect logged-in users away from login page
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   if (token) {
-    // Logged in, redirect to dashboard
-    return <Navigate to="/dashboardhome" replace />;
+    // Check if user is admin
+    if (isAdmin()) {
+      // If admin, redirect to admin dashboard
+      return <Navigate to="/dashboardhome" replace />;
+    }
+    // For regular users, redirect to home page
+    return <Navigate to="/" replace />;
   }
   return children;
 };
@@ -269,9 +291,9 @@ const AppRoutes = () => {
           <Route
             path="/dashboardhome"
             element={
-              <PrivateRoute>
+              <AdminRoute>
                 <AppLayout />
-              </PrivateRoute>
+              </AdminRoute>
             }
           >
             <Route index element={<DashboardHome />} />
@@ -292,9 +314,9 @@ const AppRoutes = () => {
           <Route
             path="/dashboard/proyek-pembangunan/detail/:id"
             element={
-              <PrivateRoute>
+              <AdminRoute>
                 <DetailProyek />
-              </PrivateRoute>
+              </AdminRoute>
             }
           />
         </Routes>

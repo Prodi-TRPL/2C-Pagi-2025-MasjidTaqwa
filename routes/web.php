@@ -31,12 +31,22 @@ Route::get('/login', function () {
 // Specific route for DetailProyek to ensure React Router works
 Route::get('/dashboard/proyek-pembangunan/detail/{id}', function () {
     return view('react-main');
-});
+})->middleware('admin.only');
+
+// Dashboard home routes - protected by admin middleware
+Route::get('/dashboardhome/{path?}', function () {
+    return view('react-main');
+})->where('path', '.*')->middleware('admin.only');
+
+// Root route with admin redirection middleware
+Route::get('/', function () {
+    return view('react-main');
+})->middleware('redirect.if.admin');
 
 // Route untuk menangani semua URL lainnya
 Route::get('/{any}', function () {
     return view('react-main');
-})->where('any', '.*');
+})->where('any', '.*')->middleware('redirect.if.admin');
 
 // Add logout route with web middleware
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
