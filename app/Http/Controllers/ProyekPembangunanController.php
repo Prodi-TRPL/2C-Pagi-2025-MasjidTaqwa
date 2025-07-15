@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use App\Traits\LogsActivity;
+use Illuminate\Support\Facades\DB; // Added this import for DB facade
 
 class ProyekPembangunanController extends Controller
 {
@@ -134,6 +135,12 @@ class ProyekPembangunanController extends Controller
             $proyek = ProyekPembangunan::findOrFail($id);
             $proyekName = $proyek->nama_item;
             
+            // Begin a database transaction
+            DB::beginTransaction();
+            
+            // First, delete all related expenses to handle the foreign key constraint
+            $proyek->pengeluaran()->delete();
+            
             // Delete image if exists
             if ($proyek->gambar) {
                 Storage::disk('public')->delete($proyek->gambar);
@@ -144,8 +151,14 @@ class ProyekPembangunanController extends Controller
             // Log activity
             $this->logActivity('hapus_proyek', 'Menghapus proyek pembangunan: ' . $proyekName);
             
+            // Commit the transaction
+            DB::commit();
+            
             return response()->json(['message' => 'Proyek berhasil dihapus']);
         } catch (\Exception $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+            
             return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
