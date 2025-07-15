@@ -1637,17 +1637,17 @@ const ProyekPembangunan = () => {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#59B997] to-[#3a9b7d] text-white p-6 shadow-lg">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold">Proyek Pembangunan</h1>
-              <p className="text-green-100 opacity-90 mt-1">Kelola proyek pembangunan dan pengeluaran terkait</p>
+              <h1 className="text-2xl font-bold text-gray-800">Proyek Pembangunan</h1>
+              <p className="text-gray-600">Kelola proyek pembangunan dan pengeluaran terkait</p>
             </div>
             <div className="flex space-x-2">
               {selectedProyek && (
                 <button 
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'pengeluaran' ? 'bg-white text-[#59B997]' : 'bg-white/10 hover:bg-white/20'}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'pengeluaran' ? 'bg-[#59B997] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                   onClick={() => setActiveTab('pengeluaran')}
                 >
                   Pengeluaran
@@ -1735,7 +1735,7 @@ const ProyekPembangunan = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Proyek Tab */}
         {activeTab === 'proyek' && (
           <div className="space-y-8">

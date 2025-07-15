@@ -4,13 +4,23 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\KategoriPengeluaran;
+use Illuminate\Support\Facades\DB;
 
 class KategoriPengeluaranController extends Controller
 {
     // Tampilkan semua data kategori
     public function index()
     {
-        $kategori = KategoriPengeluaran::all();
+        $kategori = KategoriPengeluaran::with(['pengeluaran' => function($query) {
+            $query->select('kategori_pengeluaran_id', DB::raw('SUM(jumlah) as total_pengeluaran'))
+                ->groupBy('kategori_pengeluaran_id');
+        }])->get()->map(function($item) {
+            return [
+                'kategori_pengeluaran_id' => $item->kategori_pengeluaran_id,
+                'nama_kategori' => $item->nama_kategori,
+                'total_pengeluaran' => $item->pengeluaran->sum('total_pengeluaran') ?? 0
+            ];
+        });
         
         // Check if request is from API
         if (request()->wantsJson() || request()->is('api/*')) {
