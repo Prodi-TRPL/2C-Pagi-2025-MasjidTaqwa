@@ -273,11 +273,11 @@ export default function KategoriPengeluaran() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         >
-          <div className="h-1 bg-[#59B997]"></div>
+          <div className="h-1 bg-red-500"></div>
           <div className="p-6">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100 mr-4">
-                <FiDollarSign className="h-6 w-6 text-[#59B997]" />
+              <div className="p-3 rounded-full bg-red-100 mr-4">
+                <FiDollarSign className="h-6 w-6 text-red-500" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Pengeluaran</p>

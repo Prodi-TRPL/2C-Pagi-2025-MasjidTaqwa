@@ -483,21 +483,21 @@ const LaporanKeuangan = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border-l-4 border-green-500">
-          <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300">Total Pemasukan</h3>
-          <p className="text-2xl font-bold" >
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Pemasukan</h3>
+          <p className="text-2xl font-bold " >
             {formatCurrency(summary.total_pemasukan)}
           </p>
         </div>
         
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border-l-4 border-red-500">
-          <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300">Total Pengeluaran</h3>
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Pengeluaran</h3>
           <p className="text-2xl font-bold" >
             {formatCurrency(summary.total_pengeluaran)}
           </p>
         </div>
         
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border-l-4" style={{ borderColor: "#59B997" }}>
-          <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300">Saldo Akhir</h3>
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">Saldo Akhir</h3>
           <p className="text-2xl font-bold" >
             {formatCurrency(summary.total_saldo)}
           </p>
