@@ -484,21 +484,21 @@ const LaporanKeuangan = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border-l-4 border-green-500">
           <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300">Total Pemasukan</h3>
-          <p className="text-2xl font-bold text-green-500">
+          <p className="text-2xl font-bold" >
             {formatCurrency(summary.total_pemasukan)}
           </p>
         </div>
         
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border-l-4 border-red-500">
           <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300">Total Pengeluaran</h3>
-          <p className="text-2xl font-bold text-red-500">
+          <p className="text-2xl font-bold" >
             {formatCurrency(summary.total_pengeluaran)}
           </p>
         </div>
         
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border-l-4" style={{ borderColor: "#59B997" }}>
           <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-300">Saldo Akhir</h3>
-          <p className="text-2xl font-bold text-blue-500">
+          <p className="text-2xl font-bold" >
             {formatCurrency(summary.total_saldo)}
           </p>
         </div>
@@ -684,7 +684,7 @@ const LaporanKeuangan = () => {
                       ${typeof pageNum !== 'number' 
                         ? 'text-gray-700 pointer-events-none'
                         : currentPage === pageNum
-                          ? 'bg-blue-50 border-blue-500 text-blue-600 border'
+                          ? 'bg-[#59B997] border-[#59B997] text-white border'
                           : 'text-gray-900 hover:bg-gray-50 border-gray-300 border'
                       }`}
                   >
@@ -717,7 +717,7 @@ const LaporanKeuangan = () => {
       {/* Page Header */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">
-          <FontAwesomeIcon icon={faChartLine} className="mr-2 text-blue-600" />
+          <FontAwesomeIcon icon={faChartLine} className="mr-2 text-[#59B997]" />
           Laporan Keuangan
         </h1>
         <p className="text-gray-600">
@@ -747,19 +747,19 @@ const LaporanKeuangan = () => {
               <span className="text-sm text-gray-600">Filter:</span>
           </div>
             <div className="flex space-x-2">
-              {filterOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleFilterChange(option.value)}
-                  className={`px-4 py-2 text-sm rounded-md transition-colors ${
-                    filter === option.value
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+            {filterOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleFilterChange(option.value)}
+                className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                  filter === option.value
+                    ? "bg-[#59B997] text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -773,7 +773,7 @@ const LaporanKeuangan = () => {
             </div>
             <input
               type="text"
-              className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:ring-[#59B997] focus:border-[#59B997]"
               placeholder="Cari transaksi..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -809,7 +809,7 @@ const LaporanKeuangan = () => {
                 onClick={() => handleTransactionTypeChange(option.value)}
                 className={`flex-1 px-4 py-2 text-sm rounded-md transition-colors ${
                   transactionType === option.value
-                    ? "bg-blue-600 text-white"
+                    ? "bg-[#59B997] text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >

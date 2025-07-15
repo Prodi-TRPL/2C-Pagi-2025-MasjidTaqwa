@@ -314,7 +314,7 @@ export default function KategoriPengeluaran() {
 
         <div className="p-6 border-b">
           {!isAdding ? (
-            <div className="text-right">
+            <div className="flex justify-end mb-4">
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
