@@ -43,7 +43,9 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
             ->greeting("Assalamualaikum, {$this->userName}")
             ->line('Anda menerima email ini karena kami menerima permintaan untuk reset kata sandi akun Anda.')
             ->line('Berikut adalah kode untuk reset kata sandi Anda:')
-            ->line('<div style="font-size: 24px; font-weight: bold; letter-spacing: 5px; text-align: center; margin: 30px 0; padding: 15px; background-color: #f5f5f5; border-radius: 8px;">' . $this->resetCode . '</div>')
+            ->line('============================')
+            ->line($this->resetCode)
+            ->line('============================')
             ->line('Kode ini akan berlaku selama 60 menit.')
             ->line('Jika Anda tidak meminta reset kata sandi, silakan abaikan email ini.')
             ->salutation('Jazakallahu Khairan, Tim Masjid Taqwa Muhammadiyah');
