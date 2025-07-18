@@ -90,26 +90,30 @@ const ProjectsSection = ({ proyeks, loading, formatCurrency, scrollRef }) => {
                   </div>
                 ))}
               
-              {/* "See More" card at the end */}
-              <div 
-                className="min-w-[300px] max-w-[300px] mr-6 flex-shrink-0 snap-start bg-gradient-to-br from-[#59B997] to-[#3a9b7d] rounded-xl shadow-sm overflow-hidden flex items-center justify-center"
-                style={{ userSelect: 'none' }} // Prevent text selection
-                onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
+             {/* "See More" card at the end */}
+            <div
+              className="min-w-[300px] max-w-[300px] mr-6 flex-shrink-0 snap-start rounded-xl shadow-sm overflow-hidden flex items-center justify-center bg-gradient-to-br from-[#59B997] to-[#3a9b7d] transition-all duration-300"
+              style={{ userSelect: 'none' }}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              <Link
+                to="/distribusi-dana-proyek"
+                className="p-8 text-center w-full h-full flex flex-col items-center justify-center group"
               >
-                <Link 
-                  to="/distribusi-dana-proyek"
-                  className="p-8 text-center w-full h-full flex flex-col items-center justify-center"
-                >
-                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4">
-                    <FontAwesomeIcon 
-                      icon={faArrowRight} 
-                      className="text-white text-2xl" 
-                    />
-                  </div>
-                  <h3 className="text-white font-bold text-xl mb-2">Lihat Selengkapnya</h3>
-                  <p className="text-white/80 text-sm">Temukan lebih banyak proyek pembangunan masjid</p>
-                </Link>
-              </div>
+                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4 group-hover:bg-white transition-all duration-300">
+                  <FontAwesomeIcon
+                    icon={faArrowRight}
+                    className="text-white text-2xl group-hover:text-[#59B997] transition-all duration-300"
+                  />
+                </div>
+                <h3 className="text-white font-bold text-xl mb-2 transition-all duration-300">
+                  Lihat Selengkapnya
+                </h3>
+                <p className="text-white/80 text-sm transition-all duration-300">
+                  Temukan lebih banyak proyek pembangunan masjid
+                </p>
+              </Link>
+            </div>
             </div>
           </div>
         )}
