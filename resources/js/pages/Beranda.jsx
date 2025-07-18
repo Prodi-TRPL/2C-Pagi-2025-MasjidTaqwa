@@ -7,6 +7,7 @@ import HomeContentAbout from '../components/LandingPage/HomeContentAbout';
 import HomeContentAdvantage from '../components/LandingPage/HomeContentAdvantage';
 import HomeContentContact from '../components/LandingPage/HomeContentContact';
 import HomeContentSignUp from '../components/LandingPage/HomeContentSignUp';
+import SpaceWave from '../components/LandingPage/SpaceWave';
 import { SimpleFooter } from '../components/LandingPage/SimpleFooter';
 import { isAdmin } from '../utils/auth';
 
@@ -32,9 +33,19 @@ function Beranda() {
       <div className="relative z-10">
         <HomeContent />
       </div>
+
+      <div className="relative z-0 bg-[#dcfce4]">
+        <SpaceWave variant="wave1" />
+      </div>
+
       <div className="relative z-0">
         <HomeContentAbout />
       </div>
+
+      <div className="relative z-0">
+        <SpaceWave variant="wave2" />
+      </div>
+
       <div className="relative z-0">
         <HomeContentAdvantage />
       </div>

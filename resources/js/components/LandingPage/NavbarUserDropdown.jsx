@@ -263,7 +263,7 @@ export default function NavbarUserDropdown() {
                     icon={faHistory} 
                     className="w-5 h-5 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" 
                   />
-                  <span>Riwayat Transaksi</span>
+                  <span>Riwayat Donasi</span>
                 </div>
               </li>
               <li>

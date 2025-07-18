@@ -606,7 +606,7 @@ function DonaturUserRiwayatTransaksi() {
                 color: '#59B997',
               }}
             >
-              Riwayat Transaksi
+              Riwayat Donasi
             </Typography>
           </Box>
           

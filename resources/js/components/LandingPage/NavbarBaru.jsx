@@ -1,16 +1,32 @@
-// Navbar2.jsx
 import { Link } from "react-router-dom";
 import { Menus } from "../../utils";
 import DesktopMenu from "./DesktopMenu";
 import MobMenu from "./MobMenu";
 import NavbarUserDropdown from "./NavbarUserDropdown";
+import { useState, useEffect } from "react";
 
 /* Navbar component: Modify menu, link path, and sign-in button here */
 export default function NavbarBaru() {
   const token = localStorage.getItem("token");
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   return (
-    <header className="h-16 text-[15px] fixed top-0 left-0 right-0 flex-center bg-white text-black z-[1000]">
+    <header
+      className={`h-16 text-[15px] fixed top-0 left-0 right-0 flex-center bg-white text-black z-[1000] transition-shadow duration-300 ${
+        isScrolled ? "shadow-md" : ""
+      }`}
+    >
       <nav className="px-3 lg:px-15 flex-center-between w-full max-w-7xl mx-auto gap-x-3">
         <div className="flex-center gap-x-3 z-[999] relative">
           {/* Logo Sidontaq */}
